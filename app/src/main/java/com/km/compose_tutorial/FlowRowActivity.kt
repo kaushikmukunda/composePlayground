@@ -3,17 +3,15 @@ package com.km.compose_tutorial
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.compose.Composable
-import androidx.ui.core.Alignment
 import androidx.ui.core.Modifier
 import androidx.ui.core.setContent
-import androidx.ui.foundation.Box
-import androidx.ui.foundation.Canvas
 import androidx.ui.foundation.Text
-import androidx.ui.geometry.Offset
 import androidx.ui.graphics.Paint
-import androidx.ui.layout.*
+import androidx.ui.layout.Column
+import androidx.ui.layout.ltr
+import androidx.ui.layout.padding
+import androidx.ui.layout.rtl
 import androidx.ui.material.MaterialTheme
-import androidx.ui.unit.Dp
 import androidx.ui.unit.dp
 
 class FlowRowActivity : ComponentActivity() {
@@ -23,59 +21,61 @@ class FlowRowActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 ScreenContent()
-//        FlexBoxContent()
             }
         }
     }
 }
 
+private fun getBulletedFlowRowConfig(numLines: Int): BulletedFlowRowConfig {
+    return BulletedFlowRowConfig(
+        areBulletsShown = true,
+        horizontalSpacing = 24.dp,
+        bulletRadius = 4f,
+        numLines = numLines,
+        bulletPaint = Paint().apply { isAntiAlias = true }
+    )
+}
+
 @Composable
 fun ScreenContent() {
-    Box(modifier = Modifier.padding(start = 8.dp, end = 8.dp) + Modifier.rtl) {
-        BulletSeperatedFlowRow(horizontalSpacing=  8.dp) {
-            BulletedText("some ads")
-            BulletedText("no in-game purchases")
-            BulletedText("total excitement")
-            BulletedText("non-stop fun")
+    Column(modifier = Modifier.padding(start = 8.dp, end = 8.dp)) {
+        Text("********** numlines1 *************\n\n")
+
+        BulletedFlowRow(
+            config = getBulletedFlowRowConfig(1),
+            modifier = Modifier.rtl
+        ) {
+            Text("some ads")
+            Text("no in-game purchases")
+            Text("total excitement")
+            Text("non-stop fun")
         }
-    }
-}
 
-class FlexBoxBulletSeperatorUiModel(
-    val bulletUiModel: BulletUiModel,
-    val contentAlignment: Alignment.Horizontal = Alignment.Start,
-//  val numLines: Int,
-//  val bulletsShown: Boolean,
-    val children: List<@Composable() () -> Unit>
-)
+        Text("\n\n********** numlines2+rtl *********\n\n")
 
-class BulletUiModel(
-    val bulletPaint: Paint,
-    val bulletGap: Dp,
-    val bulletSize: Float
-)
+        BulletedFlowRow(
+            config = getBulletedFlowRowConfig(2),
+            modifier = Modifier.rtl
+        ) {
+            Text("some ads")
+            Text("no in-game purchases")
+            Text("total excitement")
+            Text("non-stop fun")
+        }
 
-@Composable
-fun FlexBoxBulletSeparatorLayout(model: FlexBoxBulletSeperatorUiModel) {
-    for (child in model.children) {
-        child.invoke()
-        Bullet(BulletUiModel(Paint(), 4.dp, 10f))
-    }
-}
+        Text("\n\n********** numlines3 *************\n\n")
 
-@Composable
-internal fun BulletedText(text: String) {
-    Row(verticalGravity = Alignment.CenterVertically, modifier = Modifier.ltr) {
-        Text(maxLines = 1, text = text)
-        Bullet(BulletUiModel(Paint(), 4.dp, 10f))
-    }
-}
-
-@Composable
-internal fun Bullet(model: BulletUiModel, modifier: Modifier = Modifier) {
-    Box(modifier = modifier + Modifier.padding(start = model.bulletGap)) {
-        Canvas(modifier = Modifier) {
-            drawCircle(Offset.zero, model.bulletSize / 2, model.bulletPaint)
+        BulletedFlowRow(
+            config = getBulletedFlowRowConfig(3),
+            modifier = Modifier.ltr
+        ) {
+            Text("some ads")
+            Text("no in-game purchases")
+            Text("total excitement")
+            Text("non-stop fun")
+            Text("no in-game purchases2")
+            Text("total excitement2")
+            Text("non-stop fun2")
         }
     }
 }
