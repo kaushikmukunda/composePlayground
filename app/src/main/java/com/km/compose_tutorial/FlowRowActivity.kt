@@ -2,11 +2,13 @@ package com.km.compose_tutorial
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.annotation.DimenRes
 import androidx.compose.Composable
+import androidx.ui.core.ContextAmbient
 import androidx.ui.core.Modifier
 import androidx.ui.core.setContent
 import androidx.ui.foundation.Text
-import androidx.ui.graphics.Paint
+import androidx.ui.graphics.Color
 import androidx.ui.layout.Column
 import androidx.ui.layout.ltr
 import androidx.ui.layout.padding
@@ -23,16 +25,18 @@ class FlowRowActivity : ComponentActivity() {
                 ScreenContent()
             }
         }
+
+        val listOf = listOf("a", "b", "c")
     }
 }
 
-private fun getBulletedFlowRowConfig(numLines: Int): BulletedFlowRowConfig {
-    return BulletedFlowRowConfig(
+private fun getBulletedFlowRowConfig(numLines: Int): BulletedFlowLayoutConfig {
+    return BulletedFlowLayoutConfig(
         areBulletsShown = true,
         horizontalSpacing = 24.dp,
-        bulletRadius = 4f,
+        bulletRadius = 2.dp,
         numLines = numLines,
-        bulletPaint = Paint().apply { isAntiAlias = true }
+        bulletColor = Color.Black
     )
 }
 
@@ -41,7 +45,9 @@ fun ScreenContent() {
     Column(modifier = Modifier.padding(start = 8.dp, end = 8.dp)) {
         Text("********** numlines1 *************\n\n")
 
-        BulletedFlowRow(
+        pixelResource(id = R.dimen.medium_padding)
+
+        BulletedFlowLayout(
             config = getBulletedFlowRowConfig(1),
             modifier = Modifier.rtl
         ) {
@@ -53,7 +59,7 @@ fun ScreenContent() {
 
         Text("\n\n********** numlines2+rtl *********\n\n")
 
-        BulletedFlowRow(
+        BulletedFlowLayout(
             config = getBulletedFlowRowConfig(2),
             modifier = Modifier.rtl
         ) {
@@ -65,7 +71,7 @@ fun ScreenContent() {
 
         Text("\n\n********** numlines3 *************\n\n")
 
-        BulletedFlowRow(
+        BulletedFlowLayout(
             config = getBulletedFlowRowConfig(3),
             modifier = Modifier.ltr
         ) {
@@ -78,5 +84,11 @@ fun ScreenContent() {
             Text("non-stop fun2")
         }
     }
+}
+
+
+@Composable
+fun pixelResource(@DimenRes id: Int): Float {
+    return ContextAmbient.current.resources.getDimensionPixelSize(id).toFloat()
 }
 

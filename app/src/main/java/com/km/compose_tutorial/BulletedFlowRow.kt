@@ -2,17 +2,23 @@ package com.km.compose_tutorial
 
 import androidx.compose.Composable
 import androidx.compose.remember
-import androidx.ui.core.*
+import androidx.ui.core.Constraints
+import androidx.ui.core.DensityAmbient
+import androidx.ui.core.Layout
+import androidx.ui.core.Modifier
+import androidx.ui.core.Placeable
+import androidx.ui.core.drawBehind
 import androidx.ui.geometry.Offset
-import androidx.ui.graphics.Paint
+import androidx.ui.graphics.Color
 import androidx.ui.layout.Arrangement
 import androidx.ui.unit.Dp
 import androidx.ui.unit.IntPx
 import androidx.ui.unit.dp
 import androidx.ui.unit.max
+import androidx.ui.util.fastForEachIndexed
 
 /**
- * Configuration for bullet separated flow row.
+ * Configuration for bullet separated flow layout.
  *
  * @property areBulletsShown True to add bullets between child views
  * @property horizontalArrangement Optional specifies the arrangement of the child views.
@@ -20,22 +26,21 @@ import androidx.ui.unit.max
  * @property horizontalSpacing Optional spacing between the children in a row.
  * @property numLines Optional total number of lines to display.
  * @property bulletRadius Optional the size of the bullet.
- * @property bulletPaint Optional Paint object to be used for drawing the bullet.
+ * @property bulletColor Optional color for the bullet. Defaults to current theme text primary.
+ *    The color is resolved within the composable scope of the Layout.
  */
-class BulletedFlowRowConfig(
-    val areBulletsShown: Boolean,
-    val horizontalArrangement: Arrangement = Arrangement.Start,
-    val horizontalSpacing: Dp = 0.dp,
-    val numLines: Int = 1,
-    val bulletRadius: Float = 0f,
-    val bulletPaint: Paint = Paint().apply { isAntiAlias = true }
+class BulletedFlowLayoutConfig(
+  val areBulletsShown: Boolean,
+  val horizontalArrangement: Arrangement = Arrangement.Start,
+  val horizontalSpacing: Dp = 0.dp,
+  val numLines: Int = 1,
+  val bulletRadius: Dp = 0.dp,
+  val bulletColor: Color? = null
 ) {
-    val horizontalSpacingIntPx by lazy {
-        IntPx(horizontalSpacing.value.toInt())
+    init {
+        require(horizontalSpacing > bulletRadius * 2) { "BulletRadius too large!" }
     }
 }
-
-typealias BulletPosition = Offset
 
 /**
  * Arranges children in left-to-right flow, packing as many child views as possible on
@@ -48,21 +53,27 @@ typealias BulletPosition = Offset
  * pre-computed positions.
  */
 @Composable
-fun BulletedFlowRow(
-    config: BulletedFlowRowConfig,
-    modifier: Modifier = Modifier,
-    children: @Composable() () -> Unit
+fun BulletedFlowLayout(
+  config: BulletedFlowLayoutConfig,
+  modifier: Modifier = Modifier,
+  children: @Composable() () -> Unit
 ) {
-    val bulletPositions = remember { mutableListOf<BulletPosition>() }
+    val bulletColor = config.bulletColor ?: Color.Black
+    val bulletPositions = remember { mutableListOf<Offset>() }
     val bulletModifier: Modifier = Modifier.drawBehind {
         for (bulletPosition in bulletPositions) {
-            drawCircle(bulletPosition, config.bulletRadius, config.bulletPaint)
+            drawCircle(
+              center = bulletPosition,
+              radius = config.bulletRadius.toPx().value,
+              color = bulletColor
+            )
         }
     }
 
+    // The layout logic is derived from Jetpack Compose Flow layout : http://shortn/_o7nTAEQgPM
     Layout(
-        children,
-        modifier = modifier + bulletModifier
+      children,
+      modifier = modifier + bulletModifier
     ) { measurables, outerConstraints, layoutDirection ->
         val sequences = mutableListOf<List<Placeable>>()
         val rowHeights = mutableListOf<IntPx>()
@@ -75,13 +86,18 @@ fun BulletedFlowRow(
         var currentWidth = IntPx.Zero
         var currentHeight = IntPx.Zero
 
+        bulletPositions.clear()
+
         val childConstraints =
-            Constraints(maxWidth = outerConstraints.maxWidth)
+          Constraints(maxWidth = outerConstraints.maxWidth)
+        val horizontalSpacingIntPx = config.horizontalSpacing.toIntPx()
 
         // Return whether the placeable can be added to the current sequence.
         fun canAddToCurrentSequence(placeable: Placeable) =
-            currentSequence.isEmpty() || (currentWidth + placeable.width +
-                    config.horizontalSpacingIntPx) <= outerConstraints.maxWidth
+          currentSequence.isEmpty() || (
+            currentWidth + placeable.width +
+              horizontalSpacingIntPx
+            ) <= outerConstraints.maxWidth
 
         // Store current sequence information and start a new sequence.
         fun startNewSequence() {
@@ -104,14 +120,14 @@ fun BulletedFlowRow(
             // Start a new sequence if there is not enough space.
             if (!canAddToCurrentSequence(placeable)) startNewSequence()
 
-            // Stop placing children if there a configured number of lines
+            // Stop placing children if it already filled configured number of lines
             if (sequences.size >= config.numLines) {
                 break
             }
 
             // Add spacing to the width if this child is not the first element in the row
             if (currentSequence.isNotEmpty()) {
-                currentWidth += config.horizontalSpacingIntPx
+                currentWidth += horizontalSpacingIntPx
             }
 
             // Add the child to the current sequence.
@@ -127,32 +143,33 @@ fun BulletedFlowRow(
         val layoutHeight = max(totalHeight, outerConstraints.minHeight)
 
         // Layout all the children
+        // Note: This is based of java/com/google/supplychain/scales/store/access/FlowRow.java
         layout(layoutWidth, layoutHeight) {
-            sequences.forEachIndexed { i, placeables ->
+            sequences.fastForEachIndexed { i, placeables ->
                 val childrenWidths = placeables.mapIndexed { j, placeable ->
                     val additionalPadding =
-                        if (j < placeables.lastIndex) config.horizontalSpacingIntPx else IntPx.Zero
+                      if (j < placeables.lastIndex) horizontalSpacingIntPx else IntPx.Zero
                     placeable.width + additionalPadding
                 }
 
                 val horizontalPositions = config.horizontalArrangement.arrange(
-                    layoutWidth,
-                    childrenWidths,
-                    layoutDirection
+                  layoutWidth,
+                  childrenWidths,
+                  layoutDirection
                 )
 
-                placeables.forEachIndexed { j, placeable ->
+                placeables.fastForEachIndexed { j, placeable ->
                     placeable.placeAbsolute(
-                        x = horizontalPositions[j],
-                        y = rowVerticalPositions[i]
+                      x = horizontalPositions[j],
+                      y = rowVerticalPositions[i]
                     )
 
                     // Prepend bullet if not the first element in the row
                     if (j > 0 && config.areBulletsShown) {
                         val dx =
-                            (horizontalPositions[j] - config.horizontalSpacingIntPx / 2).value
+                          (horizontalPositions[j] - horizontalSpacingIntPx / 2).value
                         val dy = (rowVerticalPositions[i] + placeable.height / 2).value
-                        bulletPositions.add(BulletPosition(dx.toFloat(), dy.toFloat()))
+                        bulletPositions.add(Offset(dx.toFloat(), dy.toFloat()))
                     }
                 }
             }

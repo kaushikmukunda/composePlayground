@@ -48,13 +48,12 @@ dependencies {
 
     implementation "androidx.ui:ui-core:$compose_version"
     implementation "androidx.compose:compose-runtime:$compose_version"
-    implementation "androidx.ui:ui-framework:$compose_version"
     implementation "androidx.ui:ui-layout:$compose_version"
     implementation "androidx.ui:ui-material:$compose_version"
+    implementation "androidx.ui:ui-util:$compose_version"
     implementation "androidx.ui:ui-tooling:$compose_version"
     implementation "androidx.ui:ui-foundation:$compose_version"
     implementation "androidx.ui:ui-animation:$compose_version"
-    implementation "androidx.ui:ui-platform:$compose_version"
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
