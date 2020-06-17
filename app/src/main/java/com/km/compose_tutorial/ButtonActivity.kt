@@ -1,25 +1,15 @@
 package com.km.compose_tutorial
 
 import android.os.Bundle
-import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.compose.Composable
-import androidx.ui.core.*
-import androidx.ui.foundation.Icon
-import androidx.ui.foundation.Image
-import androidx.ui.foundation.Text
+import androidx.ui.core.Modifier
+import androidx.ui.core.setContent
 import androidx.ui.graphics.BlendMode
 import androidx.ui.graphics.Color
 import androidx.ui.graphics.ColorFilter
-import androidx.ui.graphics.ImageAsset
 import androidx.ui.layout.*
-import androidx.ui.material.Button
-import androidx.ui.material.IconButton
 import androidx.ui.material.MaterialTheme
-import androidx.ui.material.OutlinedButton
-import androidx.ui.material.icons.Icons
-import androidx.ui.material.icons.filled.Favorite
-import androidx.ui.res.colorResource
 import androidx.ui.res.imageResource
 import androidx.ui.res.vectorResource
 import androidx.ui.unit.dp
@@ -34,8 +24,6 @@ class ButtonActivity : ComponentActivity() {
                 ButtonScreenContent()
             }
         }
-
-        val listOf = listOf("a", "b", "c")
     }
 }
 

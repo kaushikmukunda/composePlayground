@@ -6,11 +6,10 @@ import androidx.compose.Composable
 import androidx.ui.core.Modifier
 import androidx.ui.core.setContent
 import androidx.ui.foundation.Text
-import androidx.ui.layout.Column
-import androidx.ui.layout.ltr
-import androidx.ui.layout.padding
+import androidx.ui.layout.*
 import androidx.ui.material.MaterialTheme
 import androidx.ui.unit.dp
+import androidx.ui.unit.sp
 
 class FlowRowActivity : ComponentActivity() {
 
@@ -64,5 +63,20 @@ fun ScreenContent() {
             },
             children = TEST_PHRASES
         )
+
+        DelimiterFlowLayout(
+            numLines = 4,
+            delimiter = { modifier ->
+                TallDelimiter(modifier = modifier)
+            },
+            children = TEST_PHRASES
+        )
     }
 }
+
+
+@Composable
+fun TallDelimiter(modifier: Modifier) {
+    Text("|", fontSize = 30.sp, modifier = modifier)
+}
+

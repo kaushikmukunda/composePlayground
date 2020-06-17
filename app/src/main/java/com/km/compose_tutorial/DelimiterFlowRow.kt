@@ -1,22 +1,12 @@
 package com.km.compose_tutorial
 
+import android.util.Log
 import androidx.compose.Composable
-import androidx.ui.core.Constraints
-import androidx.ui.core.Layout
-import androidx.ui.core.Modifier
-import androidx.ui.core.Placeable
-import androidx.ui.core.drawWithContent
-import androidx.ui.core.tag
+import androidx.ui.core.*
 import androidx.ui.foundation.Text
 import androidx.ui.graphics.Color
-import androidx.ui.layout.Arrangement
-import androidx.ui.layout.Spacer
-import androidx.ui.layout.padding
-import androidx.ui.layout.width
-import androidx.ui.unit.Dp
-import androidx.ui.unit.IntPx
-import androidx.ui.unit.dp
-import androidx.ui.unit.max
+import androidx.ui.layout.*
+import androidx.ui.unit.*
 import androidx.ui.util.fastForEachIndexed
 
 /**
@@ -66,7 +56,7 @@ fun DelimiterFlowLayout(
 
         val childConstraints = Constraints(maxWidth = outerConstraints.maxWidth)
 
-        var measurableIdx = 0
+        var measurableIdx = -1
 
         fun trimDelimiter() {
             if (measurables[measurableIdx - 1].tag == DELIMITER_TAG) {
@@ -96,6 +86,8 @@ fun DelimiterFlowLayout(
         }
 
         for (measurable in measurables) {
+            measurableIdx++
+
             // Ask the child for its preferred size.
             val placeable = measurable.measure(childConstraints)
 
@@ -116,8 +108,6 @@ fun DelimiterFlowLayout(
             currentSequence.add(placeable)
             currentWidth += placeable.width
             currentHeight = max(currentHeight, placeable.height)
-
-            measurableIdx++
         }
 
         // Add last line
@@ -139,9 +129,12 @@ fun DelimiterFlowLayout(
                 )
 
                 placeables.fastForEachIndexed { j, placeable ->
+                    val verticalOffset = Alignment.CenterVertically.align(
+                      rowHeights[i] - placeable.height)
+
                     placeable.placeAbsolute(
                         x = horizontalPositions[j],
-                        y = rowVerticalPositions[i]
+                        y = rowVerticalPositions[i] + verticalOffset
                     )
                 }
             }
@@ -187,5 +180,5 @@ fun BulletDelimiter(
  */
 @Composable
 fun SpaceDelimiter(width: Dp) {
-    Spacer(modifier = Modifier.width(width = width).tag(DELIMITER_TAG))
+    Spacer(modifier = Modifier.width(width = width))
 }
