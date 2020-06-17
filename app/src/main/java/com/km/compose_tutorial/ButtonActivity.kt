@@ -4,12 +4,14 @@ import android.os.Bundle
 import android.view.MotionEvent
 import androidx.activity.ComponentActivity
 import androidx.compose.Composable
-import androidx.ui.core.Modifier
-import androidx.ui.core.setContent
+import androidx.ui.core.*
 import androidx.ui.foundation.Icon
 import androidx.ui.foundation.Image
 import androidx.ui.foundation.Text
+import androidx.ui.graphics.BlendMode
 import androidx.ui.graphics.Color
+import androidx.ui.graphics.ColorFilter
+import androidx.ui.graphics.ImageAsset
 import androidx.ui.layout.*
 import androidx.ui.material.Button
 import androidx.ui.material.IconButton
@@ -19,7 +21,9 @@ import androidx.ui.material.icons.Icons
 import androidx.ui.material.icons.filled.Favorite
 import androidx.ui.res.colorResource
 import androidx.ui.res.imageResource
+import androidx.ui.res.vectorResource
 import androidx.ui.unit.dp
+import com.km.compose_tutorial.button.*
 
 class ButtonActivity : ComponentActivity() {
 
@@ -39,66 +43,55 @@ class ButtonActivity : ComponentActivity() {
 @Composable
 private fun ButtonScreenContent() {
     Column(modifier = Modifier.padding(all = 16.dp)) {
-        ButtonComposable(
-            config = ButtonConfig(
-                uiAction = ButtonUiAction({ _, _ -> }, {}),
-                text = "link-abcd",
-                backgroundColor = Color.Transparent,
-                clickData = Any()
-
+        ButtonComposer(ColorUtility())
+            .compose(
+                model = ButtonUiModel(
+                    buttonText = "link",
+                    uiAction = ButtonUiAction({}, {}, { _, _ -> }),
+                    clickData = Any(),
+                    iconModel = IconModel(
+                        IconAsset.ImageIcon(imageResource(id = android.R.drawable.ic_btn_speak_now)),
+                        IconPlacement.START,
+                        iconPadding = 0.dp
+                    )
+                )
             )
-        )
 
         Spacer(modifier = Modifier.padding(8.dp))
 
-        ButtonComposable(
-            config = ButtonConfig(
-                uiAction = ButtonUiAction({ _, _ -> }, {}),
-                text = "link",
-                backgroundColor = Color.Transparent,
-                clickData = Any()
+        ButtonComposer(ColorUtility())
+            .compose(
+                model = ButtonUiModel(
+                    buttonText = "link1234",
+                    buttonStyle = ButtonStyle.LINK,
+                    buttonVariant = ButtonVariant.SMALL,
+                    uiAction = ButtonUiAction({}, {}, { _, _ -> }),
+                    clickData = Any(),
+                    iconModel = IconModel(
+                        IconAsset.VectorIcon(vectorResource(id = R.drawable.ic_open_in_new)),
+                        IconPlacement.END,
+                        iconPadding = 0.dp,
+                        colorFilter = ColorFilter(Color.Red, BlendMode.srcATop)
+                    )
+                )
             )
-        )
 
-        Spacer(modifier = Modifier.padding(8.dp))
+        Spacer(modifier = Modifier.preferredHeight(8.dp))
 
-        Button(
-            text = { Text(text = "Fill_no_elevation") },
-            elevation = 0.dp,
-            onClick = {}
-        )
-
-        Spacer(modifier = Modifier.padding(8.dp))
-
-        Button(
-            text = { Text(text = "Default") },
-            onClick = {}
-        )
-
-        Spacer(modifier = Modifier.padding(8.dp))
-
-        OutlinedButton(
-            text = { Text(text = "Secondary") },
-            onClick = {}
-        )
-
-        Spacer(modifier = Modifier.padding(8.dp))
-
-        Button(
-            text = {
-                Row {
-                    Text(text = "Standard size")
-                }
-            },
-            onClick = {},
-            modifier = Modifier.defaultMinSizeConstraints(minWidth = 160.dp) + Modifier.wrapContentWidth(),
-            backgroundColor = colorResource(id = R.color.stateful_color)
-        )
-
-        IconButton(onClick = { /* doSomething() */ }) {
-            Icon(Icons.Filled.Favorite)
-        }
-
+        ButtonComposer(ColorUtility())
+            .compose(
+                model = ButtonUiModel(
+                    buttonText = "link1234",
+                    buttonStyle = ButtonStyle.OUTLINE,
+                    buttonVariant = ButtonVariant.SMALL,
+                    uiAction = ButtonUiAction({}, {}, { _, _ -> }),
+                    clickData = Any(),
+                    iconModel = IconModel(
+                        IconAsset.VectorIcon(vectorResource(id = R.raw.ic_open_in_new)),
+                        IconPlacement.END
+                    )
+                )
+            )
     }
 }
 

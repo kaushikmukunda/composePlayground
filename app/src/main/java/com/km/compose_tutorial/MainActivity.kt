@@ -63,7 +63,7 @@ class CounterState(var count: Int = 0)
 fun Counter(state: CounterState) {
   Button(onClick = { state.count++ }) {
     Text("Clicked ${state.count} times")
-    Log.d("DBG", "composing button")
+    Log.d("DBG", "composing com.km.compose_tutorial.button")
   }
   Log.d("DBG", "composing Counter")
 }

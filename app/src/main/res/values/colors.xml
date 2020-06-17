@@ -8,4 +8,7 @@
   <color name="button_hover">#14906B</color>
   <color name="button_press">#52AD92</color>
 
+  <color name="disabled_text">#888888</color>
+  <color name="disabled_bg">#888888</color>
+
 </resources>

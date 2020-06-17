@@ -10,13 +10,6 @@ import java.lang.IllegalArgumentException
 @RunWith(JUnit4::class)
 class DelimiterFlowLayoutConfigTest {
 
-    @Test(expected = IllegalArgumentException::class)
-    fun invalidConfig() {
-        DelimiterFlowLayoutConfig(
-            areBulletsShown = true,
-            bulletRadius = 4.dp,
-            horizontalSpacing = 6.dp
-        )
-    }
+
 
 }
