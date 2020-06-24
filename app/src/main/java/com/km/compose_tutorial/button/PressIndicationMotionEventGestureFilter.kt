@@ -30,7 +30,7 @@ internal fun Modifier.pressIndicationMotionEventGestureFilter(
             onStart = {
                 val ts = System.currentTimeMillis()
                 val motionEvent =
-                    MotionEvent.obtain(ts, ts, MotionEvent.ACTION_DOWN, it.x.value, it.y.value, /* metaState= */ 0)
+                    MotionEvent.obtain(ts, ts, MotionEvent.ACTION_DOWN, it.x, it.y, /* metaState= */ 0)
                 listener.invoke(motionEvent)
                 actionDownEvents.add(motionEvent)
             },

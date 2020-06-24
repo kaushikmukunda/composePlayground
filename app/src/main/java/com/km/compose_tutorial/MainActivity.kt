@@ -4,11 +4,11 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.Composable
-import androidx.compose.Model
 import androidx.ui.core.setContent
 import androidx.ui.foundation.Text
 import androidx.ui.graphics.Color
 import androidx.ui.layout.Column
+import androidx.ui.layout.ExperimentalLayout
 import androidx.ui.layout.FlowRow
 import androidx.ui.material.*
 import androidx.ui.tooling.preview.Preview
@@ -47,6 +47,7 @@ fun MyScreenContent(
   Log.d("DBG", "composing ScreenContent")
 }
 
+@OptIn(ExperimentalLayout::class)
 @Composable
 fun Greeting(name: String) {
   FlowRow {
@@ -56,7 +57,6 @@ fun Greeting(name: String) {
   }
 }
 
-@Model
 class CounterState(var count: Int = 0)
 
 @Composable
@@ -68,7 +68,6 @@ fun Counter(state: CounterState) {
   Log.d("DBG", "composing Counter")
 }
 
-@Model
 class FormState(var optionChecked: Boolean = false)
 
 @Composable

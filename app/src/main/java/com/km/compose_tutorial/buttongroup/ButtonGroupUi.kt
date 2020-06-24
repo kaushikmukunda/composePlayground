@@ -3,10 +3,7 @@ package com.km.compose_tutorial.buttongroup
 import androidx.compose.*
 import androidx.ui.core.*
 import androidx.ui.foundation.Box
-import androidx.ui.layout.FlowRow
-import androidx.ui.layout.MainAxisAlignment
-import androidx.ui.layout.SizeMode
-import androidx.ui.layout.widthIn
+import androidx.ui.layout.*
 import androidx.ui.unit.*
 import com.km.compose_tutorial.button.*
 import kotlin.math.floor
@@ -22,6 +19,7 @@ class ButtonGroupComposer constructor(private val buttonComposer: ButtonComposer
   }
 }
 
+@OptIn(ExperimentalLayout::class)
 @Composable
 private fun ButtonGroupUi(buttonComposer: ButtonComposer,
                           model: ButtonGroupUiModel,
@@ -30,7 +28,7 @@ private fun ButtonGroupUi(buttonComposer: ButtonComposer,
     return
   }
 
-  var layoutSize by state(StructurallyEqual) { IntPxSize(IntPx.Companion.Zero, IntPx.Zero) }
+  var layoutSize by state(StructurallyEqual) { IntSize(0, 0) }
   val layoutModifier = Modifier.onPositioned {
     layoutSize = it.size
   }
@@ -48,7 +46,7 @@ private fun ButtonGroupUi(buttonComposer: ButtonComposer,
       mainAxisSpacing = buttonSpacing,
       crossAxisSpacing = buttonSpacing
     ) {
-      val buttonWidthModifier = Modifier.buttonWidthConstraints(model, IntSize(layoutSize.width.value, layoutSize.height.value))
+      val buttonWidthModifier = Modifier.buttonWidthConstraints(model, IntSize(layoutSize.width, layoutSize.height))
 
       val leftButton = getLeftButtonModel(model)
       val rightButton = getRightButtonModel(model)

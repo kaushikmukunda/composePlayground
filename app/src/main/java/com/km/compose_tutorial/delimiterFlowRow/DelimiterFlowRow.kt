@@ -7,6 +7,7 @@ import androidx.ui.graphics.Color
 import androidx.ui.layout.*
 import androidx.ui.unit.*
 import androidx.ui.util.fastForEachIndexed
+import kotlin.math.max
 
 /**
  * Arranges children in left-to-right flow, packing as many child views as possible on
@@ -43,15 +44,15 @@ fun DelimiterFlowLayout(
         modifier = modifier
     ) { measurables, outerConstraints, layoutDirection ->
         val sequences = mutableListOf<List<Placeable>>()
-        val rowHeights = mutableListOf<IntPx>()
-        val rowVerticalPositions = mutableListOf<IntPx>()
+        val rowHeights = mutableListOf<Int>()
+        val rowVerticalPositions = mutableListOf<Int>()
 
-        var totalWidth = IntPx.Zero
-        var totalHeight = IntPx.Zero
+        var totalWidth = 0
+        var totalHeight = 0
 
         val currentSequence = mutableListOf<Placeable>()
-        var currentWidth = IntPx.Zero
-        var currentHeight = IntPx.Zero
+        var currentWidth = 0
+        var currentHeight = 0
 
         val childConstraints = Constraints(maxWidth = outerConstraints.maxWidth)
 
@@ -80,8 +81,8 @@ fun DelimiterFlowLayout(
             totalWidth = max(totalWidth, currentWidth)
 
             currentSequence.clear()
-            currentWidth = IntPx.Zero
-            currentHeight = IntPx.Zero
+            currentWidth = 0
+            currentHeight = 0
         }
 
         for (measurable in measurables) {
@@ -167,7 +168,7 @@ fun BulletDelimiter(
         modifier = modifier
             .padding(horizontal = bulletGap)
             .drawWithContent {
-                drawCircle(color = color, radius = bulletRadius.toPx().value)
+                drawCircle(color = color, radius = bulletRadius.toPx())
             }
     )
 }
