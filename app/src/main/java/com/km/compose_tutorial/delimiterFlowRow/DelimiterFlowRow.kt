@@ -1,6 +1,5 @@
-package com.km.compose_tutorial
+package com.km.compose_tutorial.delimiterFlowRow
 
-import android.util.Log
 import androidx.compose.Composable
 import androidx.ui.core.*
 import androidx.ui.foundation.Text

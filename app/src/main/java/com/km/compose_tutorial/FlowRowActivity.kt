@@ -10,6 +10,9 @@ import androidx.ui.layout.*
 import androidx.ui.material.MaterialTheme
 import androidx.ui.unit.dp
 import androidx.ui.unit.sp
+import com.km.compose_tutorial.delimiterFlowRow.BulletDelimiter
+import com.km.compose_tutorial.delimiterFlowRow.DelimiterFlowLayout
+import com.km.compose_tutorial.delimiterFlowRow.SpaceDelimiter
 
 class FlowRowActivity : ComponentActivity() {
 
@@ -48,7 +51,11 @@ fun ScreenContent() {
         DelimiterFlowLayout(
             numLines = 1,
             modifier = Modifier.ltr,
-            delimiter = { SpaceDelimiter(16.dp) },
+            delimiter = {
+                SpaceDelimiter(
+                    16.dp
+                )
+            },
             children = TEST_PHRASES
         )
 
