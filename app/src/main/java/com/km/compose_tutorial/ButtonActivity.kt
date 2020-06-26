@@ -26,7 +26,7 @@ class ButtonActivity : ComponentActivity() {
     setContent {
       MaterialTheme {
         ButtonGroupScreenContent()
-//                ButtonScreenContent()
+//        ButtonScreenContent()
       }
     }
   }
@@ -138,7 +138,7 @@ private fun ButtonScreenContent() {
     ButtonComposer(ColorUtility())
       .compose(
         model = ButtonUiModel(
-          buttonText = "link1234",
+          buttonText = "link",
           buttonStyle = ButtonStyle.LINK,
           buttonVariant = ButtonVariant.SMALL,
           uiAction = ButtonUiAction({}, {}, { _, _ -> }),
@@ -157,13 +157,26 @@ private fun ButtonScreenContent() {
     ButtonComposer(ColorUtility())
       .compose(
         model = ButtonUiModel(
-          buttonText = "link1234",
+          buttonText = "lin",
+          buttonStyle = ButtonStyle.LINK,
+          buttonVariant = ButtonVariant.SMALL,
+          uiAction = ButtonUiAction({}, {}, { _, _ -> }),
+          clickData = Any()
+        )
+      )
+
+    Spacer(modifier = Modifier.preferredHeight(8.dp))
+
+    ButtonComposer(ColorUtility())
+      .compose(
+        model = ButtonUiModel(
+          buttonText = "link",
           buttonStyle = ButtonStyle.OUTLINE,
           buttonVariant = ButtonVariant.SMALL,
           uiAction = ButtonUiAction({}, {}, { _, _ -> }),
           clickData = Any(),
           iconModel = IconModel(
-            IconAsset.VectorIcon(vectorResource(id = R.raw.ic_open_in_new)),
+            IconAsset.VectorIcon(vectorResource(id = R.drawable.ic_open_in_new)),
             IconPlacement.END
           )
         )

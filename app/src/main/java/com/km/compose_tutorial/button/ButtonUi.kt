@@ -177,9 +177,9 @@ private fun getBorder(model: ButtonUiModel, colorUtility: ColorUtility): Border?
 // sets a minWidth.
 @Composable
 private fun Modifier.minWidthModifier(model: ButtonUiModel): Modifier {
-    val modifier = if (model.buttonVariant == ButtonVariant.STANDARD &&
-        model.buttonStyle != ButtonStyle.LINK
-    ) {
+    val modifier = if (model.buttonStyle == ButtonStyle.LINK) {
+        Modifier.widthIn(minWidth = 0.dp)
+    } else if (model.buttonVariant == ButtonVariant.STANDARD) {
         val minWidth = dimensionResource(R.dimen.componentized_standard_button_min_width)
         Modifier.defaultMinSizeConstraints(minWidth = minWidth)
     } else {
