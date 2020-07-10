@@ -50,7 +50,7 @@ fun ScreenContent() {
     Column(modifier = Modifier.padding(start = 0.dp, end = 0.dp)) {
         DelimiterFlowLayout(
             numLines = 1,
-            modifier = Modifier.ltr,
+            modifier = Modifier.rtl,
             delimiter = {
                 SpaceDelimiter(
                     16.dp

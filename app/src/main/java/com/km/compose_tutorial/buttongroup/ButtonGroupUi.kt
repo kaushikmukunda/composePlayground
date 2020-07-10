@@ -4,12 +4,13 @@ import androidx.compose.*
 import androidx.ui.core.*
 import androidx.ui.foundation.Box
 import androidx.ui.layout.*
-import androidx.ui.unit.*
+import androidx.ui.unit.Dp
+import androidx.ui.unit.IntSize
+import androidx.ui.unit.dp
 import com.km.compose_tutorial.button.*
 import kotlin.math.floor
 
-
-/** Composable button container for injecting dependencies. */
+/** Composable button group container for injecting dependencies. */
 @Stable
 class ButtonGroupComposer constructor(private val buttonComposer: ButtonComposer) {
 
@@ -21,9 +22,11 @@ class ButtonGroupComposer constructor(private val buttonComposer: ButtonComposer
 
 @OptIn(ExperimentalLayout::class)
 @Composable
-private fun ButtonGroupUi(buttonComposer: ButtonComposer,
-                          model: ButtonGroupUiModel,
-                          modifier: Modifier) {
+private fun ButtonGroupUi(
+  buttonComposer: ButtonComposer,
+  model: ButtonGroupUiModel,
+  modifier: Modifier
+) {
   if (model.numButtons == 0) {
     return
   }
@@ -46,20 +49,20 @@ private fun ButtonGroupUi(buttonComposer: ButtonComposer,
       mainAxisSpacing = buttonSpacing,
       crossAxisSpacing = buttonSpacing
     ) {
-      val buttonWidthModifier = Modifier.buttonWidthConstraints(model, IntSize(layoutSize.width, layoutSize.height))
+      val buttonWidthModifier = Modifier.buttonWidthConstraints(model, layoutSize)
 
-      val leftButton = getLeftButtonModel(model)
-      val rightButton = getRightButtonModel(model)
+      val leftButtonUiModel = createLeftButtonUiModel(model)
+      val rightButtonUiModel = createRightButtonUiModel(model)
 
-      // FlowRow does not support RTL out of the box currently and we implement it manually
+      // TODO(b/159812991): Once FlowRow supports RTL out of the box, refactor the manual mangling.
       if (isLtr) {
-        leftButton?.let {
+        leftButtonUiModel?.let {
           buttonComposer.compose(model = it, modifier = buttonWidthModifier)
         }
-        buttonComposer.compose(model = rightButton, modifier = buttonWidthModifier)
+        buttonComposer.compose(model = rightButtonUiModel, modifier = buttonWidthModifier)
       } else {
-        buttonComposer.compose(model = rightButton, modifier = buttonWidthModifier)
-        leftButton?.let {
+        buttonComposer.compose(model = rightButtonUiModel, modifier = buttonWidthModifier)
+        leftButtonUiModel?.let {
           buttonComposer.compose(model = it, modifier = buttonWidthModifier)
         }
       }
@@ -67,14 +70,17 @@ private fun ButtonGroupUi(buttonComposer: ButtonComposer,
   }
 }
 
-private fun getLayoutDirectionAwareButtonAlignment(model: ButtonGroupUiModel, isLtr: Boolean): MainAxisAlignment {
+private fun getLayoutDirectionAwareButtonAlignment(
+  model: ButtonGroupUiModel,
+  isLtr: Boolean
+): MainAxisAlignment {
   val ltrButtonAlignment = getButtonAlignment(model)
-  return if (isLtr) ltrButtonAlignment else {
-    if (ltrButtonAlignment == MainAxisAlignment.Start) {
-      MainAxisAlignment.End
-    } else {
-      MainAxisAlignment.Start
-    }
+  return if (isLtr) {
+    ltrButtonAlignment
+  } else if (ltrButtonAlignment == MainAxisAlignment.Start) {
+    MainAxisAlignment.End
+  } else {
+    MainAxisAlignment.Start
   }
 }
 
@@ -85,11 +91,12 @@ private fun getButtonAlignment(model: ButtonGroupUiModel): MainAxisAlignment {
 
     ButtonGroupVariant.INVISIBLE_FILL -> MainAxisAlignment.End
 
-    else -> if (model.buttonGroupSnapping == ButtonGroupSnapping.LEFT) {
-      MainAxisAlignment.Start
-    } else {
-      MainAxisAlignment.End
-    }
+    else ->
+      if (model.buttonGroupSnapping == ButtonGroupSnapping.LEFT) {
+        MainAxisAlignment.Start
+      } else {
+        MainAxisAlignment.End
+      }
   }
 }
 
@@ -103,8 +110,7 @@ private fun Modifier.buttonWidthConstraints(model: ButtonGroupUiModel,
     ButtonGroupVariant.FILL_OUTLINE_50_50,
     ButtonGroupVariant.OUTLINE_OUTLINE_50_50 -> {
       val buttonSpacing = getButtonGroupSpacing(model)
-      val totalWidthDp =
-        Dp((layoutSize.width) / ContextAmbient.current.resources.displayMetrics.density)
+      val totalWidthDp = with(DensityAmbient.current) { layoutSize.width.toDp() }
       // Use floor as any overflow will cause the FlowRow to layout the second button on the
       // next row.
       val buttonWidth = ((totalWidthDp - buttonSpacing) / 2).floor()
@@ -122,7 +128,7 @@ private fun Modifier.buttonWidthConstraints(model: ButtonGroupUiModel,
 
 @Composable
 private fun getButtonGroupSpacing(model: ButtonGroupUiModel): Dp {
-  if (model.numButtons < 2 || model.secondButtonModel.buttonState == ButtonState.HIDDEN) {
+  if (model.numButtons < 2 || model.secondButtonConfig?.buttonState == ButtonState.HIDDEN) {
     return 0.dp
   }
 
@@ -143,30 +149,30 @@ private fun getButtonGroupSpacing(model: ButtonGroupUiModel): Dp {
 }
 
 @Composable
-private fun getRightButtonModel(model: ButtonGroupUiModel): ButtonUiModel {
+private fun createRightButtonUiModel(model: ButtonGroupUiModel): ButtonUiModel {
   return if (model.numButtons == 1) {
     if (model.isSingleButtonSecondary) {
-      generateSecondaryButtonModelForVariant(model, model.firstButtonModel)
+      generateSecondaryButtonModelForVariant(model, model.firstButtonConfig)
     } else {
-      generatePrimaryButtonModelForVariant(model, model.firstButtonModel)
+      generatePrimaryButtonModelForVariant(model, model.firstButtonConfig)
     }
   } else {
-    generatePrimaryButtonModelForVariant(model, model.secondButtonModel)
+    generatePrimaryButtonModelForVariant(model, requireNotNull(model.secondButtonConfig))
   }
 }
 
 @Composable
-private fun getLeftButtonModel(model: ButtonGroupUiModel): ButtonUiModel? {
+private fun createLeftButtonUiModel(model: ButtonGroupUiModel): ButtonUiModel? {
   if (model.numButtons < 2) {
     return null
   }
 
-  return generateSecondaryButtonModelForVariant(model, model.firstButtonModel)
+  return generateSecondaryButtonModelForVariant(model, model.firstButtonConfig)
 }
 
 private fun generatePrimaryButtonModelForVariant(
   groupModel: ButtonGroupUiModel,
-  buttonModel: ButtonDataModel
+  buttonConfig: ButtonConfig
 ): ButtonUiModel {
   var buttonStyle = ButtonStyle.FILLED
   var padding = ButtonPadding.DEFAULT
@@ -176,6 +182,7 @@ private fun generatePrimaryButtonModelForVariant(
       buttonStyle = ButtonStyle.FILLED
       padding = ButtonPadding.NONE
     }
+
     ButtonGroupVariant.OUTLINE_FILL,
     ButtonGroupVariant.INVISIBLE_FILL -> {
       buttonStyle = ButtonStyle.FILLED
@@ -193,6 +200,7 @@ private fun generatePrimaryButtonModelForVariant(
       buttonStyle = ButtonStyle.OUTLINE
       padding = ButtonPadding.DEFAULT
     }
+
     ButtonGroupVariant.FILL_OUTLINE_50_50,
     ButtonGroupVariant.OUTLINE_OUTLINE_50_50 -> {
       buttonStyle = ButtonStyle.OUTLINE
@@ -200,13 +208,12 @@ private fun generatePrimaryButtonModelForVariant(
     }
   }
 
-  return buttonUiModelFrom(buttonModel, buttonStyle, padding)
+  return buttonUiModelFrom(buttonConfig, buttonStyle, padding)
 }
-
 
 private fun generateSecondaryButtonModelForVariant(
   groupModel: ButtonGroupUiModel,
-  buttonModel: ButtonDataModel
+  buttonConfig: ButtonConfig
 ): ButtonUiModel {
   var buttonStyle = ButtonStyle.FILLED
   var padding = ButtonPadding.DEFAULT
@@ -242,25 +249,28 @@ private fun generateSecondaryButtonModelForVariant(
     }
   }
 
-  return buttonUiModelFrom(buttonModel, buttonStyle, padding)
+  return buttonUiModelFrom(buttonConfig, buttonStyle, padding)
 }
 
 private fun buttonUiModelFrom(
-  buttonModel: ButtonDataModel,
+  buttonConfig: ButtonConfig,
   buttonStyle: ButtonStyle,
   padding: ButtonPadding
 ): ButtonUiModel {
   return ButtonUiModel(
-    buttonText = buttonModel.buttonText,
-    uiAction = buttonModel.uiAction,
-    clickData = buttonModel.clickData,
+    buttonText = buttonConfig.buttonText,
+    uiAction = buttonConfig.uiAction,
+    clickData = buttonConfig.clickData,
     buttonStyle = buttonStyle,
     buttonPadding = padding,
-    buttonState = buttonModel.buttonState,
-    iconModel = buttonModel.iconModel
+    buttonState = buttonConfig.buttonState,
+    iconModel = buttonConfig.iconModel,
+//    backend = buttonConfig.backend,
+//    theme = buttonConfig.theme
   )
 }
 
 private fun Dp.floor(): Dp = Dp(floor(this.value))
 
-
+private val ButtonGroupUiModel.numButtons: Int
+  get() = if (this.secondButtonConfig == null) 1 else 2
