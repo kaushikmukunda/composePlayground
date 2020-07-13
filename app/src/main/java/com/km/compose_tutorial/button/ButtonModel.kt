@@ -82,7 +82,7 @@ class IconModel(
  * @property backend Used to determine the color of the button.
  */
 @Immutable
-open class ButtonUiModel(
+class ButtonUiModel(
     val buttonText: String,
     val uiAction: ButtonUiAction,
     val clickData: Any?,

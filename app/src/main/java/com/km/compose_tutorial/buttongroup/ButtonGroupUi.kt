@@ -12,7 +12,7 @@ import kotlin.math.floor
 
 /** Composable button group container for injecting dependencies. */
 @Stable
-class ButtonGroupComposer constructor(private val buttonComposer: ButtonComposer) {
+open class ButtonGroupComposer constructor(private val buttonComposer: ButtonComposer) {
 
   @Composable
   fun compose(model: ButtonGroupUiModel, modifier: Modifier = Modifier) {
@@ -49,6 +49,9 @@ private fun ButtonGroupUi(
       mainAxisSpacing = buttonSpacing,
       crossAxisSpacing = buttonSpacing
     ) {
+//      val buttonPositionedModifier = Modifier.onPositioned {
+////        dispatchButtonSizeCallback(it.it.size, modifier)
+//      }
       val buttonWidthModifier = Modifier.buttonWidthConstraints(model, layoutSize)
 
       val leftButtonUiModel = createLeftButtonUiModel(model)
@@ -69,6 +72,14 @@ private fun ButtonGroupUi(
     }
   }
 }
+
+//private fun dispatchButtonSizeCallback(buttonId: String, buttonSize: IntSize, modifier: Modifier) {
+//  modifier.foldOut(Any()) {mod, _ ->
+//    if (mod is OnButtonSizeMeasuredModifier) {
+//      mod.onButtonSizeMeasured(buttonId, buttonSize)
+//    }
+//  }
+//}
 
 private fun getLayoutDirectionAwareButtonAlignment(
   model: ButtonGroupUiModel,
@@ -264,7 +275,7 @@ private fun buttonUiModelFrom(
     buttonStyle = buttonStyle,
     buttonPadding = padding,
     buttonState = buttonConfig.buttonState,
-    iconModel = buttonConfig.iconModel,
+    iconModel = buttonConfig.iconModel
 //    backend = buttonConfig.backend,
 //    theme = buttonConfig.theme
   )

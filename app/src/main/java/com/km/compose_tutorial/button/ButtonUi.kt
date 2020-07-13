@@ -11,7 +11,6 @@ import androidx.ui.foundation.Image
 import androidx.ui.foundation.Text
 import androidx.ui.foundation.clickable
 import androidx.ui.graphics.Color
-import androidx.ui.graphics.ImageAsset
 import androidx.ui.layout.*
 import androidx.ui.material.Button
 import androidx.ui.material.ripple.RippleIndication
@@ -23,10 +22,10 @@ import com.km.compose_tutorial.R
 
 /** Composable button container for injecting dependencies. */
 @Stable
-class ButtonComposer constructor(private val colorUtility: ColorUtility) {
+open class ButtonComposer constructor(private val colorUtility: ColorUtility) {
 
     @Composable
-    fun compose(model: ButtonUiModel, modifier: Modifier = Modifier) {
+    open fun compose(model: ButtonUiModel, modifier: Modifier = Modifier) {
         ButtonUi(colorUtility, model, modifier)
     }
 }

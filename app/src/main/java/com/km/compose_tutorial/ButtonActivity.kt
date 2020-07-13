@@ -1,18 +1,26 @@
 package com.km.compose_tutorial
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.compose.Composable
-import androidx.ui.core.Modifier
-import androidx.ui.core.setContent
+import androidx.ui.core.*
+import androidx.ui.foundation.Text
 import androidx.ui.graphics.BlendMode
 import androidx.ui.graphics.Color
 import androidx.ui.graphics.ColorFilter
+import androidx.ui.graphics.drawscope.DrawScope
 import androidx.ui.layout.*
+import androidx.ui.material.Button
 import androidx.ui.material.MaterialTheme
 import androidx.ui.res.imageResource
 import androidx.ui.res.vectorResource
+import androidx.ui.unit.IntSize
 import androidx.ui.unit.dp
+import com.km.compose_tutorial.actionbutton.ActionButtonClickData
+import com.km.compose_tutorial.actionbutton.ActionButtonComposer
+import com.km.compose_tutorial.actionbuttongroup.ActionButtonGroupComposer
+import com.km.compose_tutorial.actionbuttongroup.ActionButtonGroupUiModel
 import com.km.compose_tutorial.button.*
 import com.km.compose_tutorial.buttongroup.ButtonConfig
 import com.km.compose_tutorial.buttongroup.ButtonGroupComposer
@@ -25,10 +33,54 @@ class ButtonActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                ButtonGroupScreenContent()
+                //                ButtonGroupScreenContent()
 //        ButtonScreenContent()
+                ActionButtonGroupContent()
             }
         }
+    }
+}
+
+@Composable
+private fun ActionButtonGroupContent() {
+    Column {
+        MeasurableButton(onClick = {
+            Log.d("dbg", "on click triggered button 1$it")
+        }) {
+            Text("Test Button1")
+        }
+
+        Spacer(modifier = Modifier.preferredHeight(8.dp))
+
+        var layoutSize = IntSize(0, 0)
+        Button(onClick = {
+            Log.d("dbg", "on click triggered button 2 $layoutSize")
+        },
+            modifier = Modifier.onPositioned {
+                layoutSize = it.size
+            }) {
+            Text("Test Button2")
+        }
+
+        val actionbuttonGroupComposer = ActionButtonGroupComposer(ActionButtonComposer(ColorUtility()))
+        actionbuttonGroupComposer.compose(
+            ActionButtonGroupUiModel(
+                ButtonGroupUiModel(
+                    buttonGroupVariant = ButtonGroupVariant.INVISIBLE_FILL,
+                    firstButtonConfig = ButtonConfig(
+                        buttonText = "button1",
+                        uiAction = ButtonUiAction({}, {}, { _, _ -> }),
+                        clickData = ActionButtonClickData()
+                    ),
+                    secondButtonConfig = ButtonConfig(
+                        buttonText = "button2",
+                        uiAction = ButtonUiAction({}, {}, { _, _ -> }),
+                        clickData = ActionButtonClickData()
+                    )
+                )
+            ),
+            modifier = Modifier.width(300.dp)
+        )
     }
 }
 
