@@ -1,2 +1,2 @@
 include ':app'
-rootProject.name = "compose_tutorial"
+rootProject.name = "composePlayground"
