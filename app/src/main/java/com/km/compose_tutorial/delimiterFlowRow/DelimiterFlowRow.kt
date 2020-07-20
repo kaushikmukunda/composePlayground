@@ -64,6 +64,12 @@ fun DelimiterFlowLayout(
             }
         }
 
+        fun trimLastLineDelimiter() {
+            if (measurables[measurableIdx].tag == DELIMITER_TAG) {
+                currentSequence.removeAt(currentSequence.lastIndex)
+            }
+        }
+
         // Return whether the placeable can be added to the current sequence.
         fun canAddToCurrentSequence(placeable: Placeable): Boolean {
             return currentSequence.isEmpty() ||
@@ -71,8 +77,7 @@ fun DelimiterFlowLayout(
         }
 
         // Store current sequence information and start a new sequence.
-        fun startNewSequence() {
-            trimDelimiter()
+        fun commitCurrentSequence() {
             sequences += currentSequence.toList()
             rowHeights += currentHeight
             rowVerticalPositions += totalHeight
@@ -83,6 +88,16 @@ fun DelimiterFlowLayout(
             currentSequence.clear()
             currentWidth = 0
             currentHeight = 0
+        }
+
+        fun startNewSequence() {
+            trimDelimiter()
+            commitCurrentSequence()
+        }
+
+        fun commitLastSequence() {
+            trimLastLineDelimiter()
+            commitCurrentSequence()
         }
 
         for (measurable in measurables) {
@@ -111,7 +126,7 @@ fun DelimiterFlowLayout(
         }
 
         // Add last line
-        if (currentSequence.isNotEmpty()) startNewSequence()
+        if (currentSequence.isNotEmpty()) commitLastSequence()
 
         val layoutWidth = max(totalWidth, outerConstraints.minWidth)
         val layoutHeight = max(totalHeight, outerConstraints.minHeight)
