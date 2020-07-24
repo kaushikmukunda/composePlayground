@@ -71,26 +71,7 @@ private fun ActionButtonGroupContent2() {
 @Composable
 private fun ActionButtonGroupContent() {
   Column {
-    MeasurableButton(onClick = {
-      Log.d("dbg", "on click triggered button 1$it")
-    }) {
-      Text("Test Button1")
-    }
-
-    Spacer(modifier = Modifier.preferredHeight(8.dp))
-
-    var layoutSize = IntSize(0, 0)
-    Button(onClick = {
-      Log.d("dbg", "on click triggered button 2 $layoutSize")
-    },
-      modifier = Modifier.onPositioned {
-        layoutSize = it.size
-      }) {
-      Text("Test Button2")
-    }
-
-    val actionbuttonGroupComposer =
-      ActionButtonGroupComposer(ActionButtonComposer(ColorUtility()))
+    val actionbuttonGroupComposer = ActionButtonGroupComposer(ActionButtonComposer(ColorUtility()))
     actionbuttonGroupComposer.compose(
       ActionButtonGroupUiModel(
         ButtonGroupUiModel(

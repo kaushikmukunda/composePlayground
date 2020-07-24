@@ -27,7 +27,7 @@ import kotlin.math.max
  */
 @Composable
 fun DelimiterFlowLayout(
-    horizontalArrangement: Arrangement = Arrangement.Start,
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     numLines: Int = 1,
     modifier: Modifier = Modifier,
     delimiter: @Composable() (Modifier) -> Unit,

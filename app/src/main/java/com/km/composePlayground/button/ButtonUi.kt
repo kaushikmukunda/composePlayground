@@ -13,6 +13,7 @@ import androidx.ui.foundation.clickable
 import androidx.ui.graphics.Color
 import androidx.ui.layout.*
 import androidx.ui.material.Button
+import androidx.ui.material.ButtonConstants.DefaultInnerPadding
 import androidx.ui.material.ripple.RippleIndication
 import androidx.ui.res.colorResource
 import androidx.ui.res.dimensionResource
@@ -68,7 +69,7 @@ private fun ButtonUi(
         // based on enabled state. The button background color also depends on buttonStyle. By passing
         // the same value, this wrapper maintains control over background color.
         disabledBackgroundColor = backgroundColor,
-        padding = Button.DefaultInnerPadding.copy(
+        padding = DefaultInnerPadding.copy(
             start = buttonWidthPadding,
             end = buttonWidthPadding
         ),

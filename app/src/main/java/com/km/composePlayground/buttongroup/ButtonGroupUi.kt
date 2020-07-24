@@ -32,7 +32,7 @@ private fun ButtonGroupUi(
     return
   }
 
-  var layoutSize by state(StructurallyEqual) { IntSize(0, 0) }
+  var layoutSize by state(structuralEqualityPolicy()) { IntSize(0, 0) }
   val layoutModifier = Modifier.onPositioned {
     layoutSize = it.size
   }
