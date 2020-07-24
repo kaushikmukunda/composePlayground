@@ -1,7 +1,8 @@
 package com.km.composePlayground.actionbutton
 
-import android.util.Log
-import androidx.compose.*
+import androidx.compose.Composable
+import androidx.compose.Stable
+import androidx.compose.remember
 import androidx.ui.core.Modifier
 import androidx.ui.core.onPositioned
 import androidx.ui.unit.IntSize
@@ -16,18 +17,18 @@ class ActionButtonComposer(colorUtility: ColorUtility) : ButtonComposer(colorUti
 
     @Composable
     override fun compose(model: ActionButtonUiModel, modifier: Modifier) {
-        var layoutSize by state(StructurallyEqual) { IntSize(0, 0) }
-        val layoutModifier = Modifier.onPositioned {
-            Log.d("dbg", "fire onpositioned ${it.size}")
-            layoutSize = it.size
-        }
-
+        val layoutSize = layoutSize()
         val wrapperModel = createWrapperModel(model, layoutSize)
-        super.compose(model = wrapperModel, modifier = layoutModifier)
+        super.compose(
+            model = wrapperModel,
+            modifier = modifier.plus(Modifier.layoutSizeCache(layoutSize = layoutSize))
+        )
     }
 
-    private fun createWrapperModel(model: ActionButtonUiModel, layoutSize: IntSize): ButtonUiModel {
-        Log.d("dbg", "recomposing")
+    private fun createWrapperModel(
+        model: ActionButtonUiModel,
+        layoutSize: LayoutSize
+    ): ButtonUiModel {
         return ButtonUiModel(
             buttonText = model.buttonText,
             uiAction = addClickInterceptor(model, layoutSize),
@@ -42,16 +43,35 @@ class ActionButtonComposer(colorUtility: ColorUtility) : ButtonComposer(colorUti
 
     private fun addClickInterceptor(
         model: ActionButtonUiModel,
-        layoutSize: IntSize
+        layoutSize: LayoutSize
     ): ButtonUiAction {
         return ButtonUiAction(
             onShown = model.uiAction.onShown,
             onTouch = model.uiAction.onTouch,
             onClick = {
-                Log.d("DBG", "${model.buttonText} action button clicked $layoutSize")
                 model.clickData as ActionButtonClickData
-                model.clickData.adTrackData = AdTrackData(layoutSize.height, layoutSize.width)
+                model.clickData.adTrackData =
+                    AdTrackData(layoutSize.height, layoutSize.width)
             }
         )
+    }
+}
+
+@Composable
+private fun Modifier.layoutSizeCache(layoutSize: LayoutSize): Modifier {
+    return this + Modifier.onPositioned {
+        layoutSize.update(it.size)
+    }
+}
+
+@Composable
+private fun layoutSize(): LayoutSize {
+    return remember { LayoutSize(0, 0) }
+}
+
+private class LayoutSize(var width: Int, var height: Int) {
+    fun update(size: IntSize) {
+        width = size.width
+        height = size.height
     }
 }
