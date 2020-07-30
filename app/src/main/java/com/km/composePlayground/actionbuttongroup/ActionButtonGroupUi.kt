@@ -35,11 +35,7 @@ class ActionButtonGroupComposer2(private val buttonGroupComposer: ButtonGroupCom
         val buttonModifier = Modifier.onPositioned {
             Log.d("Dbg", "button positioned ${it.boundsInParent} ${it.size}")
         }
-        buttonGroupComposer.compose(
-            createWrapperGroupUiModel(model),
-            modifier = modifier,
-            buttonModifier = buttonModifier
-        )
+        buttonGroupComposer.compose(createWrapperGroupUiModel(model), modifier = modifier)
     }
 
     private fun createWrapperGroupUiModel(model: ActionButtonGroupUiModel): ButtonGroupUiModel {

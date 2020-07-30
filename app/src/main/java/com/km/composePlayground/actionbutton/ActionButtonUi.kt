@@ -52,6 +52,7 @@ class ActionButtonComposer(colorUtility: ColorUtility) : ButtonComposer(colorUti
                 model.clickData as ActionButtonClickData
                 model.clickData.adTrackData =
                     AdTrackData(layoutSize.height, layoutSize.width)
+                model.uiAction.onClick.invoke(it)
             }
         )
     }

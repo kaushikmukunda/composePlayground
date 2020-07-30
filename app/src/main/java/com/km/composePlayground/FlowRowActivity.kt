@@ -20,7 +20,7 @@ class FlowRowActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                ScreenContent()
+                ScreenContentWithConstraints()
             }
         }
     }
@@ -46,7 +46,7 @@ private val TEST_PHRASES = listOf<@Composable() () -> Unit>(
 )
 
 @Composable
-fun ScreenContent() {
+fun ScreenContentWithConstraints() {
     Column(modifier = Modifier.padding(start = 0.dp, end = 0.dp)) {
         DelimiterFlowLayout(
             numLines = 1,

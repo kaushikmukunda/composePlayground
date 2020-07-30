@@ -3,20 +3,20 @@ package com.km.composePlayground.buttongroup
 import androidx.compose.*
 import androidx.ui.core.*
 import androidx.ui.foundation.Box
+import androidx.ui.foundation.ContentGravity
 import androidx.ui.layout.*
 import androidx.ui.unit.Dp
 import androidx.ui.unit.IntSize
 import androidx.ui.unit.dp
 import com.km.composePlayground.button.*
 import kotlin.math.floor
-
 /** Composable button group container for injecting dependencies. */
 @Stable
-open class ButtonGroupComposer constructor(private val buttonComposer: ButtonComposer) {
+open class ButtonGroupComposer (private val buttonComposer: ButtonComposer) {
 
   @Composable
-  fun compose(model: ButtonGroupUiModel, buttonModifier: Modifier = Modifier, modifier: Modifier = Modifier) {
-    ButtonGroupUi(buttonComposer, model, buttonModifier, modifier)
+  fun compose(model: ButtonGroupUiModel, modifier: Modifier = Modifier) {
+    ButtonGroupUi(buttonComposer, model, modifier)
   }
 }
 
@@ -25,7 +25,6 @@ open class ButtonGroupComposer constructor(private val buttonComposer: ButtonCom
 private fun ButtonGroupUi(
   buttonComposer: ButtonComposer,
   model: ButtonGroupUiModel,
-  buttonModifier: Modifier,
   modifier: Modifier
 ) {
   if (model.numButtons == 0) {
@@ -37,23 +36,16 @@ private fun ButtonGroupUi(
     layoutSize = it.size
   }
 
-  // Wrap the FlowRow within a Box to accomodate the layout modifier. FlowRow does not accept a
-  // modifier. This is required to resize the Button for the 50_50 group variant.
-  Box(modifier = modifier + layoutModifier) {
-    val isLtr = ConfigurationAmbient.current.localeLayoutDirection == LayoutDirection.Ltr
+  // Wrap the FlowRow within a Box to accomodate the layout modifier as FlowRow does not accept one.
+  val isLtr = ConfigurationAmbient.current.localeLayoutDirection == LayoutDirection.Ltr
+  Box(
+    gravity = getLayoutDirectionAwareContentGravity(model, isLtr),
+    modifier = modifier.containerWidthModifier(model) + layoutModifier
+  ) {
     val buttonSpacing = getButtonGroupSpacing(model)
 
-    FlowRow(
-      // This allows the flowRow to take up the entire available space
-      mainAxisSize = SizeMode.Expand,
-      mainAxisAlignment = getLayoutDirectionAwareButtonAlignment(model, isLtr),
-      mainAxisSpacing = buttonSpacing,
-      crossAxisSpacing = buttonSpacing
-    ) {
-//      val buttonPositionedModifier = Modifier.onPositioned {
-////        dispatchButtonSizeCallback(it.it.size, modifier)
-//      }
-      val buttonWidthModifier = buttonModifier.buttonWidthConstraints(model, layoutSize)
+    FlowRow(mainAxisSpacing = buttonSpacing, crossAxisSpacing = buttonSpacing) {
+      val buttonWidthModifier = Modifier.buttonWidthConstraints(model, layoutSize)
 
       val leftButtonUiModel = createLeftButtonUiModel(model)
       val rightButtonUiModel = createRightButtonUiModel(model)
@@ -74,40 +66,46 @@ private fun ButtonGroupUi(
   }
 }
 
-//private fun dispatchButtonSizeCallback(buttonId: String, buttonSize: IntSize, modifier: Modifier) {
-//  modifier.foldOut(Any()) {mod, _ ->
-//    if (mod is OnButtonSizeMeasuredModifier) {
-//      mod.onButtonSizeMeasured(buttonId, buttonSize)
-//    }
-//  }
-//}
-
-private fun getLayoutDirectionAwareButtonAlignment(
-  model: ButtonGroupUiModel,
-  isLtr: Boolean
-): MainAxisAlignment {
-  val ltrButtonAlignment = getButtonAlignment(model)
-  return if (isLtr) {
-    ltrButtonAlignment
-  } else if (ltrButtonAlignment == MainAxisAlignment.Start) {
-    MainAxisAlignment.End
-  } else {
-    MainAxisAlignment.Start
+/**
+ * The 50_50 group variants require button to take up all the available space. Apply a
+ * fillMaxWidth modifier for these cases.
+ */
+@Composable
+private fun Modifier.containerWidthModifier(model: ButtonGroupUiModel): Modifier {
+  return when (model.buttonGroupVariant) {
+    ButtonGroupVariant.OUTLINE_FILL_50_50,
+    ButtonGroupVariant.FILL_OUTLINE_50_50,
+    ButtonGroupVariant.OUTLINE_OUTLINE_50_50 -> this.fillMaxWidth()
+    else -> this
   }
 }
 
-private fun getButtonAlignment(model: ButtonGroupUiModel): MainAxisAlignment {
+private fun getLayoutDirectionAwareContentGravity(
+  model: ButtonGroupUiModel,
+  isLtr: Boolean
+): ContentGravity {
+  val ltrContentGravity = getContentGravity(model)
+  return if (isLtr) {
+    ltrContentGravity
+  } else if (ltrContentGravity == ContentGravity.CenterStart) {
+    ContentGravity.CenterEnd
+  } else {
+    ContentGravity.CenterStart
+  }
+}
+
+private fun getContentGravity(model: ButtonGroupUiModel): ContentGravity {
   return when (model.buttonGroupVariant) {
     ButtonGroupVariant.FILL_INVISIBLE,
-    ButtonGroupVariant.OUTLINE_INVISIBLE -> MainAxisAlignment.Start
+    ButtonGroupVariant.OUTLINE_INVISIBLE -> ContentGravity.CenterStart
 
-    ButtonGroupVariant.INVISIBLE_FILL -> MainAxisAlignment.End
+    ButtonGroupVariant.INVISIBLE_FILL -> ContentGravity.CenterEnd
 
     else ->
       if (model.buttonGroupSnapping == ButtonGroupSnapping.LEFT) {
-        MainAxisAlignment.Start
+        ContentGravity.CenterStart
       } else {
-        MainAxisAlignment.End
+        ContentGravity.CenterEnd
       }
   }
 }
@@ -276,7 +274,7 @@ private fun buttonUiModelFrom(
     buttonStyle = buttonStyle,
     buttonPadding = padding,
     buttonState = buttonConfig.buttonState,
-    iconModel = buttonConfig.iconModel
+    iconModel = buttonConfig.iconModel,
 //    backend = buttonConfig.backend,
 //    theme = buttonConfig.theme
   )
