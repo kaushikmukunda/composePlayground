@@ -1,23 +1,19 @@
 package com.km.composePlayground
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.compose.Composable
-import androidx.ui.core.Modifier
-import androidx.ui.core.onPositioned
-import androidx.ui.core.setContent
-import androidx.ui.foundation.Text
-import androidx.ui.graphics.BlendMode
-import androidx.ui.graphics.Color
-import androidx.ui.graphics.ColorFilter
-import androidx.ui.layout.*
-import androidx.ui.material.Button
-import androidx.ui.material.MaterialTheme
-import androidx.ui.res.imageResource
-import androidx.ui.res.vectorResource
-import androidx.ui.unit.IntSize
-import androidx.ui.unit.dp
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.res.imageResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.unit.dp
+
 import com.km.composePlayground.actionbutton.ActionButtonClickData
 import com.km.composePlayground.actionbutton.ActionButtonComposer
 import com.km.composePlayground.actionbutton.AdTrackData
@@ -171,8 +167,7 @@ private fun ButtonGroupScreenContent() {
           uiAction = ButtonUiAction({}, {}, { _, _ -> }),
           clickData = Any()
         )
-      ),
-      modifier = Modifier.rtl
+      )
     )
   }
 }
@@ -208,7 +203,7 @@ private fun ButtonScreenContent() {
             IconAsset.VectorIcon(vectorResource(id = R.drawable.ic_open_in_new)),
             IconPlacement.END,
             iconPadding = 0.dp,
-            colorFilter = ColorFilter(Color.Red, BlendMode.srcATop)
+            colorFilter = ColorFilter(Color.Red, BlendMode.SrcAtop)
           )
         )
       )

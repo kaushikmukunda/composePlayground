@@ -1,24 +1,24 @@
 package com.km.composePlayground.button
 
-import androidx.compose.Composable
-import androidx.compose.Stable
-import androidx.compose.onCommit
-import androidx.ui.core.Alignment
-import androidx.ui.core.ContentScale
-import androidx.ui.core.Modifier
-import androidx.ui.foundation.Border
-import androidx.ui.foundation.Image
-import androidx.ui.foundation.Text
-import androidx.ui.foundation.clickable
-import androidx.ui.graphics.Color
-import androidx.ui.layout.*
-import androidx.ui.material.Button
-import androidx.ui.material.ButtonConstants.DefaultInnerPadding
-import androidx.ui.material.ripple.RippleIndication
-import androidx.ui.res.colorResource
-import androidx.ui.res.dimensionResource
-import androidx.ui.unit.Dp
-import androidx.ui.unit.dp
+import androidx.compose.foundation.Border
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.Text
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonConstants.DefaultInnerPadding
+import androidx.compose.material.ripple.RippleIndication
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.onCommit
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.km.composePlayground.R
 
 /** Composable button container for injecting dependencies. */

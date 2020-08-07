@@ -1,7 +1,7 @@
 package com.km.composePlayground.buttongroup
 
-import androidx.ui.core.Modifier
-import androidx.ui.unit.IntSize
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntSize
 
 fun Modifier.onButtonSizeMeasured(onMeasured: (String, IntSize) -> Unit) =
     this + object : OnButtonSizeMeasuredModifier {

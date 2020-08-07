@@ -1,6 +1,6 @@
 package com.km.composePlayground.buttongroup
 
-import androidx.compose.Immutable
+import androidx.compose.runtime.Immutable
 import com.km.composePlayground.button.ButtonState
 import com.km.composePlayground.button.ButtonUiAction
 import com.km.composePlayground.button.ButtonUiModel

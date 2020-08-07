@@ -2,14 +2,15 @@ package com.km.composePlayground
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.compose.Composable
-import androidx.ui.core.Modifier
-import androidx.ui.core.setContent
-import androidx.ui.foundation.Text
-import androidx.ui.layout.*
-import androidx.ui.material.MaterialTheme
-import androidx.ui.unit.dp
-import androidx.ui.unit.sp
+import androidx.compose.foundation.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.km.composePlayground.delimiterFlowRow.BulletDelimiter
 import com.km.composePlayground.delimiterFlowRow.DelimiterFlowLayout
 import com.km.composePlayground.delimiterFlowRow.SpaceDelimiter
@@ -50,7 +51,7 @@ fun ScreenContentWithConstraints() {
     Column(modifier = Modifier.padding(start = 0.dp, end = 0.dp)) {
         DelimiterFlowLayout(
             numLines = 1,
-            modifier = Modifier.rtl,
+//            modifier = Modifier.rtl,
             delimiter = {
                 SpaceDelimiter(
                     16.dp

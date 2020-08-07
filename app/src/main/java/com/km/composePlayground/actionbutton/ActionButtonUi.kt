@@ -1,11 +1,11 @@
 package com.km.composePlayground.actionbutton
 
-import androidx.compose.Composable
-import androidx.compose.Stable
-import androidx.compose.remember
-import androidx.ui.core.Modifier
-import androidx.ui.core.onPositioned
-import androidx.ui.unit.IntSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.onPositioned
+import androidx.compose.ui.unit.IntSize
 import com.km.composePlayground.button.ButtonComposer
 import com.km.composePlayground.button.ButtonUiAction
 import com.km.composePlayground.button.ButtonUiModel

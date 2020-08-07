@@ -2,17 +2,18 @@ package com.km.composePlayground
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.Composable
-import androidx.compose.Recomposer
-import androidx.ui.core.Modifier
-import androidx.ui.core.layoutId
-import androidx.ui.core.setContent
-import androidx.ui.foundation.Box
-import androidx.ui.foundation.Text
-import androidx.ui.layout.*
-import androidx.ui.material.Button
-import androidx.ui.text.style.TextOverflow
-import androidx.ui.unit.dp
+import androidx.compose.foundation.Box
+import androidx.compose.foundation.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.Button
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Recomposer
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+
 import com.km.composePlayground.actionbutton.ActionButtonClickData
 import com.km.composePlayground.actionbutton.ActionButtonComposer
 import com.km.composePlayground.actionbutton.AdTrackData
@@ -49,7 +50,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
         val buttonId = "buttonRef"
 
         ConstraintLayout(modifier = Modifier.fillMaxWidth(),
-            constraintSet = ConstraintSet2 {
+            constraintSet = ConstraintSet {
                 val textRef = createRefFor(textId)
                 val buttonRef = createRefFor(buttonId)
 
@@ -76,7 +77,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
         val buttonId = "buttonRef"
 
         ConstraintLayout(modifier = Modifier.fillMaxWidth().padding(16.dp),
-            constraintSet = ConstraintSet2 {
+            constraintSet = ConstraintSet {
                 val textRef = createRefFor(textId)
                 val buttonRef = createRefFor(buttonId)
 

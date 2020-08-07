@@ -1,12 +1,15 @@
 package com.km.composePlayground.delimiterFlowRow
 
-import androidx.compose.Composable
-import androidx.ui.core.*
-import androidx.ui.foundation.Text
-import androidx.ui.graphics.Color
-import androidx.ui.layout.*
-import androidx.ui.unit.*
-import androidx.ui.util.fastForEachIndexed
+import androidx.compose.foundation.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.*
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.id
+import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEachIndexed
 import kotlin.math.max
 
 /**
@@ -38,11 +41,11 @@ fun DelimiterFlowLayout(
         children = {
             for (child in children) {
                 child()
-                delimiter(Modifier.tag(DELIMITER_TAG))
+                delimiter(Modifier.layoutId(DELIMITER_TAG))
             }
         },
         modifier = modifier
-    ) { measurables, outerConstraints, layoutDirection ->
+    ) { measurables, outerConstraints ->
         val sequences = mutableListOf<List<Placeable>>()
         val rowHeights = mutableListOf<Int>()
         val rowVerticalPositions = mutableListOf<Int>()
@@ -54,18 +57,18 @@ fun DelimiterFlowLayout(
         var currentWidth = 0
         var currentHeight = 0
 
-        val childConstraints = Constraints(maxWidth = outerConstraints.maxWidth)
+        val childConstraints = androidx.compose.ui.unit.Constraints(maxWidth = outerConstraints.maxWidth)
 
         var measurableIdx = -1
 
         fun trimDelimiter() {
-            if (measurables[measurableIdx - 1].tag == DELIMITER_TAG) {
+            if (measurables[measurableIdx - 1].id == DELIMITER_TAG) {
                 currentSequence.removeAt(currentSequence.lastIndex)
             }
         }
 
         fun trimLastLineDelimiter() {
-            if (measurables[measurableIdx].tag == DELIMITER_TAG) {
+            if (measurables[measurableIdx].id == DELIMITER_TAG) {
                 currentSequence.removeAt(currentSequence.lastIndex)
             }
         }
@@ -115,7 +118,7 @@ fun DelimiterFlowLayout(
             }
 
             // Do not start line with delimiter
-            if (currentSequence.isEmpty() && measurable.tag == DELIMITER_TAG) {
+            if (currentSequence.isEmpty() && measurable.id == DELIMITER_TAG) {
                 continue
             }
 
@@ -175,7 +178,7 @@ fun BulletDelimiter(
     bulletColor: Color = Color.Unset,
     bulletRadius: Dp = 0.dp,
     bulletGap: Dp = 0.dp,
-    modifier: Modifier = Modifier.tag(DELIMITER_TAG)
+    modifier: Modifier = Modifier.layoutId(DELIMITER_TAG)
 ) {
     val color = if (bulletColor == Color.Unset) Color.Black else bulletColor
     Text(

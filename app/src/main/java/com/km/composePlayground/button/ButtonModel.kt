@@ -1,12 +1,12 @@
 package com.km.composePlayground.button
 
 import android.view.MotionEvent
-import androidx.compose.Immutable
-import androidx.ui.graphics.ColorFilter
-import androidx.ui.graphics.ImageAsset
-import androidx.ui.graphics.vector.VectorAsset
-import androidx.ui.unit.Dp
-import androidx.ui.unit.dp
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ImageAsset
+import androidx.compose.ui.graphics.vector.VectorAsset
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 /** Actions associated with [ButtonUi]. */
 class ButtonUiAction(

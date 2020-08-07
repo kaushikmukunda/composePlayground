@@ -1,12 +1,12 @@
 package com.km.composePlayground.button
 
 import android.view.MotionEvent
-import androidx.compose.onDispose
-import androidx.compose.remember
-import androidx.ui.core.Modifier
-import androidx.ui.core.composed
-import androidx.ui.core.gesture.pressIndicatorGestureFilter
-import androidx.ui.util.fastForEach
+import androidx.compose.runtime.onDispose
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
+import androidx.compose.ui.gesture.pressIndicatorGestureFilter
+import androidx.compose.ui.util.fastForEach
 
 /**
  * This gesture detector wraps around [Modifier.pressIndicatorGestureFilter] and converts
