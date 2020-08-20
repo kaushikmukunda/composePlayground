@@ -7,4 +7,6 @@
     <dimen name="componentized_loose_button_width_padding">12dp</dimen>
     <dimen name="componentized_button_outline">1dp</dimen>
     <dimen name="componentized_standard_button_min_width">130dp</dimen>
+    <dimen name="componentized_small_button_height">32dp</dimen>
+    <dimen name="componentized_standard_button_height">36dp</dimen>
 </resources>

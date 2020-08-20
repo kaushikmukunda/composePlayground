@@ -1,12 +1,12 @@
 package com.km.composePlayground.button
 
+import android.util.Log
 import androidx.compose.foundation.Border
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonConstants.DefaultInnerPadding
 import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -14,6 +14,7 @@ import androidx.compose.runtime.onCommit
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
@@ -50,7 +51,6 @@ private fun ButtonUi(
     if (model.buttonState == ButtonState.HIDDEN) {
         return
     }
-
     onCommit {
         model.uiAction.onShown.invoke()
     }
@@ -60,7 +60,7 @@ private fun ButtonUi(
     val backgroundColor = getBackgroundColor(model, colorUtility)
     val buttonWidthPadding = getButtonWidthPadding(model)
     Button(
-        onClick = { model.uiAction.onClick(model.clickData) },
+        onClick = { model.uiAction.onClick(model.clickData) }.clickListener(),
         enabled = model.isEnabled(),
         contentColor = getButtonTextColor(model, colorUtility),
         disabledContentColor = disabledContentColor,
@@ -69,49 +69,57 @@ private fun ButtonUi(
         // based on enabled state. The button background color also depends on buttonStyle. By passing
         // the same value, this wrapper maintains control over background color.
         disabledBackgroundColor = backgroundColor,
-        padding = DefaultInnerPadding.copy(
+        padding = InnerPadding(
             start = buttonWidthPadding,
             end = buttonWidthPadding
         ),
         border = getBorder(model, colorUtility),
         elevation = 0.dp,
-        modifier = modifier.minWidthModifier(model).rippleModifier(model).touchModifier(model)
+        // TODO(b/162462372): Disabling problematic modifiers for now
+        modifier = modifier.minSizeModifier(model).touchModifier(model) // .rippleModifier(model)
     ) {
         Row(
             verticalGravity = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
-            if (model.iconModel?.iconPlacement == IconPlacement.START) {
-                iconComposable(model = model.iconModel)
-            }
-
+            positionalIconComposable(model.iconModel, IconPlacement.START)
             Text(text = model.buttonText)
-
-            if (model.iconModel?.iconPlacement == IconPlacement.END) {
-                iconComposable(model = model.iconModel)
-            }
+            positionalIconComposable(model.iconModel, IconPlacement.END)
         }
     }
 }
 
 @Composable
-private fun iconComposable(model: IconModel) {
-    val paddingModifier =
-        if (model.iconPlacement == IconPlacement.START) Modifier.padding(end = model.iconPadding)
-        else Modifier.padding(start = model.iconPadding)
-    val iconModifier = paddingModifier
-        .size(model.iconWidth + model.iconPadding, model.iconHeight)
-    val contentScale = ContentScale.Fit
+private fun positionalIconComposable(model: IconModel?, position: IconPlacement) {
+    model?.let {
+        if (it.iconPlacement == position) {
+            iconUi(it)
+        }
+    }
+}
 
-    when (model.icon) {
-        is IconAsset.ImageIcon -> Image(
-            asset = model.icon.asset,
-            colorFilter = model.colorFilter,
-            contentScale = contentScale,
-            modifier = iconModifier
-        )
+@Composable
+private fun iconUi(model: IconModel) {
+    val paddingModifier =
+        if (model.iconPlacement == IconPlacement.START) {
+            Modifier.padding(end = model.iconPadding)
+        } else {
+            Modifier.padding(start = model.iconPadding)
+        }
+    val iconModifier = paddingModifier.size(model.iconWidth, model.iconHeight)
+    val contentScale = ContentScale.Fit
+    val iconAsset = model.icon
+    when (iconAsset) {
+        is IconAsset.ImageIcon -> {
+            Image(
+                asset = iconAsset.asset,
+                colorFilter = model.colorFilter,
+                contentScale = contentScale,
+                modifier = iconModifier
+            )
+        }
         is IconAsset.VectorIcon -> Image(
-            asset = model.icon.asset,
+            asset = iconAsset.asset,
             colorFilter = model.colorFilter,
             contentScale = contentScale,
             modifier = iconModifier
@@ -150,14 +158,12 @@ private fun getButtonWidthPadding(model: ButtonUiModel): Dp {
     if (model.buttonStyle == ButtonStyle.LINK) {
         return 0.dp
     }
-
     val paddingRes = when (model.buttonPadding) {
         ButtonPadding.NONE -> R.dimen.componentized_none_button_width_padding
         ButtonPadding.DEFAULT -> R.dimen.componentized_default_button_width_padding
         ButtonPadding.COMPACT -> R.dimen.componentized_compact_button_width_padding
         ButtonPadding.LOOSE -> R.dimen.componentized_loose_button_width_padding
     }
-
     return dimensionResource(paddingRes)
 }
 
@@ -173,20 +179,26 @@ private fun getBorder(model: ButtonUiModel, colorUtility: ColorUtility): Border?
     }
 }
 
-// TODO(b/158513509): Link button should have 0 horizontal padding. Button component currently
-// sets a minWidth.
 @Composable
-private fun Modifier.minWidthModifier(model: ButtonUiModel): Modifier {
-    val modifier = if (model.buttonStyle == ButtonStyle.LINK) {
-        Modifier.widthIn(minWidth = 0.dp)
-    } else if (model.buttonVariant == ButtonVariant.STANDARD) {
-        val minWidth = dimensionResource(R.dimen.componentized_standard_button_min_width)
-        Modifier.defaultMinSizeConstraints(minWidth = minWidth)
+private fun Modifier.minSizeModifier(model: ButtonUiModel): Modifier {
+    val stdButtonMinWidth = dimensionResource(R.dimen.componentized_standard_button_min_width)
+    // A non-zero width is required to override the default constraint.
+    val smallButtonMinWidth = 1.dp
+    val stdButtonMinHeight = dimensionResource(R.dimen.componentized_standard_button_height)
+    val smallButtonMinHeight = dimensionResource(R.dimen.componentized_small_button_height)
+
+    val minWidth: Dp
+    val minHeight: Dp
+    if (model.buttonVariant == ButtonVariant.STANDARD) {
+        minWidth =
+            if (model.buttonStyle != ButtonStyle.LINK) stdButtonMinWidth else smallButtonMinWidth
+        minHeight = stdButtonMinHeight
     } else {
-        Modifier
+        minWidth = smallButtonMinWidth
+        minHeight = smallButtonMinHeight
     }
 
-    return this + modifier
+    return this.then(Modifier.defaultMinSizeConstraints(minWidth, minHeight))
 }
 
 // TODO(b/158674989): Update ripple with stateful color when support available
@@ -200,8 +212,18 @@ private fun Modifier.rippleModifier(model: ButtonUiModel): Modifier {
 
 @Composable
 private fun Modifier.touchModifier(model: ButtonUiModel): Modifier {
-    return this + Modifier.pressIndicationMotionEventGestureFilter { motionEvent ->
-        model.uiAction.onTouch.invoke(model.clickData, motionEvent)
-    }
+    return this.then(
+        Modifier.pointerInteropFilter { motionEvent ->
+            model.uiAction.onTouch.invoke(model.clickData, motionEvent)
+            false
+        }
+    )
 }
 
+@Composable
+private inline fun (() -> Unit).clickListener():() -> Unit {
+    return {
+        Log.d("dbg", "log clickable")
+        this()
+    }
+}
