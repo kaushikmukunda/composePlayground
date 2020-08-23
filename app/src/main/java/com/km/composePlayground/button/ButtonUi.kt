@@ -1,10 +1,7 @@
 package com.km.composePlayground.button
 
 import android.util.Log
-import androidx.compose.foundation.Border
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.Text
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ripple.RippleIndication
@@ -69,7 +66,7 @@ private fun ButtonUi(
         // based on enabled state. The button background color also depends on buttonStyle. By passing
         // the same value, this wrapper maintains control over background color.
         disabledBackgroundColor = backgroundColor,
-        padding = InnerPadding(
+        contentPadding = InnerPadding(
             start = buttonWidthPadding,
             end = buttonWidthPadding
         ),
@@ -168,9 +165,9 @@ private fun getButtonWidthPadding(model: ButtonUiModel): Dp {
 }
 
 @Composable
-private fun getBorder(model: ButtonUiModel, colorUtility: ColorUtility): Border? {
+private fun getBorder(model: ButtonUiModel, colorUtility: ColorUtility): BorderStroke? {
     return if (model.buttonStyle == ButtonStyle.OUTLINE && model.isEnabled()) {
-        Border(
+        BorderStroke(
             dimensionResource(R.dimen.componentized_button_outline),
             Color.Black
         )

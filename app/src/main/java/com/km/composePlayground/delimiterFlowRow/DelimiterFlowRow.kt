@@ -29,6 +29,7 @@ import kotlin.math.max
  *
  */
 @Composable
+@OptIn(InternalLayoutApi::class)
 fun DelimiterFlowLayout(
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     numLines: Int = 1,
@@ -150,7 +151,7 @@ fun DelimiterFlowLayout(
                     val verticalOffset = Alignment.CenterVertically.align(
                       rowHeights[i] - placeable.height)
 
-                    placeable.placeAbsolute(
+                    placeable.place(
                         x = horizontalPositions[j],
                         y = rowVerticalPositions[i] + verticalOffset
                     )
