@@ -1,19 +1,23 @@
 package com.km.composePlayground
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Box
-import androidx.compose.foundation.Text
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Recomposer
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-
 import com.km.composePlayground.actionbutton.ActionButtonClickData
 import com.km.composePlayground.actionbutton.ActionButtonComposer
 import com.km.composePlayground.actionbutton.AdTrackData
@@ -26,8 +30,15 @@ import com.km.composePlayground.buttongroup.ButtonConfig
 import com.km.composePlayground.buttongroup.ButtonGroupComposer
 import com.km.composePlayground.buttongroup.ButtonGroupUiModel
 import com.km.composePlayground.buttongroup.ButtonGroupVariant
+import com.km.composePlayground.modifiers.LayoutSize
+import com.km.composePlayground.modifiers.layoutSize
+import com.km.composePlayground.modifiers.layoutSizeCache
+import com.km.composePlayground.modifiers.rememberState
+import kotlin.math.max
 
 class ConstrainLayoutTestActivity : AppCompatActivity() {
+
+    private val installBarModel = mutableStateOf(InstallBarModel())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +51,11 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
                     modifier = Modifier.padding(top = 16.dp, bottom = 2.dp)
                 )
                 ScreenContentWithConstraintSet()
+                Text(
+                    "InstallBar section:",
+                    modifier = Modifier.padding(top = 16.dp, bottom = 2.dp)
+                )
+                InstallBarSection(installBarModel.value)
             }
         }
     }
@@ -96,6 +112,101 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
             }) {
             TextSection(modifier = Modifier.layoutId(textId))
             ActionButtonSection(modifier = Modifier.layoutId(buttonId))
+        }
+    }
+
+    @Composable
+    private fun InstallBarSection(model: InstallBarModel) {
+        val textId = "textRef"
+        val buttonId = "buttonRef"
+        val layoutSize = layoutSize()
+
+        ConstraintLayout(modifier = Modifier
+            .layoutSizeCache(layoutSize)
+            .heightIn(minHeight = getMinHeight(layoutSize))
+            .fillMaxWidth()
+            .padding(top = 40.dp, bottom = 20.dp)
+            .indication(
+                indication = RippleIndication(color = Color.Red),
+                interactionState = InteractionState().apply {
+                    addInteraction(Interaction.Pressed)
+                }
+            )
+            .clickable(indication = RippleIndication(color=Color.Red)) {  Log.d("dbg", "clicked")}
+            .drawBorder(size = 1.dp, color = Color.Red),
+            constraintSet = ConstraintSet {
+                val textRef = createRefFor(textId)
+                val buttonRef = createRefFor(buttonId)
+
+                constrain(textRef) {
+                    start.linkTo(parent.start)
+                    end.linkTo(buttonRef.start, 40.dp)
+                    width = Dimension.fillToConstraints
+                }
+
+                constrain(buttonRef) {
+                    start.linkTo(textRef.end)
+                    end.linkTo(parent.end)
+                }
+
+            }) {
+            InstallBarTextSection(model, modifier = Modifier.layoutId(textId))
+            InstallBarButtonSection(modifier = Modifier.layoutId(buttonId))
+        }
+    }
+
+    @Composable
+    private fun getMinHeight(layoutSize: LayoutSize): Dp {
+        val minHeight = rememberState { 0 }
+        minHeight.value = max(minHeight.value, layoutSize.height)
+
+        return with(DensityAmbient.current) {
+            Log.d(
+                "dbg",
+                "prev max: ${minHeight.value.toDp()} layoutSize: ${layoutSize.height.toDp()}"
+            )
+            minHeight.value.toDp()
+        }
+    }
+
+    @Composable
+    @OptIn(ExperimentalLayout::class)
+    private fun InstallBarButtonSection(modifier: Modifier) {
+        Box(modifier = modifier) {
+            FlowRow {
+                Button(onClick = {
+                    installBarModel.value = InstallBarModel(false, false)
+                }, modifier = Modifier.padding(end = 16.dp)) { Text("install") }
+                Button(onClick = {
+                    installBarModel.value = InstallBarModel(true, true)
+                }) { Text("cancel") }
+            }
+        }
+    }
+
+    @Composable
+    private fun InstallBarTextSection(model: InstallBarModel, modifier: Modifier) {
+        Column(modifier = modifier) {
+            Text(
+                "A really long string that should overflow button and ellipsize",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (model.showLine2) {
+                Text(
+                    "Another long string that should overflow button and ellipsize",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+            if (model.showLine3) {
+                Text("line3")
+                Text("line4")
+                Text("line5")
+                Text("line6")
+                Text("line7")
+                Text("line8")
+            }
         }
     }
 
@@ -181,3 +292,5 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
         )
     }
 }
+
+class InstallBarModel(val showLine2: Boolean = true, val showLine3: Boolean = true)

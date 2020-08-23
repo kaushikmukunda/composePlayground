@@ -221,7 +221,7 @@ private fun Modifier.touchModifier(model: ButtonUiModel): Modifier {
 }
 
 @Composable
-private inline fun (() -> Unit).clickListener():() -> Unit {
+private inline fun (() -> Unit).clickListener(): () -> Unit {
     return {
         Log.d("dbg", "log clickable")
         this()
