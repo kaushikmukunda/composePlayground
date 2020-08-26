@@ -1,16 +1,53 @@
 package com.km.composePlayground.delimiterFlowRow
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.id
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
+import com.km.composePlayground.modifiers.rememberState
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.max
+
+private const val ANIMATION_DELAY_MS = 2000L
+private const val ANIMATION_DURATION_MS = 250
+private const val ANIMATION_REPEAT = 2
+
+class AnimationState(
+    var showFirst: Boolean = true,
+    var showSecond: Boolean = false,
+    var firstIndex: Int = 0,
+    var secondIndex: Int = 0
+)
+
+private fun Modifier.OnFlowLayoutRendered(onRendered: (Int, Boolean) -> Unit): Modifier =
+    this.then(object : OnFlowLayoutRendered {
+        override fun onFlowLayoutRendered(lastChildIdxPlaced: Int, isLastIndex: Boolean) {
+            onRendered(lastChildIdxPlaced, isLastIndex)
+        }
+    })
+
+private interface OnFlowLayoutRendered : Modifier.Element {
+
+    fun onFlowLayoutRendered(lastChildIdxPlaced: Int, isLastIndex: Boolean)
+
+}
 
 /**
  * Arranges children in left-to-right flow, packing as many child views as possible on
@@ -28,11 +65,87 @@ import kotlin.math.max
  * @property children List of child composables that need to be rendered within the layout.
  *
  */
+
 @Composable
-@OptIn(InternalLayoutApi::class)
+@OptIn(InternalLayoutApi::class, ExperimentalAnimationApi::class)
 fun DelimiterFlowLayout(
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     numLines: Int = 1,
+    modifier: Modifier = Modifier,
+    delimiter: @Composable() (Modifier) -> Unit,
+    children: List<@Composable() () -> Unit>
+) {
+    var animationState by rememberState { AnimationState() }
+
+    fun updateAnimationState(isLastIdx: Boolean, idx: Int) {
+        if (animationState.showFirst && isLastIdx && animationState.firstIndex == 0) {
+            return
+        }
+
+        MainScope().launch {
+            delay(ANIMATION_DELAY_MS)
+
+            val nextIdx = if (isLastIdx) 0 else idx
+
+            animationState = AnimationState(
+                showFirst = !animationState.showFirst,
+                showSecond = !animationState.showSecond,
+                firstIndex = if (animationState.showFirst) animationState.firstIndex else nextIdx,
+                secondIndex = if (animationState.showSecond) animationState.secondIndex else nextIdx,
+                )
+        }
+    }
+
+    Stack {
+
+        val enter = fadeIn(
+            animSpec = tween(
+                durationMillis = ANIMATION_DURATION_MS,
+                delayMillis = ANIMATION_DURATION_MS,
+                easing = LinearEasing
+            )
+        )
+        val exit = fadeOut(animSpec = tween(durationMillis = ANIMATION_DURATION_MS))
+
+        AnimatedVisibility(visible = animationState.showFirst, enter = enter, exit = exit) {
+            DelimiterFlowLayoutInternal(
+                horizontalArrangement = horizontalArrangement,
+                numLines = numLines,
+                startIdx = animationState.firstIndex,
+                modifier = modifier.OnFlowLayoutRendered { idx, isLastIdx ->
+                    if (animationState.showFirst) {
+                        updateAnimationState(isLastIdx, idx)
+                    }
+                },
+                delimiter = delimiter,
+                children = children
+            )
+        }
+
+        AnimatedVisibility(visible = animationState.showSecond, enter = enter, exit = exit) {
+            DelimiterFlowLayoutInternal(
+                horizontalArrangement = horizontalArrangement,
+                numLines = numLines,
+                startIdx = animationState.secondIndex,
+                modifier = modifier.OnFlowLayoutRendered { idx, isLastIdx ->
+                    if (animationState.showSecond) {
+                        updateAnimationState(isLastIdx, idx)
+                    }
+                },
+                delimiter = delimiter,
+                children = children
+            )
+        }
+    }
+}
+
+
+@Composable
+@OptIn(InternalLayoutApi::class)
+private fun DelimiterFlowLayoutInternal(
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+    numLines: Int = 1,
+    startIdx: Int,
     modifier: Modifier = Modifier,
     delimiter: @Composable() (Modifier) -> Unit,
     children: List<@Composable() () -> Unit>
@@ -58,15 +171,10 @@ fun DelimiterFlowLayout(
         var currentWidth = 0
         var currentHeight = 0
 
-        val childConstraints = androidx.compose.ui.unit.Constraints(maxWidth = outerConstraints.maxWidth)
+        val childConstraints = Constraints(maxWidth = outerConstraints.maxWidth)
 
-        var measurableIdx = -1
-
-        fun trimDelimiter() {
-            if (measurables[measurableIdx - 1].id == DELIMITER_TAG) {
-                currentSequence.removeAt(currentSequence.lastIndex)
-            }
-        }
+        var measurableIdx = startIdx - 1
+        var delimiterWidth = 0
 
         fun trimLastLineDelimiter() {
             if (measurables[measurableIdx].id == DELIMITER_TAG) {
@@ -77,7 +185,7 @@ fun DelimiterFlowLayout(
         // Return whether the placeable can be added to the current sequence.
         fun canAddToCurrentSequence(placeable: Placeable): Boolean {
             return currentSequence.isEmpty() ||
-                    (currentWidth + placeable.width) <= outerConstraints.maxWidth
+                    (currentWidth + placeable.width + delimiterWidth) <= outerConstraints.maxWidth
         }
 
         // Store current sequence information and start a new sequence.
@@ -95,7 +203,6 @@ fun DelimiterFlowLayout(
         }
 
         fun startNewSequence() {
-            trimDelimiter()
             commitCurrentSequence()
         }
 
@@ -104,11 +211,15 @@ fun DelimiterFlowLayout(
             commitCurrentSequence()
         }
 
-        for (measurable in measurables) {
+        for (idx in startIdx until measurables.size) {
+            val measurable = measurables[idx]
             measurableIdx++
 
             // Ask the child for its preferred size.
             val placeable = measurable.measure(childConstraints)
+            if (delimiterWidth == 0 && measurable.id == DELIMITER_TAG) {
+                delimiterWidth = placeable.width
+            }
 
             // Start a new sequence if there is not enough space.
             if (!canAddToCurrentSequence(placeable)) startNewSequence()
@@ -132,6 +243,13 @@ fun DelimiterFlowLayout(
         // Add last line
         if (currentSequence.isNotEmpty()) commitLastSequence()
 
+        modifier.foldOut(null) { mod, _ ->
+            if (mod is OnFlowLayoutRendered) {
+                mod.onFlowLayoutRendered(measurableIdx, measurableIdx == measurables.lastIndex)
+            }
+            null
+        }
+
         val layoutWidth = max(totalWidth, outerConstraints.minWidth)
         val layoutHeight = max(totalHeight, outerConstraints.minHeight)
 
@@ -149,7 +267,8 @@ fun DelimiterFlowLayout(
 
                 placeables.fastForEachIndexed { j, placeable ->
                     val verticalOffset = Alignment.CenterVertically.align(
-                      rowHeights[i] - placeable.height)
+                        rowHeights[i] - placeable.height
+                    )
 
                     placeable.place(
                         x = horizontalPositions[j],

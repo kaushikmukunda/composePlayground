@@ -1,9 +1,11 @@
 package com.km.composePlayground
 
 import android.os.Bundle
+import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -60,6 +62,8 @@ fun ScreenContentWithConstraints() {
             children = TEST_PHRASES
         )
 
+        Spacer(modifier = Modifier.padding(top=16.dp))
+
         DelimiterFlowLayout(
             numLines = 4,
             delimiter = { modifier ->
@@ -71,6 +75,8 @@ fun ScreenContentWithConstraints() {
             },
             children = TEST_PHRASES
         )
+
+        Spacer(modifier = Modifier.padding(top=16.dp))
 
         DelimiterFlowLayout(
             numLines = 4,

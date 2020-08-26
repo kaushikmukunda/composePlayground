@@ -40,6 +40,11 @@
         android:theme="@style/AppTheme.NoActionBar">
     </activity>
 
+    <activity
+        android:name=".scratchpad.ScratchPadActivity"
+        android:theme="@style/AppTheme.NoActionBar">
+    </activity>
+
   </application>
 
 </manifest>
