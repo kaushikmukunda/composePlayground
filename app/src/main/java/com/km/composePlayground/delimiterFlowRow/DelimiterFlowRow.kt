@@ -1,17 +1,16 @@
 package com.km.composePlayground.delimiterFlowRow
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
+import androidx.compose.animation.animatedFloat
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.onCommit
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.drawOpacity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.id
 import androidx.compose.ui.layout.layoutId
@@ -30,10 +29,9 @@ private const val ANIMATION_DURATION_MS = 250
 private const val ANIMATION_REPEAT = 2
 
 class AnimationState(
-    var showFirst: Boolean = true,
-    var showSecond: Boolean = false,
-    var firstIndex: Int = 0,
-    var secondIndex: Int = 0
+    var visible: Boolean = true,
+    var currentIndex: Int = 0,
+    var nextIndex: Int = 0
 )
 
 private fun Modifier.OnFlowLayoutRendered(onRendered: (Int, Boolean) -> Unit): Modifier =
@@ -77,66 +75,64 @@ fun DelimiterFlowLayout(
 ) {
     var animationState by rememberState { AnimationState() }
 
-    fun updateAnimationState(isLastIdx: Boolean, idx: Int) {
-        if (animationState.showFirst && isLastIdx && animationState.firstIndex == 0) {
-            return
-        }
+    val opacity = animatedOpacity(
+        animation = tween(
+            durationMillis = ANIMATION_DURATION_MS,
+            easing = LinearEasing
+        ),
+        visible = animationState.visible,
+        onAnimationFinish = {
+            if (animationState.currentIndex == animationState.nextIndex) {
+                return@animatedOpacity
+            }
 
-        MainScope().launch {
-            delay(ANIMATION_DELAY_MS)
+            MainScope().launch {
+                if (animationState.visible) {
+                    delay(ANIMATION_DELAY_MS)
+                }
 
-            val nextIdx = if (isLastIdx) 0 else idx
-
-            animationState = AnimationState(
-                showFirst = !animationState.showFirst,
-                showSecond = !animationState.showSecond,
-                firstIndex = if (animationState.showFirst) animationState.firstIndex else nextIdx,
-                secondIndex = if (animationState.showSecond) animationState.secondIndex else nextIdx,
+                animationState = AnimationState(
+                    visible = !animationState.visible,
+                    currentIndex =
+                    if (animationState.visible) animationState.currentIndex else animationState.nextIndex,
+                    nextIndex = animationState.nextIndex
                 )
+            }
         }
+    )
+
+    DelimiterFlowLayoutInternal(
+        horizontalArrangement = horizontalArrangement,
+        numLines = numLines,
+        startIdx = animationState.currentIndex,
+        modifier = modifier
+            .drawOpacity(opacity.value)
+            .OnFlowLayoutRendered { idx, isLastIdx ->
+                animationState.nextIndex = if (isLastIdx) 0 else idx
+            },
+        delimiter = delimiter,
+        children = children
+    )
+}
+
+@Composable
+private fun animatedOpacity(
+    animation: AnimationSpec<Float>,
+    visible: Boolean,
+    onAnimationFinish: () -> Unit = {}
+): AnimatedFloat {
+    val animatedFloat = animatedFloat(if (!visible) 1f else 0f)
+    onCommit(visible) {
+        animatedFloat.animateTo(
+            if (visible) 1f else 0f,
+            anim = animation,
+            onEnd = { reason, _ ->
+                if (reason == AnimationEndReason.TargetReached) {
+                    onAnimationFinish()
+                }
+            })
     }
-
-    Stack {
-
-        val enter = fadeIn(
-            animSpec = tween(
-                durationMillis = ANIMATION_DURATION_MS,
-                delayMillis = ANIMATION_DURATION_MS,
-                easing = LinearEasing
-            )
-        )
-        val exit = fadeOut(animSpec = tween(durationMillis = ANIMATION_DURATION_MS))
-
-        AnimatedVisibility(visible = animationState.showFirst, enter = enter, exit = exit) {
-            DelimiterFlowLayoutInternal(
-                horizontalArrangement = horizontalArrangement,
-                numLines = numLines,
-                startIdx = animationState.firstIndex,
-                modifier = modifier.OnFlowLayoutRendered { idx, isLastIdx ->
-                    if (animationState.showFirst) {
-                        updateAnimationState(isLastIdx, idx)
-                    }
-                },
-                delimiter = delimiter,
-                children = children
-            )
-        }
-
-        AnimatedVisibility(visible = animationState.showSecond, enter = enter, exit = exit) {
-            DelimiterFlowLayoutInternal(
-                horizontalArrangement = horizontalArrangement,
-                numLines = numLines,
-                startIdx = animationState.secondIndex,
-                modifier = modifier.OnFlowLayoutRendered { idx, isLastIdx ->
-                    if (animationState.showSecond) {
-                        updateAnimationState(isLastIdx, idx)
-                    }
-                },
-                delimiter = delimiter,
-                children = children
-            )
-        }
-    }
+    return animatedFloat
 }
 
 
