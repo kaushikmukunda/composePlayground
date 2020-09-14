@@ -15,6 +15,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.R
@@ -72,8 +73,7 @@ private fun ButtonUi(
         ),
         border = getBorder(model, colorUtility),
         elevation = 0.dp,
-        // TODO(b/162462372): Disabling problematic modifiers for now
-        modifier = modifier.minSizeModifier(model).touchModifier(model) // .rippleModifier(model)
+        modifier = modifier.minSizeModifier(model).touchModifier(model)
     ) {
         Row(
             verticalGravity = Alignment.CenterVertically,
@@ -196,15 +196,6 @@ private fun Modifier.minSizeModifier(model: ButtonUiModel): Modifier {
     }
 
     return this.then(Modifier.defaultMinSizeConstraints(minWidth, minHeight))
-}
-
-// TODO(b/158674989): Update ripple with stateful color when support available
-@Composable
-private fun Modifier.rippleModifier(model: ButtonUiModel): Modifier {
-    val colorRes = CorpusResourceUtils.getStatefulPrimaryColorResId(model)
-    return this + Modifier.clickable(indication = RippleIndication(color = Color.White)) {
-        /* do nothing */
-    }
 }
 
 @Composable

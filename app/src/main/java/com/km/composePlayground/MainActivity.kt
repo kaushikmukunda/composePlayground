@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
+import com.km.composePlayground.customView.CustomViewActivity
 import com.km.composePlayground.scratchpad.ScratchPadActivity
 
 class MainActivity : ComponentActivity() {
@@ -57,6 +58,14 @@ class MainActivity : ComponentActivity() {
                 startActivity(Intent(baseContext, ScratchPadActivity::class.java))
             }) {
                 Text("ScratchPad Activity")
+            }
+
+            Spacer(modifier = Modifier.preferredHeight(8.dp))
+
+            Button(onClick = {
+                startActivity(Intent(baseContext, CustomViewActivity::class.java))
+            }) {
+                Text("Custom View")
             }
         }
 

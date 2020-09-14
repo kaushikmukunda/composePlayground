@@ -62,28 +62,36 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
 
     @Composable
     private fun ScreenContentWithConstraints() {
-        val textId = "textRef"
-        val buttonId = "buttonRef"
+        val leftSectionId = "left"
+        val rightSectionId = "right"
 
         ConstraintLayout(modifier = Modifier.fillMaxWidth(),
             constraintSet = ConstraintSet {
-                val textRef = createRefFor(textId)
-                val buttonRef = createRefFor(buttonId)
+                val leftRef = createRefFor(leftSectionId)
+                val rightRef = createRefFor(rightSectionId)
 
-                constrain(textRef) {
+                constrain(leftRef) {
                     start.linkTo(parent.start)
-                    end.linkTo(buttonRef.start, 40.dp)
+                    top.linkTo(parent.top)
+                }
+
+                constrain(rightRef) {
+                    top.linkTo(parent.top)
+                    linkTo(start = leftRef.end, end = parent.end, startMargin = 16.dp, bias = 0f)
                     width = Dimension.fillToConstraints
                 }
 
-                constrain(buttonRef) {
-                    start.linkTo(textRef.end)
-                    end.linkTo(parent.end)
-                }
-
             }) {
-            TextSection(modifier = Modifier.layoutId(textId))
-            ButtonSection(modifier = Modifier.layoutId(buttonId))
+            Box(modifier = Modifier.layoutId(leftSectionId)) {
+                Text("left", maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+            Box(modifier = Modifier.layoutId(rightSectionId)) {
+                Text(
+                    "A very long line of text that should overflow as this is just too long to fit in a line",
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 
