@@ -14,10 +14,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
+import com.km.composePlayground.codelabs.layout.CodeLabLayoutActivity
 import com.km.composePlayground.customView.CustomViewActivity
 import com.km.composePlayground.scratchpad.ScratchPadActivity
 
 class MainActivity : ComponentActivity() {
+    private val activityMap = mapOf(
+        FlowRowActivity::class.java to "Delimiter Flow",
+        ButtonActivity::class.java to "Buttons",
+        ConstrainLayoutTestActivity::class.java to "Constraint Layout",
+        ScratchPadActivity::class.java to "Scratch pad",
+        CustomViewActivity::class.java to "Custom View",
+        CodeLabLayoutActivity::class.java to "CodeLab Layout",
+    )
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -30,45 +40,15 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun MyScreenContent() {
         Column(modifier = Modifier.padding(8.dp)) {
-            Button(onClick = {
-                startActivity(Intent(baseContext, FlowRowActivity::class.java))
-            }) {
-                Text("Delimiter Flow")
-            }
+            for (activityEntry in activityMap) {
+                Button(onClick = {
+                    startActivity(Intent(baseContext, activityEntry.key))
+                }) {
+                    Text(activityEntry.value)
+                }
 
-            Spacer(modifier = Modifier.preferredHeight(8.dp))
-
-            Button(onClick = {
-                startActivity(Intent(baseContext, ButtonActivity::class.java))
-            }) {
-                Text("Buttons")
-            }
-
-            Spacer(modifier = Modifier.preferredHeight(8.dp))
-
-            Button(onClick = {
-                startActivity(Intent(baseContext, ConstrainLayoutTestActivity::class.java))
-            }) {
-                Text("Constraint Layout")
-            }
-
-            Spacer(modifier = Modifier.preferredHeight(8.dp))
-
-            Button(onClick = {
-                startActivity(Intent(baseContext, ScratchPadActivity::class.java))
-            }) {
-                Text("ScratchPad Activity")
-            }
-
-            Spacer(modifier = Modifier.preferredHeight(8.dp))
-
-            Button(onClick = {
-                startActivity(Intent(baseContext, CustomViewActivity::class.java))
-            }) {
-                Text("Custom View")
+                Spacer(modifier = Modifier.preferredHeight(8.dp))
             }
         }
-
     }
-
 }
