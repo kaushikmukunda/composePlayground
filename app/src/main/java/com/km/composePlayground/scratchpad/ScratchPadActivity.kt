@@ -5,16 +5,21 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.ClickableText
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawOpacity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.annotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.delimiterFlowRow.BulletDelimiter
 import com.km.composePlayground.delimiterFlowRow.DelimiterFlowLayout
@@ -28,12 +33,44 @@ class ScratchPadActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent(Recomposer.current()) {
-      DelimiterFlowAnim()
+      MaterialTheme {
+        TextAnnotation()
+      }
+//      DelimiterFlowAnim()
 //            FullyLoadedTransition()
 //            CrossfadeSample()
 //            AnimatingText()
     }
   }
+}
+
+@Composable
+private fun TextAnnotation() {
+  val annotatedString = annotatedString {
+    append("link: <b>Jetpack</b> Compose")
+    // attach a string annotation that stores a URL to the text "Jetpack Compose".
+    addStringAnnotation(
+      scope = "URL",
+      annotation = "https://developer.android.com/jetpack/compose",
+      start = 0,
+      end = 4
+    )
+    addStyle(
+      SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline),
+      start = 0,
+      end = 4
+    )
+
+    toAnnotatedString()
+  }
+
+  ClickableText(text = annotatedString, onClick = { offset ->
+      if (offset in (0..4)) {
+          Log.d("dbg", "message in offset clicked $offset")
+      } else {
+          Log.d("dbg", "out of bounds clicked")
+      }
+  })
 }
 
 private val TEST_PHRASES = listOf<@Composable() () -> Unit>(
