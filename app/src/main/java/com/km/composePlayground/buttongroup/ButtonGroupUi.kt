@@ -137,12 +137,12 @@ private fun Modifier.buttonWidthConstraints(
 
             // ButtonWidth would be < 0.dp before the composable is positioned (onPositionedModifier).
             if (buttonWidth > 0.dp) {
-                this.widthIn(minWidth = buttonWidth, maxWidth = maxWidth)
+                this.widthIn(min = buttonWidth, max = maxWidth)
             } else {
-                this.widthIn(maxWidth = maxWidth)
+                this.widthIn(max = maxWidth)
             }
         }
-        else -> this.widthIn(maxWidth = maxWidth)
+        else -> this.widthIn(max = maxWidth)
     }
 }
 

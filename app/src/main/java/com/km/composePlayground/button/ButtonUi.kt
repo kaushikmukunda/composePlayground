@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonConstants
 import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -60,14 +61,20 @@ private fun ButtonUi(
     Button(
         onClick = { model.uiAction.onClick(model.clickData) }.clickListener(),
         enabled = model.isEnabled(),
-        contentColor = getButtonTextColor(model, colorUtility),
-        disabledContentColor = disabledContentColor,
-        backgroundColor = backgroundColor,
+        contentColor = ButtonConstants.defaultButtonContentColor(
+            model.isEnabled(),
+            defaultColor = getButtonTextColor(model, colorUtility),
+            disabledColor = disabledContentColor
+        ),
         // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
         // based on enabled state. The button background color also depends on buttonStyle. By passing
         // the same value, this wrapper maintains control over background color.
-        disabledBackgroundColor = backgroundColor,
-        contentPadding = InnerPadding(
+        backgroundColor = ButtonConstants.defaultButtonBackgroundColor(
+            model.isEnabled(),
+            defaultColor = backgroundColor,
+            disabledColor = backgroundColor
+        ),
+        contentPadding = PaddingValues(
             start = buttonWidthPadding,
             end = buttonWidthPadding
         ),
@@ -76,7 +83,7 @@ private fun ButtonUi(
         modifier = modifier.minSizeModifier(model).touchModifier(model)
     ) {
         Row(
-            verticalGravity = Alignment.CenterVertically,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             positionalIconComposable(model.iconModel, IconPlacement.START)

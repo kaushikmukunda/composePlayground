@@ -131,7 +131,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
 
         ConstraintLayout(modifier = Modifier
             .layoutSizeCache(layoutSize)
-            .heightIn(minHeight = getMinHeight(layoutSize))
+            .heightIn(min = getMinHeight(layoutSize))
             .fillMaxWidth()
             .padding(top = 40.dp, bottom = 20.dp)
             .indication(
