@@ -46,6 +46,10 @@
             android:name=".codelabs.layout.CodeLabLayoutActivity"
             android:theme="@style/AppTheme.NoActionBar" />
 
+        <activity
+            android:name=".scroller.ScrollerActivity"
+            android:theme="@style/AppTheme.NoActionBar" />
+
     </application>
 
 </manifest>

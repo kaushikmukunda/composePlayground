@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.km.composePlayground.codelabs.layout.CodeLabLayoutActivity
 import com.km.composePlayground.customView.CustomViewActivity
 import com.km.composePlayground.scratchpad.ScratchPadActivity
+import com.km.composePlayground.scroller.ScrollerActivity
 
 class MainActivity : ComponentActivity() {
     private val activityMap = mapOf(
@@ -25,6 +26,7 @@ class MainActivity : ComponentActivity() {
         ConstrainLayoutTestActivity::class.java to "Constraint Layout",
         ScratchPadActivity::class.java to "Scratch pad",
         CustomViewActivity::class.java to "Custom View",
+        ScrollerActivity::class.java to "Scroller",
         CodeLabLayoutActivity::class.java to "CodeLab Layout",
     )
 
