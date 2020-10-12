@@ -5,10 +5,10 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonConstants
-import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.onCommit
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,7 +16,6 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.R
@@ -58,37 +57,55 @@ private fun ButtonUi(
 
     val backgroundColor = getBackgroundColor(model, colorUtility)
     val buttonWidthPadding = getButtonWidthPadding(model)
-    Button(
-        onClick = { model.uiAction.onClick(model.clickData) }.clickListener(),
-        enabled = model.isEnabled(),
-        contentColor = ButtonConstants.defaultButtonContentColor(
-            model.isEnabled(),
-            defaultColor = getButtonTextColor(model, colorUtility),
-            disabledColor = disabledContentColor
-        ),
-        // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
-        // based on enabled state. The button background color also depends on buttonStyle. By passing
-        // the same value, this wrapper maintains control over background color.
-        backgroundColor = ButtonConstants.defaultButtonBackgroundColor(
-            model.isEnabled(),
-            defaultColor = backgroundColor,
-            disabledColor = backgroundColor
-        ),
-        contentPadding = PaddingValues(
-            start = buttonWidthPadding,
-            end = buttonWidthPadding
-        ),
-        border = getBorder(model, colorUtility),
-        elevation = 0.dp,
-        modifier = modifier.minSizeModifier(model).touchModifier(model)
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center
+
+    val buttonClickable = { model.uiAction.onClick(model.clickData) }.clickListener()
+    val interactionState = remember { InteractionState() }
+    Box(gravity = ContentGravity.Center,
+        modifier = Modifier
+            .preferredHeightIn(min = 48.dp)
+            .touchModifier(model)
+            .clickable(
+                indication = null,
+                interactionState = interactionState
+            ) {
+                Log.d("dbg", "box click")
+                buttonClickable() }) {
+        Button(
+            onClick = {
+                buttonClickable()
+                Log.d("dbg", "button click")
+            },
+            interactionState = interactionState,
+            enabled = model.isEnabled(),
+            contentColor = ButtonConstants.defaultButtonContentColor(
+                model.isEnabled(),
+                defaultColor = getButtonTextColor(model, colorUtility),
+                disabledColor = disabledContentColor
+            ),
+            // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
+            // based on enabled state. The button background color also depends on buttonStyle. By passing
+            // the same value, this wrapper maintains control over background color.
+            backgroundColor = ButtonConstants.defaultButtonBackgroundColor(
+                model.isEnabled(),
+                defaultColor = backgroundColor,
+                disabledColor = backgroundColor
+            ),
+            contentPadding = PaddingValues(
+                start = buttonWidthPadding,
+                end = buttonWidthPadding
+            ),
+            border = getBorder(model, colorUtility),
+            elevation = 0.dp,
+            modifier = modifier.minSizeModifier(model).touchModifier(model)
         ) {
-            positionalIconComposable(model.iconModel, IconPlacement.START)
-            Text(text = model.buttonText)
-            positionalIconComposable(model.iconModel, IconPlacement.END)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                positionalIconComposable(model.iconModel, IconPlacement.START)
+                Text(text = model.buttonText)
+                positionalIconComposable(model.iconModel, IconPlacement.END)
+            }
         }
     }
 }
@@ -209,6 +226,7 @@ private fun Modifier.minSizeModifier(model: ButtonUiModel): Modifier {
 private fun Modifier.touchModifier(model: ButtonUiModel): Modifier {
     return this.then(
         Modifier.pointerInteropFilter { motionEvent ->
+            Log.d("dbg", "touch invoked")
             model.uiAction.onTouch.invoke(model.clickData, motionEvent)
             false
         }

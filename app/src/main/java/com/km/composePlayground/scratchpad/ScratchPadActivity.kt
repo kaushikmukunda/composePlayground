@@ -1,14 +1,15 @@
 package com.km.composePlayground.scratchpad
 
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.ClickableText
-import androidx.compose.foundation.Text
-import androidx.compose.foundation.border
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ColumnScope.align
+import androidx.compose.foundation.layout.RowScope.align
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,11 +37,11 @@ class ScratchPadActivity : AppCompatActivity() {
         setContent(Recomposer.current()) {
             MaterialTheme {
                 TextAnnotation()
-            }
 //      DelimiterFlowAnim()
 //            FullyLoadedTransition()
 //            CrossfadeSample()
 //            AnimatingText()
+            }
         }
     }
 }
