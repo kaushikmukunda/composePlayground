@@ -1,7 +1,6 @@
 package com.km.composePlayground
 
 import android.os.Bundle
-import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.layout.Column
@@ -54,11 +53,7 @@ fun ScreenContentWithConstraints() {
         DelimiterFlowLayout(
             numLines = 1,
 //            modifier = Modifier.rtl,
-            delimiter = {
-                SpaceDelimiter(
-                    16.dp
-                )
-            },
+            delimiter = { SpaceDelimiter(16.dp, modifier = Modifier) },
             children = TEST_PHRASES
         )
 

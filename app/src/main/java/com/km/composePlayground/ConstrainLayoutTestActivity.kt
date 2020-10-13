@@ -35,6 +35,7 @@ import com.km.composePlayground.modifiers.layoutSize
 import com.km.composePlayground.modifiers.layoutSizeCache
 import com.km.composePlayground.modifiers.rememberState
 import kotlin.math.max
+import androidx.compose.foundation.layout.Box
 
 class ConstrainLayoutTestActivity : AppCompatActivity() {
 
