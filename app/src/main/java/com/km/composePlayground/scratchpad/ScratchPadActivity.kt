@@ -32,7 +32,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -55,8 +54,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.km.composePlayground.delimiterFlowRow.BulletDelimiter
-import com.km.composePlayground.delimiterFlowRow.DelimiterFlowLayout
+import com.km.composePlayground.components.delimiterFlowRow.BulletDelimiter
+import com.km.composePlayground.components.delimiterFlowRow.DelimiterFlowLayout
 import com.km.composePlayground.linkText.LinkTextUi
 import com.km.composePlayground.linkText.LinkTextUiAction
 import com.km.composePlayground.linkText.LinkTextUiModel

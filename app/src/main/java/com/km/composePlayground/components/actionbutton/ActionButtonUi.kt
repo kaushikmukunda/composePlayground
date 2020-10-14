@@ -1,4 +1,4 @@
-package com.km.composePlayground.actionbutton
+package com.km.composePlayground.components.actionbutton
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
@@ -6,10 +6,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.onPositioned
 import androidx.compose.ui.unit.IntSize
-import com.km.composePlayground.button.ButtonComposer
-import com.km.composePlayground.button.ButtonUiAction
-import com.km.composePlayground.button.ButtonUiModel
-import com.km.composePlayground.button.ColorUtility
+import com.km.composePlayground.components.button.ButtonComposer
+import com.km.composePlayground.components.button.ButtonUiAction
+import com.km.composePlayground.components.button.ButtonUiModel
+import com.km.composePlayground.components.button.ColorUtility
 
 /** Composable button container for injecting dependencies. */
 @Stable

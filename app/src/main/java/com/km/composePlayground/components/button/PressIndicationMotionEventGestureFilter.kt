@@ -1,4 +1,4 @@
-package com.km.composePlayground.button
+package com.km.composePlayground.components.button
 
 import android.view.MotionEvent
 import androidx.compose.runtime.onDispose

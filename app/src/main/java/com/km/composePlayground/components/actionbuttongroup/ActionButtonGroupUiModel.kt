@@ -1,0 +1,5 @@
+package com.km.composePlayground.components.actionbuttongroup
+
+import com.km.composePlayground.components.buttongroup.ButtonGroupUiModel
+
+class ActionButtonGroupUiModel(val buttonGroupUiModel: ButtonGroupUiModel)

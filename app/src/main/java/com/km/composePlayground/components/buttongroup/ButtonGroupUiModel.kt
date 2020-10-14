@@ -1,10 +1,10 @@
-package com.km.composePlayground.buttongroup
+package com.km.composePlayground.components.buttongroup
 
 import androidx.compose.runtime.Immutable
-import com.km.composePlayground.button.ButtonState
-import com.km.composePlayground.button.ButtonUiAction
-import com.km.composePlayground.button.ButtonUiModel
-import com.km.composePlayground.button.IconModel
+import com.km.composePlayground.components.button.ButtonState
+import com.km.composePlayground.components.button.ButtonUiAction
+import com.km.composePlayground.components.button.ButtonUiModel
+import com.km.composePlayground.components.button.IconModel
 
 /** Allowed variants of button group. */
 enum class ButtonGroupVariant {

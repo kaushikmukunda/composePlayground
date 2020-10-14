@@ -1,4 +1,4 @@
-package com.km.composePlayground.delimiterFlowRow
+package com.km.composePlayground.components.delimiterFlowRow
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animatedFloat

@@ -12,9 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.km.composePlayground.delimiterFlowRow.BulletDelimiter
-import com.km.composePlayground.delimiterFlowRow.DelimiterFlowLayout
-import com.km.composePlayground.delimiterFlowRow.SpaceDelimiter
+import com.km.composePlayground.components.delimiterFlowRow.BulletDelimiter
+import com.km.composePlayground.components.delimiterFlowRow.DelimiterFlowLayout
+import com.km.composePlayground.components.delimiterFlowRow.SpaceDelimiter
 
 class FlowRowActivity : ComponentActivity() {
 

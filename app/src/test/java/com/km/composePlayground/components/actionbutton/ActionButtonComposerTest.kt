@@ -1,12 +1,12 @@
-package com.km.composePlayground.actionbutton
+package com.km.composePlayground.components.actionbutton
 
 import android.util.Log
 import androidx.compose.Composable
 import androidx.ui.core.Modifier
 import androidx.ui.core.OnPositionedModifier
-import com.km.composePlayground.button.ButtonUiAction
-import com.km.composePlayground.button.ButtonUiModel
-import com.km.composePlayground.button.ColorUtility
+import com.km.composePlayground.components.button.ButtonUiAction
+import com.km.composePlayground.components.button.ButtonUiModel
+import com.km.composePlayground.components.button.ColorUtility
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

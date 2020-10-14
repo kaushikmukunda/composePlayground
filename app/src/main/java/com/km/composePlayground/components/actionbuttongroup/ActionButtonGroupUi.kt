@@ -1,4 +1,4 @@
-package com.km.composePlayground.actionbuttongroup
+package com.km.composePlayground.components.actionbuttongroup
 
 import android.util.Log
 import androidx.compose.runtime.Composable
@@ -7,13 +7,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInParent
 import androidx.compose.ui.onPositioned
 import androidx.compose.ui.unit.IntSize
-import com.km.composePlayground.actionbutton.ActionButtonClickData
-import com.km.composePlayground.actionbutton.ActionButtonComposer
-import com.km.composePlayground.actionbutton.AdTrackData
-import com.km.composePlayground.button.ButtonUiAction
-import com.km.composePlayground.buttongroup.ButtonConfig
-import com.km.composePlayground.buttongroup.ButtonGroupComposer
-import com.km.composePlayground.buttongroup.ButtonGroupUiModel
+import com.km.composePlayground.components.actionbutton.ActionButtonClickData
+import com.km.composePlayground.components.actionbutton.ActionButtonComposer
+import com.km.composePlayground.components.actionbutton.AdTrackData
+import com.km.composePlayground.components.button.ButtonUiAction
+import com.km.composePlayground.components.buttongroup.ButtonConfig
+import com.km.composePlayground.components.buttongroup.ButtonGroupComposer
+import com.km.composePlayground.components.buttongroup.ButtonGroupUiModel
 
 
 /** Composable button group container for injecting dependencies. */

@@ -1,6 +1,6 @@
-package com.km.composePlayground.actionbutton
+package com.km.composePlayground.components.actionbutton
 
-import com.km.composePlayground.button.ButtonUiModel
+import com.km.composePlayground.components.button.ButtonUiModel
 
 class AdTrackData(
     val viewHeight: Int,

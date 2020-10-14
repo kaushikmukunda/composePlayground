@@ -1,4 +1,4 @@
-package com.km.composePlayground.buttongroup
+package com.km.composePlayground.components.buttongroup
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntSize
