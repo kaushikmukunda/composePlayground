@@ -3,45 +3,16 @@ package com.km.composePlayground.scratchpad
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animatedFloat
-import androidx.compose.animation.core.AnimatedFloat
-import androidx.compose.animation.core.AnimationEndReason
-import androidx.compose.animation.core.AnimationSpec
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.ClickableText
 import androidx.compose.foundation.Text
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ConstraintLayout
-import androidx.compose.foundation.layout.ConstraintSet
-import androidx.compose.foundation.layout.Dimension
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Stack
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Recomposer
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.onCommit
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawOpacity
@@ -53,14 +24,13 @@ import androidx.compose.ui.text.annotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
+import com.km.composePlayground.components.button.ButtonComposer
+import com.km.composePlayground.components.button.ColorUtility
+import com.km.composePlayground.components.buttongroup.ButtonGroupComposer
 import com.km.composePlayground.components.delimiterFlowRow.BulletDelimiter
 import com.km.composePlayground.components.delimiterFlowRow.DelimiterFlowLayout
-import com.km.composePlayground.linkText.LinkTextUi
-import com.km.composePlayground.linkText.LinkTextUiAction
-import com.km.composePlayground.linkText.LinkTextUiModel
-import com.km.composePlayground.linkText.Markdown
-import com.km.composePlayground.linkText.Range
+import com.km.composePlayground.components.dialog.*
+import com.km.composePlayground.linkText.*
 import com.km.composePlayground.modifiers.rememberState
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
@@ -112,31 +82,33 @@ fun FullScreenDialogSample() {
   val contentId = "content"
   val footerId = "footer"
   if (openDialog.value) {
-    ConstraintLayout(constraintSet = ConstraintSet {
-      val headerRef = createRefFor(headerId)
-      val contentRef = createRefFor(contentId)
-      val footerRef = createRefFor(footerId)
+    ConstraintLayout(
+      constraintSet = ConstraintSet {
+        val headerRef = createRefFor(headerId)
+        val contentRef = createRefFor(contentId)
+        val footerRef = createRefFor(footerId)
 
-      constrain(headerRef) {
-        top.linkTo(parent.top)
-        bottom.linkTo(contentRef.top, 8.dp)
-        linkTo(start = parent.start, end = parent.end, bias = 0f)
-      }
+        constrain(headerRef) {
+          top.linkTo(parent.top)
+          bottom.linkTo(contentRef.top, 8.dp)
+          linkTo(start = parent.start, end = parent.end, bias = 0f)
+        }
 
-      constrain(contentRef) {
-        top.linkTo(headerRef.bottom)
-        bottom.linkTo(footerRef.top)
-        linkTo(start = parent.start, end = parent.end, bias = 0f)
-        height = Dimension.fillToConstraints
-      }
+        constrain(contentRef) {
+          top.linkTo(headerRef.bottom)
+          bottom.linkTo(footerRef.top)
+          linkTo(start = parent.start, end = parent.end, bias = 0f)
+          height = Dimension.fillToConstraints
+        }
 
-      constrain(footerRef) {
-        start.linkTo(parent.start)
-        top.linkTo(contentRef.bottom)
-        bottom.linkTo(parent.bottom)
-      }
-    },
-      modifier = Modifier.fillMaxSize().padding(vertical = 8.dp)) {
+        constrain(footerRef) {
+          start.linkTo(parent.start)
+          top.linkTo(contentRef.bottom)
+          bottom.linkTo(parent.bottom)
+        }
+      },
+      modifier = Modifier.fillMaxSize().padding(vertical = 8.dp)
+    ) {
       Text("Header", modifier = Modifier.layoutId(headerId))
       Text("Content", modifier = Modifier.layoutId(contentId))
 
@@ -149,19 +121,38 @@ fun FullScreenDialogSample() {
 
 @Composable
 private fun DialogSample() {
-  val openDialog = remember { mutableStateOf(true) }
-  if (!openDialog.value) return
+  val dialogComposer = DialogComposer(ButtonGroupComposer(ButtonComposer(ColorUtility())))
+  dialogComposer.compose(
+    model = DialogUiModel(
+      content = ContentModel(
+        content =
+        "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
+          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
+          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
+          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
+          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
+          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
+          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?"
+      ),
+      footer = FooterModel(
+        positiveButtonConfig = DialogButtonConfig("click me and what if this is a super long long long long long dialog text that goes on"),
+        negativeButtonConfig = DialogButtonConfig("click me and what if this is a super long long long long long dialog text that goes on")
+      ),
+      uiAction = object : DialogUiAction {
+        override fun onPositiveButtonClicked(dialogData: Any?) {
+          Log.d("dbg", "+ve button clicked")
+        }
 
-  Dialog(onDismissRequest = {}) {
-    Box(Modifier.background(Color.White).height(200.dp).fillMaxWidth()) {
-      Column {
-        Text("Hello World")
-        Button(onClick = { openDialog.value = false }) {
-          Text("click me")
+        override fun onNegativeButtonClicked(dialogData: Any?) {
+          Log.d("dbg", "-ve button clicked")
+        }
+
+        override fun onDismiss(dialogData: Any?) {
+          Log.d("dbg", "dialog dismissed")
         }
       }
-    }
-  }
+    )
+  )
 }
 
 @Composable

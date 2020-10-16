@@ -1,26 +1,30 @@
 package com.km.composePlayground.components.buttongroup
 
-import androidx.compose.foundation.Box
-import androidx.compose.foundation.ContentGravity
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayout
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.preferredWidthIn
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.onPositioned
 import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.platform.LayoutDirectionAmbient
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.unit.*
 import com.km.composePlayground.components.button.*
+import com.km.composePlayground.modifiers.rememberState
 import kotlin.math.floor
 
 /** Composable button group container for injecting dependencies. */
 @Stable
-open class ButtonGroupComposer(private val buttonComposer: ButtonComposer) {
+open class ButtonGroupComposer constructor(private val buttonComposer: ButtonComposer) {
 
     @Composable
     fun compose(model: ButtonGroupUiModel, modifier: Modifier = Modifier) {
@@ -39,7 +43,7 @@ private fun ButtonGroupUi(
         return
     }
 
-    var layoutSize by state(structuralEqualityPolicy()) { IntSize(0, 0) }
+    var layoutSize by rememberState { IntSize.Zero }
     val layoutModifier = Modifier.onPositioned {
         layoutSize = it.size
     }
@@ -47,8 +51,11 @@ private fun ButtonGroupUi(
     // Wrap the FlowRow within a Box to accomodate the layout modifier as FlowRow does not accept one.
     val isLtr = LayoutDirectionAmbient.current == LayoutDirection.Ltr
     Box(
-        gravity = getLayoutDirectionAwareContentGravity(model, isLtr),
-        modifier = modifier.containerWidthModifier(model) + layoutModifier
+        alignment = getLayoutDirectionAwareAlignment(model, isLtr),
+        modifier =
+        modifier
+            .containerSizeModifier(model)
+            .then(layoutModifier)
     ) {
         val buttonSpacing = getButtonGroupSpacing(model)
 
@@ -79,41 +86,44 @@ private fun ButtonGroupUi(
  * fillMaxWidth modifier for these cases.
  */
 @Composable
-private fun Modifier.containerWidthModifier(model: ButtonGroupUiModel): Modifier {
-    return when (model.buttonGroupVariant) {
+private fun Modifier.containerSizeModifier(model: ButtonGroupUiModel): Modifier {
+    val widthModifier = when (model.buttonGroupVariant) {
         ButtonGroupVariant.OUTLINE_FILL_50_50,
         ButtonGroupVariant.FILL_OUTLINE_50_50,
-        ButtonGroupVariant.OUTLINE_OUTLINE_50_50 -> this.fillMaxWidth()
+        ButtonGroupVariant.OUTLINE_OUTLINE_50_50 -> fillMaxWidth()
         else -> this
     }
+    val heightModifier = heightIn(min = 48.dp)
+
+    return this.then(widthModifier).then(heightModifier)
 }
 
-private fun getLayoutDirectionAwareContentGravity(
+private fun getLayoutDirectionAwareAlignment(
     model: ButtonGroupUiModel,
     isLtr: Boolean
-): ContentGravity {
-    val ltrContentGravity = getContentGravity(model)
+): Alignment {
+    val ltrAlignment = getAlignment(model)
     return if (isLtr) {
-        ltrContentGravity
-    } else if (ltrContentGravity == ContentGravity.CenterStart) {
-        ContentGravity.CenterEnd
+        ltrAlignment
+    } else if (ltrAlignment == Alignment.CenterStart) {
+        Alignment.CenterEnd
     } else {
-        ContentGravity.CenterStart
+        Alignment.CenterStart
     }
 }
 
-private fun getContentGravity(model: ButtonGroupUiModel): ContentGravity {
+private fun getAlignment(model: ButtonGroupUiModel): Alignment {
     return when (model.buttonGroupVariant) {
         ButtonGroupVariant.FILL_INVISIBLE,
-        ButtonGroupVariant.OUTLINE_INVISIBLE -> ContentGravity.CenterStart
+        ButtonGroupVariant.OUTLINE_INVISIBLE -> Alignment.CenterStart
 
-        ButtonGroupVariant.INVISIBLE_FILL -> ContentGravity.CenterEnd
+        ButtonGroupVariant.INVISIBLE_FILL -> Alignment.CenterEnd
 
         else ->
             if (model.buttonGroupSnapping == ButtonGroupSnapping.LEFT) {
-                ContentGravity.CenterStart
+                Alignment.CenterStart
             } else {
-                ContentGravity.CenterEnd
+                Alignment.CenterEnd
             }
     }
 }
@@ -133,16 +143,16 @@ private fun Modifier.buttonWidthConstraints(
             val totalWidthDp = with(DensityAmbient.current) { layoutSize.width.toDp() }
             // Use floor as any overflow will cause the FlowRow to layout the second button on the
             // next row.
-            val buttonWidth = ((totalWidthDp - buttonSpacing) / 2).floor()
+            val buttonWidth = ((totalWidthDp - buttonSpacing) / model.numButtons).floor()
 
             // ButtonWidth would be < 0.dp before the composable is positioned (onPositionedModifier).
             if (buttonWidth > 0.dp) {
-                this.widthIn(min = buttonWidth, max = maxWidth)
+                this.preferredWidthIn(min = buttonWidth, max = maxWidth)
             } else {
-                this.widthIn(max = maxWidth)
+                this.preferredWidthIn(max = maxWidth)
             }
         }
-        else -> this.widthIn(max = maxWidth)
+        else -> this.preferredWidthIn(max = maxWidth)
     }
 }
 
@@ -228,7 +238,7 @@ private fun generatePrimaryButtonModelForVariant(
         }
     }
 
-    return buttonUiModelFrom(buttonConfig, buttonStyle, padding)
+    return buttonUiModelFrom(buttonConfig, buttonStyle, padding, groupModel.buttonVariant)
 }
 
 private fun generateSecondaryButtonModelForVariant(
@@ -269,24 +279,28 @@ private fun generateSecondaryButtonModelForVariant(
         }
     }
 
-    return buttonUiModelFrom(buttonConfig, buttonStyle, padding)
+    return buttonUiModelFrom(buttonConfig, buttonStyle, padding, groupModel.buttonVariant)
 }
 
 private fun buttonUiModelFrom(
     buttonConfig: ButtonConfig,
     buttonStyle: ButtonStyle,
-    padding: ButtonPadding
+    padding: ButtonPadding,
+    buttonVariant: ButtonVariant
 ): ButtonUiModel {
     return ButtonUiModel(
         buttonText = buttonConfig.buttonText,
         uiAction = buttonConfig.uiAction,
         clickData = buttonConfig.clickData,
+        buttonVariant = buttonVariant,
         buttonStyle = buttonStyle,
         buttonPadding = padding,
         buttonState = buttonConfig.buttonState,
         iconModel = buttonConfig.iconModel,
-//    backend = buttonConfig.backend,
-//    theme = buttonConfig.theme
+//        vxStyle = buttonConfig.vxStyle,
+//        theme = buttonConfig.theme,
+//        accessibilityLabel = buttonConfig.accessibilityLabel,
+//        loggingData = buttonConfig.loggingData
     )
 }
 

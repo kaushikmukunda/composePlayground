@@ -87,7 +87,8 @@ class ButtonUiModel(
     val buttonStyle: ButtonStyle = ButtonStyle.FILLED,
     val buttonPadding: ButtonPadding = ButtonPadding.DEFAULT,
     val buttonState: ButtonState = ButtonState.ENABLED,
-    val iconModel: IconModel? = null
+    val iconModel: IconModel? = null,
+    val accessibilityLabel: String? = null
 ) {
     fun isEnabled(): Boolean = buttonState == ButtonState.ENABLED
 }

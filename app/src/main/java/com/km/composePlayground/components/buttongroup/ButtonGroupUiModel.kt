@@ -1,10 +1,7 @@
 package com.km.composePlayground.components.buttongroup
 
 import androidx.compose.runtime.Immutable
-import com.km.composePlayground.components.button.ButtonState
-import com.km.composePlayground.components.button.ButtonUiAction
-import com.km.composePlayground.components.button.ButtonUiModel
-import com.km.composePlayground.components.button.IconModel
+import com.km.composePlayground.components.button.*
 
 /** Allowed variants of button group. */
 enum class ButtonGroupVariant {
@@ -72,9 +69,13 @@ enum class ButtonGroupSnapping {
  * @property clickData Opaque object that is not used by [ButtonUi]. Only used by [ButtonUiAction]
  *     to send it back to listener during click event.
  * @property buttonState State of the button.
+ * @property buttonPadding Optional padding for the button.
  * @property iconModel Optional icon to be shown next to the button label.
- * @property backend Used to determine the color of the button.
+ * @property vxStyle [VxStyle] that determines the color.
  * @property theme Optional theme to be used for button if it is placed on a light/dark background.
+ * @property accessibilityLabel Text to be read by Talkback when focused on button. If null,
+ *   will default to buttonText.
+ * @property loggingData Optional [VeMetadata] to be used for impression and click logging.
  */
 @Immutable
 class ButtonConfig(
@@ -82,9 +83,11 @@ class ButtonConfig(
   val uiAction: ButtonUiAction,
   val clickData: Any?,
   val buttonState: ButtonState = ButtonState.ENABLED,
-  val iconModel: IconModel? = null
-//  val backend: PhoneskyBackend.Backend = PhoneskyBackend.Backend.MULTI_BACKEND,
-//  val theme: Int = DayNightResUtils.Theme.DAY_NIGHT
+  val buttonPadding: ButtonPadding? = null,
+  val iconModel: IconModel? = null,
+//  val vxStyle: VxStyle = VxStyle.MULTI,
+//  val accessibilityLabel: String? = null,
+//  val loggingData: VeMetadata = VeMetadata(PlayStore.PlayStoreUiElement.Type.OTHER)
 )
 
 /**
@@ -92,6 +95,7 @@ class ButtonConfig(
  *
  * @property buttonGroupVariant The variant styling to be applied to the buttons.
  * @property buttonGroupSnapping Aligns the button group to the left edge or right edge of the view.
+ * @property buttonVariant The button size for the individual buttons.
  * @property isSingleButtonSecondary Indicates that there is only one button and should be styled as
  *     secondary button.
  * @property firstButtonConfig The button metadata for the first button.
@@ -101,6 +105,7 @@ class ButtonConfig(
 class ButtonGroupUiModel(
   val buttonGroupVariant: ButtonGroupVariant = ButtonGroupVariant.OUTLINE_FILL,
   val buttonGroupSnapping: ButtonGroupSnapping = ButtonGroupSnapping.LEFT,
+  val buttonVariant: ButtonVariant = ButtonVariant.STANDARD,
   val isSingleButtonSecondary: Boolean = false,
   val firstButtonConfig: ButtonConfig,
   val secondButtonConfig: ButtonConfig? = null
