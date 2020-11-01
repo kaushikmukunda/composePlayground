@@ -3,7 +3,6 @@ package com.km.composePlayground.components.dialog
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -12,15 +11,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.drawBehind
-import androidx.compose.ui.drawWithContent
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.SpanStyleRange
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import com.km.composePlayground.components.button.ButtonUiAction
 import com.km.composePlayground.components.buttongroup.*
+import com.km.composePlayground.linkText.MarkdownText
+import com.km.composePlayground.linkText.getStyleSpans
 
 private const val HEADER_ID = "header_id"
 private const val CONTENT_ID = "content_id"
@@ -29,16 +33,16 @@ private const val FOOTER_ID = "footer_id"
 @Stable
 class DialogComposer(private val buttonGroupComposer: ButtonGroupComposer) {
 
-    @Composable
-    fun compose(model: DialogUiModel) {
-        DialogUi(buttonGroupComposer, model)
-    }
+  @Composable
+  fun compose(model: DialogUiModel) {
+    DialogUi(buttonGroupComposer, model)
+  }
 }
 
 @Composable
 private fun DialogUi(buttonGroupComposer: ButtonGroupComposer, model: DialogUiModel) {
-    val openDialog = remember { mutableStateOf(true) }
-    if (!openDialog.value) return
+  val openDialog = remember { mutableStateOf(true) }
+  if (!openDialog.value) return
 
   fun dismiss() {
     openDialog.value = false
@@ -74,7 +78,7 @@ private fun DialogUi(buttonGroupComposer: ButtonGroupComposer, model: DialogUiMo
         }
       },
       modifier = Modifier
-        .background(color=MaterialTheme.colors.background, shape = RoundedCornerShape(corner= CornerSize(8.dp)))
+        .background(color = MaterialTheme.colors.background, shape = RoundedCornerShape(corner = CornerSize(8.dp)))
         .fillMaxWidth()
         .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 16.dp)
     ) {
@@ -89,8 +93,10 @@ private fun DialogUi(buttonGroupComposer: ButtonGroupComposer, model: DialogUiMo
         }
       )
 
+      val contentAction = { url: String -> model.uiAction.onLinkClicked(url, model.dialogData) }
+
       HeaderUi(model.header, modifier = Modifier.layoutId(HEADER_ID))
-      ContentUi(model.content, modifier = Modifier.layoutId(CONTENT_ID))
+      ContentUi(model.content, contentAction, modifier = Modifier.layoutId(CONTENT_ID))
       FooterUi(
         buttonGroupComposer,
         model.footer,
@@ -114,11 +120,41 @@ private fun HeaderUi(model: HeaderModel?, modifier: Modifier) {
 }
 
 @Composable
-private fun ContentUi(model: ContentModel, modifier: Modifier) {
-  val scrollstate  = rememberScrollState()
-  Text(
-    text = model.content,
-    modifier = modifier.padding(vertical = 16.dp).heightIn(max=448.dp).verticalScroll(scrollstate)
+private fun ContentUi(model: ContentModel, contentAction: (String) -> Unit, modifier: Modifier) {
+  val scrollstate = rememberScrollState()
+  val urlSpans = model.content.markdown.urls
+  ClickableText(
+    text = buildAnnotatedString(model.content),
+    modifier = modifier.padding(vertical = 16.dp).heightIn(max = 448.dp).verticalScroll(scrollstate),
+    onClick = { offset ->
+      for (urlSpan in urlSpans) {
+        if (offset >= urlSpan.range.start && offset < urlSpan.range.end) {
+          contentAction.invoke(urlSpan.url)
+          break
+        }
+      }
+    }
+  )
+}
+
+private fun buildAnnotatedString(markdownText: MarkdownText): AnnotatedString {
+  val spanStyles = mutableListOf<SpanStyleRange>().apply {
+    addAll(markdownText.markdown.getStyleSpans())
+
+    markdownText.markdown.urls.fastForEach { urlSpan ->
+      add(
+        SpanStyleRange(
+          SpanStyle(color = Color.Gray, textDecoration = TextDecoration.Underline),
+          start = urlSpan.range.start,
+          end = urlSpan.range.end
+        )
+      )
+    }
+  }
+
+  return AnnotatedString(
+    text = markdownText.text,
+    spanStyles = spanStyles
   )
 }
 

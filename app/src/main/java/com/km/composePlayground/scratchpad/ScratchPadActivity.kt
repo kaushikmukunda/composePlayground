@@ -46,6 +46,7 @@ class ScratchPadActivity : AppCompatActivity() {
 //                TextAnnotation()
 //          FullScreenDialogSample()
           DialogSample()
+//          LinkText()
 //          AlertDialogSample()
 //      DelimiterFlowAnim()
 //            FullyLoadedTransition()
@@ -125,20 +126,25 @@ private fun DialogSample() {
   dialogComposer.compose(
     model = DialogUiModel(
       content = ContentModel(
-        content =
-        "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
-          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
-          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
-          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
-          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
-          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?" +
-          "This is the dialog body\n\n Some longish text\n\n How about them Cowboys?"
-      ),
+        content = MarkdownText(
+          "This is the dialog body<br>Some longish text<br>How about them Cowboys?<p>" +
+            "This is the dialog body<br>Some longish text<br>How about them Cowboys?<p>" +
+            "This is the dialog body<br>Some longish text<br>How about them Cowboys?<p>" +
+            "This is the dialog body<br>Some longish text<br>How about them Cowboys?<p>" +
+            "This is the dialog body<br>Some longish text<br>How about them Cowboys?<p>" +
+            "This is the dialog body<br>Some longish text<br>How about them Cowboys?<p>" +
+            "This is the dialog body<br> Some <a href=\"www.google.com\">Search</a> longish text<p>" +
+            "This is the dialog body<br> another <a href=\"www.bing.com\">Search</a> longish text<p>"
+        )),
       footer = FooterModel(
         positiveButtonConfig = DialogButtonConfig("click me and what if this is a super long long long long long dialog text that goes on"),
         negativeButtonConfig = DialogButtonConfig("click me and what if this is a super long long long long long dialog text that goes on")
       ),
       uiAction = object : DialogUiAction {
+        override fun onLinkClicked(url: String, dialogData: Any?) {
+          Log.d("dbg", "click $url")
+        }
+
         override fun onPositiveButtonClicked(dialogData: Any?) {
           Log.d("dbg", "+ve button clicked")
         }
@@ -164,25 +170,15 @@ private fun LinkText() {
     LinkTextUi(
       LinkTextUiModel(
         uiAction = stubUiAction,
-        text = "start bold italic bold italic end ",
-        linkText = "link",
-        markdown = Markdown(
-          bold = listOf(Range(6, 30)),
-          italics = listOf(Range(11, 18), Range(23, 30))
-        ),
-        textStyle = MaterialTheme.typography.h5,
+        textMarkdown = MarkdownText("Simple <a href=\"www.example.com\">click me</a><b>bold</b> <i>italic</i>"),
+        linkTextMarkdown = MarkdownText("link"),
       )
     )
     LinkTextUi(
       LinkTextUiModel(
         uiAction = stubUiAction,
-        text = "start italic bold italic bold end ",
-        linkText = "link",
-        markdown = Markdown(
-          italics = listOf(Range(6, 30)),
-          bold = listOf(Range(13, 18), Range(25, 29))
-        ),
-        textStyle = MaterialTheme.typography.caption,
+        textMarkdown = MarkdownText("start <b>bold <i>italic</i> bold <i>italic</i></b> end "),
+        linkTextMarkdown = MarkdownText("link"),
       )
     )
   }

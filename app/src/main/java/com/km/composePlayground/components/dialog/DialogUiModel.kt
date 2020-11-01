@@ -3,6 +3,7 @@ package com.km.composePlayground.components.dialog
 import androidx.compose.ui.graphics.ImageAsset
 import androidx.compose.ui.graphics.vector.VectorAsset
 import com.km.composePlayground.base.UiModel
+import com.km.composePlayground.linkText.MarkdownText
 
 sealed class IconAsset {
     class ImageIcon(val asset: ImageAsset) : IconAsset()
@@ -15,7 +16,7 @@ class HeaderModel(
 )
 
 class ContentModel(
-    val content: String
+    val content: MarkdownText
 )
 
 class FooterModel(
@@ -30,6 +31,8 @@ class DialogButtonConfig(
 )
 
 interface DialogUiAction {
+
+    fun onLinkClicked(url: String, dialogData: Any?)
 
     fun onPositiveButtonClicked(dialogData: Any?)
 
