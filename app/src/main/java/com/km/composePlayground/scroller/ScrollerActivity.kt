@@ -1,16 +1,21 @@
 package com.km.composePlayground.scroller
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRowFor
+import androidx.compose.foundation.lazy.ExperimentalLazyDsl
+import androidx.compose.foundation.lazy.LazyRowForIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,16 +23,35 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.WithConstraints
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 
 class ScrollerActivity : AppCompatActivity() {
 
+  @ExperimentalLazyDsl
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
       MaterialTheme {
-        DynamicLazyRow()
+        Column {
+          Text("3 items per row, maxSize 90.dp")
+          DynamicLazyRow(config = LazyRowConfig(items = testList))
+          Spacer(modifier = Modifier.height(16.dp))
+
+          Text("2 items per row, maxSize 90.dp")
+          DynamicLazyRow(
+            config = LazyRowConfig(items = testList, itemsPerWidth = { if (it > 600.dp) 4 else 2 }))
+          Spacer(modifier = Modifier.height(16.dp))
+
+          Text("2 items per row, maxSize 160.dp")
+          DynamicLazyRow(
+            config = LazyRowConfig(
+              items = testList,
+              maxItemSize = 160.dp,
+              itemsPerWidth = { if (it > 600.dp) 4 else 2 }))
+          Spacer(modifier = Modifier.height(16.dp))
+        }
       }
     }
   }
@@ -41,22 +65,32 @@ val testList = listOf(
   "Random 7", "Random 8", "Random 9",
 )
 
+val SCROLLER_PADDING_START = 16.dp
+val SCROLLER_PADDING_END = 24.dp
+
+class LazyRowConfig<T>(
+  val maxItemSize: Dp = 90.dp,
+  val peekAmount: Dp = 30.dp,
+  val itemsPerWidth: (Dp) -> Int = { if (it > 600.dp) 5 else 3 },
+  val items: List<T>
+)
+
 @Composable
-fun DynamicLazyRow() {
-  WithConstraints(modifier = Modifier.fillMaxWidth()) {
-    val maxItemSize = 90.dp
-    val peekAmount = 30.dp
-    val itemsPerWidth = if (maxWidth > 600.dp) 5 else 3
-    val itemContainerSize = (maxWidth - peekAmount) / itemsPerWidth
-    val itemSize = min(itemContainerSize, maxItemSize)
+fun DynamicLazyRow(config: LazyRowConfig<Any>) {
+  WithConstraints {
+    val itemsPerWidth = config.itemsPerWidth(maxWidth)
+    val itemContainerSize = (maxWidth - config.peekAmount) / itemsPerWidth
+    val itemSize = min(itemContainerSize, config.maxItemSize)
     val additionalPadding = itemContainerSize - itemSize
-    Log.d("dbg", "$maxWidth")
+    val listState = rememberLazyListState()
 
     Box(alignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
-//      LazyRowFor(testList.subList(0, 1)) {
-      LazyRowFor(testList) {
-        Log.d("dbg>>$", "composing $it")
-        MyItem(text = it, modifier = Modifier.padding(horizontal = additionalPadding / 2).size(itemSize))
+      LazyRowForIndexed(config.items,
+        state = listState,
+        contentPadding =
+        PaddingValues(start = SCROLLER_PADDING_START, end = SCROLLER_PADDING_END)) { index, item ->
+        val padding = if (index == 0) 0.dp else additionalPadding
+        MyItem(text = item as String, modifier = Modifier.padding(start = padding).size(itemSize))
       }
     }
   }
