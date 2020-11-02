@@ -190,7 +190,7 @@ private fun TextAnnotation() {
     append("link: <b>Jetpack</b> Compose")
     // attach a string annotation that stores a URL to the text "Jetpack Compose".
     addStringAnnotation(
-      scope = "URL",
+      tag = "URL",
       annotation = "https://developer.android.com/jetpack/compose",
       start = 0,
       end = 4

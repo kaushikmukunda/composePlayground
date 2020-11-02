@@ -87,25 +87,21 @@ private fun ButtonUi(
         onClick = { buttonOnClick() },
         interactionState = interactionState,
         enabled = model.isEnabled(),
-        contentColor = ButtonConstants.defaultButtonContentColor(
-            model.isEnabled(),
-            defaultColor = getButtonTextColor(model, colorUtility),
-            disabledColor = disabledContentColor
-        ),
         // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
         // based on enabled state. The button background color also depends on buttonStyle. By passing
         // the same value, this wrapper maintains control over background color.
-        backgroundColor = ButtonConstants.defaultButtonBackgroundColor(
-            model.isEnabled(),
-            defaultColor = backgroundColor,
-            disabledColor = backgroundColor
+        colors = ButtonConstants.defaultButtonColors(
+            backgroundColor = backgroundColor,
+            disabledBackgroundColor = backgroundColor,
+            contentColor = getButtonTextColor(model, colorUtility),
+            disabledContentColor = disabledContentColor
         ),
         contentPadding = PaddingValues(
             start = buttonWidthPadding,
             end = buttonWidthPadding
         ),
         border = getBorder(model, colorUtility),
-        elevation = 0.dp,
+        elevation = ButtonConstants.defaultElevation(0.dp, 0.dp, 0.dp),
         modifier = buttonModifier
 //            .then(loggingModifier)
             .minSizeModifier(model)
