@@ -4,28 +4,38 @@ import android.os.Bundle
 import android.util.Log
 import androidx.annotation.FloatRange
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.material.Text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRowForIndexed
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.Text
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.WithConstraints
+import androidx.compose.ui.layout.WithConstraintsScope
 import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
+import com.km.composePlayground.base.UniformUi
+import com.km.composePlayground.base.UniformUiModel
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 class ScrollerActivity : AppCompatActivity() {
+
+  var scrollerUiModel1x by mutableStateOf(
+    ScrollerUiModel(
+      getScrollingContent(false),
+      uiModelMapper
+    )
+  )
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -35,41 +45,29 @@ class ScrollerActivity : AppCompatActivity() {
           Text("0.75x")
           DynamicLazyRow(
             uiModel = ScrollerUiModel(
-              config = ScrollerConfig(itemBaseWidthMultiplier = 0.75f),
-              uiAction = object : ScrollingUiAction {
-                override fun loadMore() {
-                  Log.d("dbg", "load more")
-                }
-              },
-              items = mutableStateOf(testList)
+              ScrollerUiContent(
+                config = ScrollerConfig(itemBaseWidthMultiplier = 0.75f),
+                uiAction = { Log.d("dbg", "load more") },
+                items = testList
+              ),
+              mapper = uiModelMapper
             )
           )
           Spacer(modifier = Modifier.height(16.dp))
 
           Text("1x")
-          DynamicLazyRow(
-            uiModel = ScrollerUiModel(
-              config = ScrollerConfig(),
-              uiAction = object : ScrollingUiAction {
-                override fun loadMore() {
-                  Log.d("dbg", "load more")
-                }
-              },
-              items = mutableStateOf(testList)
-            )
-          )
+          DynamicLazyRow(uiModel = scrollerUiModel1x)
 
           Spacer(modifier = Modifier.height(16.dp))
           Text("1.25x")
           DynamicLazyRow(
             uiModel = ScrollerUiModel(
-              config = ScrollerConfig(itemBaseWidthMultiplier = 1.25f),
-              uiAction = object : ScrollingUiAction {
-                override fun loadMore() {
-                  Log.d("dbg", "load more")
-                }
-              },
-              items = mutableStateOf(testList)
+              ScrollerUiContent(
+                config = ScrollerConfig(itemBaseWidthMultiplier = 1.25f),
+                uiAction = { Log.d("dbg", "load more") },
+                items = testList
+              ),
+              mapper = uiModelMapper
             )
           )
 
@@ -77,13 +75,12 @@ class ScrollerActivity : AppCompatActivity() {
           Text("fit entire content")
           DynamicLazyRow(
             uiModel = ScrollerUiModel(
-              config = ScrollerConfig(),
-              uiAction = object : ScrollingUiAction {
-                override fun loadMore() {
-                  Log.d("dbg", "load more")
-                }
-              },
-              items = mutableStateOf(testList.subList(0, 2))
+              ScrollerUiContent(
+                config = ScrollerConfig(),
+                uiAction = { Log.d("dbg", "load more") },
+                items = testList.subList(0, 2)
+              ),
+              mapper = uiModelMapper
             )
           )
 
@@ -91,10 +88,55 @@ class ScrollerActivity : AppCompatActivity() {
       }
     }
   }
+
+  var loadCount = 2
+  private fun updateScrollingContent() {
+    // already loading
+    if (scrollerUiModel1x.content.value.footeritem != null) return
+    if (loadCount <= 0) return
+
+    MainScope().launch {
+      loadCount--
+      val appendItems = mutableListOf<UiModel>(
+        TextModel("adding $loadCount 0"),
+        TextModel("adding $loadCount 1"),
+        TextModel("adding $loadCount 2"),
+      )
+      val existingList = scrollerUiModel1x.content.value.items
+      scrollerUiModel1x.content.value =
+        getScrollingContent(true, existingList)
+
+      Log.d("dbg", "loading")
+      delay(2000)
+      Log.d("dbg", "loading complete")
+
+      scrollerUiModel1x.content.value = getScrollingContent(false, existingList, appendItems)
+    }
+  }
+
+  private fun getScrollingContent(
+    isLoadingMore: Boolean,
+    existingList: List<UiModel> = testList,
+    appendList: List<UiModel> = listOf()
+  ): ScrollerUiContent {
+    return ScrollerUiContent(
+      config = ScrollerConfig(),
+      uiAction = { position ->
+        if (position == scrollerUiModel1x.content.value.items.size - 1) {
+          updateScrollingContent()
+        }
+      },
+      items = mutableListOf<UiModel>().apply {
+        addAll(existingList)
+        addAll(appendList)
+      },
+      footeritem = if (isLoadingMore) FooterModel() else null
+    )
+  }
 }
 
 
-val testList = listOf(
+val testList = mutableListOf<UiModel>(
   TextModel("Hello World"),
   TextModel("Foo"),
   TextModel("Bar"),
@@ -106,102 +148,113 @@ val testList = listOf(
   TextModel("Word 5"),
 )
 
-val SCROLLER_PADDING_START = 16.dp
-val SCROLLER_PADDING_END = 24.dp
-val PAGINATION_THRESHOLD = 5
-
 class TextModel(val text: String) : UiModel
+class FooterModel() : UiModel
 
-class ContentPadding(
-  val start: Dp,
-  val end: Dp
-) {
-  fun getTotalPadding() = start + end
+fun interface ScrollingUiAction {
+  /**
+   * Notifies listener to what position an item is currently visible
+   */
+  fun triggerPagination(position: Int)
+}
+
+fun interface UiModelMapper {
+  @Composable
+  fun map(uiModel: UiModel, modifier: Modifier)
 }
 
 class ScrollerConfig(
+  val desiredItemWidth: Dp = 80.dp,
   @FloatRange(from = 0.0, to = 1.0) val childPeekAmount: Float = 0.1f,
   val itemBaseWidthMultiplier: Float = 1.0f,
   val centerContent: Boolean = true,
-  val contentPadding: ContentPadding = ContentPadding(SCROLLER_PADDING_START, SCROLLER_PADDING_END),
-  val paginationThreshold: Int = PAGINATION_THRESHOLD
+  val contentPadding: PaddingValues = PaddingValues(all = 8.dp),
 )
 
-interface ScrollingUiAction {
-
-  fun loadMore()
-
-}
-
-class ScrollerUiModel(
+class ScrollerUiContent(
   val config: ScrollerConfig,
   val uiAction: ScrollingUiAction,
-  val items: MutableState<List<UiModel>>,
-  val isLoadingMore: Boolean = false
+  val items: List<UiModel>,
+  val footeritem: UiModel? = null,
 )
 
+class ScrollerUiModel(
+  scrollerUiContent: ScrollerUiContent,
+  val mapper: UiModelMapper,
+) : UniformUiModel<ScrollerUiContent> {
+  override val content = mutableStateOf(scrollerUiContent)
+}
+
 @Composable
-fun DynamicLazyRow(uiModel: ScrollerUiModel) {
+fun DynamicLazyRow(uiModel: ScrollerUiModel) = UniformUi(uiModel) { content ->
   WithConstraints {
-    val desiredCardWidth = 240 // Replace with DensityMetric
-    val widthForChildrenPx =
-      with(DensityAmbient.current) {
-        maxWidth.toIntPx() - uiModel.config.contentPadding.getTotalPadding().toIntPx()
-      }
-    val numColumns = remember(desiredCardWidth, widthForChildrenPx) {
-      CardCountHelper.getCardCount(
-        (desiredCardWidth * uiModel.config.itemBaseWidthMultiplier).toInt(),
-        widthForChildrenPx,
-        uiModel.config.childPeekAmount
-      )
-    }
-    val itemWidthPx = remember(desiredCardWidth, widthForChildrenPx) {
-      CardCountHelper.getUnitCardWidth(
-        (desiredCardWidth * uiModel.config.itemBaseWidthMultiplier).toInt(),
-        widthForChildrenPx,
-        uiModel.config.childPeekAmount
-      )
-    }
-    val itemWidthDp = with(DensityAmbient.current) { itemWidthPx.toDp() }
-    val padding = with(DensityAmbient.current) {
-      ((widthForChildrenPx - (itemWidthPx * numColumns)) / numColumns).toDp()
-    }
-    Log.d("dbg", "numColumns $numColumns itemWidth $itemWidthDp padding $padding")
+    val alignment = if (content.config.centerContent) Alignment.Center else Alignment.TopStart
+    val itemWidthDp = getItemWidth(content = content)
 
-    Column {
-      val alignment = if (uiModel.config.centerContent) Alignment.Center else Alignment.TopStart
-      Box(alignment = alignment, modifier = Modifier.fillMaxWidth()) {
-        LazyRowForIndexed(
-          items = uiModel.items.value,
-          contentPadding = PaddingValues(
-            start = uiModel.config.contentPadding.start,
-            end = uiModel.config.contentPadding.end
-          )
-        ) { index, item ->
-          if (index == uiModel.items.value.lastIndex - uiModel.config.paginationThreshold) {
-            uiModel.uiAction.loadMore()
-          }
-
-          MyItem(
-            model = item as TextModel,
-            modifier = Modifier.width(width = itemWidthDp)
-          )
+    Box(alignment = alignment, modifier = Modifier.fillMaxWidth()) {
+      LazyRowForIndexed(
+        items = content.items,
+        contentPadding = content.config.contentPadding,
+      ) { index, item ->
+        // Only notify on first composition of a particular item
+        onActive {
+          content.uiAction.triggerPagination(index)
         }
-      }
 
-      if (uiModel.isLoadingMore) {
-        CircularProgressIndicator()
+        uiModel.mapper.map(
+          uiModel = item,
+          modifier = Modifier.width(width = itemWidthDp)
+        )
+
+        // Append footer item
+        if (index == content.items.lastIndex && content.footeritem != null) {
+          uiModel.mapper.map(content.footeritem, Modifier)
+        }
       }
     }
   }
 }
 
 @Composable
-fun MyItem(model: TextModel, modifier: Modifier = Modifier) {
+private fun WithConstraintsScope.getItemWidth(content: ScrollerUiContent): Dp {
+  return with(DensityAmbient.current) {
+    val widthForChildrenPx =
+      (maxWidth - content.config.contentPadding.start - content.config.contentPadding.end).toIntPx()
+
+    remember(content.config.desiredItemWidth, widthForChildrenPx) {
+      CardCountHelper.getUnitCardWidth(
+        (content.config.desiredItemWidth * content.config.itemBaseWidthMultiplier).toIntPx(),
+        widthForChildrenPx,
+        content.config.childPeekAmount
+      )
+    }.toDp()
+  }
+}
+
+val uiModelMapper = object : UiModelMapper {
+
+  @Composable
+  override fun map(uiModel: UiModel, modifier: Modifier) {
+    when (uiModel) {
+      is TextModel -> TextItem(uiModel, modifier)
+      is FooterModel -> FooterItem(model = uiModel)
+    }
+  }
+
+}
+
+@Composable
+private fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
   Text(
-    text = model.text, modifier = modifier
-      .padding(horizontal = 8.dp)
+    text = model.text,
+    modifier = modifier
+      .padding(end = 8.dp)
       .background(color = Color.Gray)
       .border(width = 1.dp, color = Color.Red)
   )
+}
+
+@Composable
+private fun FooterItem(model: FooterModel) {
+  CircularProgressIndicator()
 }
