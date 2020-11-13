@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInParent
-import androidx.compose.ui.onPositioned
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import com.km.composePlayground.components.actionbutton.ActionButtonClickData
 import com.km.composePlayground.components.actionbutton.ActionButtonComposer
@@ -32,7 +32,7 @@ class ActionButtonGroupComposer2(private val buttonGroupComposer: ButtonGroupCom
 
     @Composable
     fun compose(model: ActionButtonGroupUiModel, modifier: Modifier = Modifier) {
-        val buttonModifier = Modifier.onPositioned {
+        val buttonModifier = Modifier.onGloballyPositioned {
             Log.d("Dbg", "button positioned ${it.boundsInParent} ${it.size}")
         }
         buttonGroupComposer.compose(createWrapperGroupUiModel(model), modifier = modifier)

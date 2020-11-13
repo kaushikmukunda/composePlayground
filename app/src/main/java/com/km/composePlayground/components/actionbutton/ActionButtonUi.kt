@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.onPositioned
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.IntSize
 import com.km.composePlayground.components.button.ButtonComposer
 import com.km.composePlayground.components.button.ButtonUiAction
@@ -60,7 +60,7 @@ class ActionButtonComposer(colorUtility: ColorUtility) : ButtonComposer(colorUti
 
 @Composable
 private fun Modifier.layoutSizeCache(layoutSize: LayoutSize): Modifier {
-    return this + Modifier.onPositioned {
+    return this + Modifier.onGloballyPositioned {
         layoutSize.update(it.size)
     }
 }

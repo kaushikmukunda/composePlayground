@@ -7,7 +7,7 @@ import androidx.compose.animation.core.AnimationEndReason
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Text
+import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.InternalLayoutApi
 import androidx.compose.foundation.layout.Spacer
@@ -19,12 +19,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.onCommit
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Layout
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.Placeable
 import androidx.compose.ui.draw.drawOpacity
 import androidx.compose.ui.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.id
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints

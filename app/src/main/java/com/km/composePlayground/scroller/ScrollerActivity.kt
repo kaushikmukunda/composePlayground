@@ -4,11 +4,10 @@ import android.os.Bundle
 import android.util.Log
 import androidx.annotation.FloatRange
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Text
+import androidx.compose.material.Text
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.ExperimentalLazyDsl
 import androidx.compose.foundation.lazy.LazyRowForIndexed
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
@@ -18,8 +17,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.WithConstraints
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Dp
@@ -28,7 +27,6 @@ import com.km.composePlayground.base.UiModel
 
 class ScrollerActivity : AppCompatActivity() {
 
-  @ExperimentalLazyDsl
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {

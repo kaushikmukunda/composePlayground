@@ -13,7 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.onPositioned
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.platform.LayoutDirectionAmbient
 import androidx.compose.ui.res.dimensionResource
@@ -44,7 +44,7 @@ private fun ButtonGroupUi(
     }
 
     var layoutSize by rememberState { IntSize.Zero }
-    val layoutModifier = Modifier.onPositioned {
+    val layoutModifier = Modifier.onGloballyPositioned {
         layoutSize = it.size
     }
 

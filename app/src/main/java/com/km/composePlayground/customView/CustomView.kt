@@ -3,7 +3,7 @@ package com.km.composePlayground.customView
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import androidx.compose.foundation.Text
+import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height

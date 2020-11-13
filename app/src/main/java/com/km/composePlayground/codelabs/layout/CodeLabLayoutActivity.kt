@@ -2,15 +2,15 @@ package com.km.composePlayground.codelabs.layout
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Text
+import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.text.FirstBaseline
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.AlignmentLine
-import androidx.compose.ui.Layout
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.layout.FirstBaseline
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp

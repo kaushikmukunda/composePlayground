@@ -1,9 +1,9 @@
 package com.km.composePlayground.components.actionbutton
 
 import android.util.Log
-import androidx.compose.Composable
-import androidx.ui.core.Modifier
-import androidx.ui.core.OnPositionedModifier
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.OnGloballyPositionedModifier
 import com.km.composePlayground.components.button.ButtonUiAction
 import com.km.composePlayground.components.button.ButtonUiModel
 import com.km.composePlayground.components.button.ColorUtility
@@ -29,7 +29,7 @@ class ActionButtonComposerTest {
         ), modifier = modifier)
 
 
-        modifier.all { it is OnPositionedModifier }.apply {
+        modifier.all { it is OnGloballyPositionedModifier }.apply {
             Log.d("dbg", "Got on positioned modifier")
         }
     }
