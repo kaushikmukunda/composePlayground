@@ -2,7 +2,6 @@ package com.km.composePlayground.scroller
 
 import android.os.Bundle
 import android.util.Log
-import androidx.annotation.FloatRange
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -43,10 +42,13 @@ class ScrollerActivity : AppCompatActivity() {
       MaterialTheme {
         Column {
           Text("0.75x")
-          DynamicLazyRow(
+          HorizontalScrollerUi(
             uiModel = ScrollerUiModel(
-              ScrollerUiContent(
-                config = ScrollerConfig(itemBaseWidthMultiplier = 0.75f),
+              HorizontalScrollerUiContent(
+                layoutPolicy = FixedLayoutPolicy(
+                  desiredItemWidth = 80.dp,
+                  baseWidthMultipler = 0.75f
+                ),
                 uiAction = { Log.d("dbg", "load more") },
                 items = testList
               ),
@@ -56,14 +58,17 @@ class ScrollerActivity : AppCompatActivity() {
           Spacer(modifier = Modifier.height(16.dp))
 
           Text("1x")
-          DynamicLazyRow(uiModel = scrollerUiModel1x)
+          HorizontalScrollerUi(uiModel = scrollerUiModel1x)
 
           Spacer(modifier = Modifier.height(16.dp))
           Text("1.25x")
-          DynamicLazyRow(
+          HorizontalScrollerUi(
             uiModel = ScrollerUiModel(
-              ScrollerUiContent(
-                config = ScrollerConfig(itemBaseWidthMultiplier = 1.25f),
+              HorizontalScrollerUiContent(
+                layoutPolicy = FixedLayoutPolicy(
+                  desiredItemWidth = 80.dp,
+                  baseWidthMultipler = 1.25f
+                ),
                 uiAction = { Log.d("dbg", "load more") },
                 items = testList
               ),
@@ -73,10 +78,10 @@ class ScrollerActivity : AppCompatActivity() {
 
           Spacer(modifier = Modifier.height(16.dp))
           Text("fit entire content")
-          DynamicLazyRow(
+          HorizontalScrollerUi(
             uiModel = ScrollerUiModel(
-              ScrollerUiContent(
-                config = ScrollerConfig(),
+              HorizontalScrollerUiContent(
+                layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
                 uiAction = { Log.d("dbg", "load more") },
                 items = testList.subList(0, 2)
               ),
@@ -118,9 +123,9 @@ class ScrollerActivity : AppCompatActivity() {
     isLoadingMore: Boolean,
     existingList: List<UiModel> = testList,
     appendList: List<UiModel> = listOf()
-  ): ScrollerUiContent {
-    return ScrollerUiContent(
-      config = ScrollerConfig(),
+  ): HorizontalScrollerUiContent {
+    return HorizontalScrollerUiContent(
+      layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
       uiAction = { position ->
         if (position == scrollerUiModel1x.content.value.items.size - 1) {
           updateScrollingContent()
@@ -151,6 +156,7 @@ val testList = mutableListOf<UiModel>(
 class TextModel(val text: String) : UiModel
 class FooterModel() : UiModel
 
+/** Action associated with Scrolling Ui. */
 fun interface ScrollingUiAction {
   /**
    * Notifies listener to what position an item is currently visible
@@ -158,43 +164,77 @@ fun interface ScrollingUiAction {
   fun triggerPagination(position: Int)
 }
 
+/** Maps UiModels to composables. */
 fun interface UiModelMapper {
   @Composable
   fun map(uiModel: UiModel, modifier: Modifier)
 }
 
-class ScrollerConfig(
-  val desiredItemWidth: Dp = 80.dp,
-  @FloatRange(from = 0.0, to = 1.0) val childPeekAmount: Float = 0.1f,
-  val itemBaseWidthMultiplier: Float = 1.0f,
-  val centerContent: Boolean = true,
-  val contentPadding: PaddingValues = PaddingValues(all = 8.dp),
-)
+/** Container class to hold item size in Dp. */
+class DpSize(val width: Dp, val height: Dp)
 
-class ScrollerUiContent(
-  val config: ScrollerConfig,
+/**
+ * Configure the layout parameters for the scroller.
+ */
+interface HorizontalScrollerLayoutPolicy {
+
+  /**
+   * Compute the dimensions of the item provided the scroller layout constraints.
+   *
+   * @param scope Provides the layout constraints of the scroller.
+   */
+  @Composable
+  fun getItemSize(scope: WithConstraintsScope): DpSize
+
+  /** The padding to be set on the scroller. */
+  fun getContentPadding(): PaddingValues
+
+  /** If the entire content were to fit in a single screen, should it be centered? */
+  fun shouldCenterContent(): Boolean
+
+}
+
+/**
+ * UiContent for the horizontal scroller.
+ *
+ * @property layoutPolicy Determine the layout and size of the item.
+ * @property uiAction Ui actions supported by the scroller.
+ * @property items The UiModels that are to be rendered in a list.
+ * @property footeritem Optional The uiModel that ought to be appended to the list. Usually used
+ *   for loading or error scenarios.
+ */
+@Stable
+class HorizontalScrollerUiContent(
+  val layoutPolicy: HorizontalScrollerLayoutPolicy,
   val uiAction: ScrollingUiAction,
   val items: List<UiModel>,
   val footeritem: UiModel? = null,
 )
 
+/**
+ * UiModel that establishes contract with HorizontalScrollerUi.
+ *
+ * @property mapper Maps UiModels to composables.
+ */
+@Stable
 class ScrollerUiModel(
-  scrollerUiContent: ScrollerUiContent,
+  horizontalScrollerUiContent: HorizontalScrollerUiContent,
   val mapper: UiModelMapper,
-) : UniformUiModel<ScrollerUiContent> {
-  override val content = mutableStateOf(scrollerUiContent)
+) : UniformUiModel<HorizontalScrollerUiContent> {
+  override val content = mutableStateOf(horizontalScrollerUiContent)
 }
 
 @Composable
-fun DynamicLazyRow(uiModel: ScrollerUiModel) = UniformUi(uiModel) { content ->
+fun HorizontalScrollerUi(uiModel: ScrollerUiModel) = UniformUi(uiModel) { content ->
   WithConstraints {
-    val alignment = if (content.config.centerContent) Alignment.Center else Alignment.TopStart
-    val itemWidthDp = getItemWidth(content = content)
+    val alignment =
+      if (content.layoutPolicy.shouldCenterContent()) Alignment.Center else Alignment.TopStart
+    val itemSize = content.layoutPolicy.getItemSize(this)
 
     Box(alignment = alignment, modifier = Modifier.fillMaxWidth()) {
       LazyRowForIndexed(
         items = content.items,
-        contentPadding = content.config.contentPadding,
+        contentPadding = content.layoutPolicy.getContentPadding(),
       ) { index, item ->
         // Only notify on first composition of a particular item
         onActive {
@@ -203,7 +243,7 @@ fun DynamicLazyRow(uiModel: ScrollerUiModel) = UniformUi(uiModel) { content ->
 
         uiModel.mapper.map(
           uiModel = item,
-          modifier = Modifier.width(width = itemWidthDp)
+          modifier = Modifier.size(width = itemSize.width, height = itemSize.height)
         )
 
         // Append footer item
@@ -215,22 +255,41 @@ fun DynamicLazyRow(uiModel: ScrollerUiModel) = UniformUi(uiModel) { content ->
   }
 }
 
-@Composable
-private fun WithConstraintsScope.getItemWidth(content: ScrollerUiContent): Dp {
-  return with(DensityAmbient.current) {
-    val widthForChildrenPx =
-      (maxWidth - content.config.contentPadding.start - content.config.contentPadding.end).toIntPx()
+/** A simple implementation of fixed layout policy. */
+class FixedLayoutPolicy(
+  val desiredItemWidth: Dp,
+  val childPeekAmount: Float = 0.1f,
+  val baseWidthMultipler: Float = 1f
+) :
+  HorizontalScrollerLayoutPolicy {
 
-    remember(content.config.desiredItemWidth, widthForChildrenPx) {
-      CardCountHelper.getUnitCardWidth(
-        (content.config.desiredItemWidth * content.config.itemBaseWidthMultiplier).toIntPx(),
-        widthForChildrenPx,
-        content.config.childPeekAmount
-      )
-    }.toDp()
+  @Composable
+  override fun getItemSize(scope: WithConstraintsScope): DpSize {
+    val width = with(DensityAmbient.current) {
+      val widthForChildrenPx =
+        (scope.maxWidth - getContentPadding().start - getContentPadding().end).toIntPx()
+
+      remember(desiredItemWidth, widthForChildrenPx) {
+        CardCountHelper.getUnitCardWidth(
+          (desiredItemWidth * baseWidthMultipler).toIntPx(),
+          widthForChildrenPx,
+          childPeekAmount
+        )
+      }.toDp()
+    }
+
+    val height: Dp = width.times(9 / 16f)
+
+    return DpSize(width, height)
   }
+
+  override fun getContentPadding() = PaddingValues(8.dp)
+
+  override fun shouldCenterContent() = true
+
 }
 
+/** A sample implmentation of UiModel. */
 val uiModelMapper = object : UiModelMapper {
 
   @Composable
