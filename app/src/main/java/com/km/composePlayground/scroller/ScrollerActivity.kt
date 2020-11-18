@@ -29,12 +29,7 @@ import kotlinx.coroutines.launch
 
 class ScrollerActivity : AppCompatActivity() {
 
-  var scrollerUiModel1x by mutableStateOf(
-    ScrollerUiModel(
-      getScrollingContent(false),
-      uiModelMapper
-    )
-  )
+  var scrollerUiModel1x by mutableStateOf(ScrollerUiModel(getScrollingContent(false)))
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -43,49 +38,56 @@ class ScrollerActivity : AppCompatActivity() {
         Column {
           Text("0.75x")
           HorizontalScrollerUi(
+            layoutPolicy = FixedLayoutPolicy(
+              desiredItemWidth = 80.dp,
+              baseWidthMultipler = 0.75f
+            ),
+            mapper = uiModelMapper,
             uiModel = ScrollerUiModel(
               HorizontalScrollerUiContent(
-                layoutPolicy = FixedLayoutPolicy(
-                  desiredItemWidth = 80.dp,
-                  baseWidthMultipler = 0.75f
-                ),
                 uiAction = { Log.d("dbg", "load more") },
                 items = testList
               ),
-              mapper = uiModelMapper
             )
           )
           Spacer(modifier = Modifier.height(16.dp))
 
           Text("1x")
-          HorizontalScrollerUi(uiModel = scrollerUiModel1x)
+          HorizontalScrollerUi(
+            layoutPolicy = FixedLayoutPolicy(
+              desiredItemWidth = 80.dp,
+              baseWidthMultipler = 1.25f
+            ),
+            mapper = uiModelMapper,
+            uiModel = scrollerUiModel1x
+          )
 
           Spacer(modifier = Modifier.height(16.dp))
           Text("1.25x")
           HorizontalScrollerUi(
+            layoutPolicy = FixedLayoutPolicy(
+              desiredItemWidth = 80.dp,
+              baseWidthMultipler = 1.25f
+            ),
+            mapper = uiModelMapper,
             uiModel = ScrollerUiModel(
               HorizontalScrollerUiContent(
-                layoutPolicy = FixedLayoutPolicy(
-                  desiredItemWidth = 80.dp,
-                  baseWidthMultipler = 1.25f
-                ),
                 uiAction = { Log.d("dbg", "load more") },
                 items = testList
               ),
-              mapper = uiModelMapper
             )
           )
 
           Spacer(modifier = Modifier.height(16.dp))
           Text("fit entire content")
           HorizontalScrollerUi(
+            mapper = uiModelMapper,
+            layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
             uiModel = ScrollerUiModel(
               HorizontalScrollerUiContent(
-                layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
                 uiAction = { Log.d("dbg", "load more") },
                 items = testList.subList(0, 2)
               ),
-              mapper = uiModelMapper
             )
           )
 
@@ -97,7 +99,7 @@ class ScrollerActivity : AppCompatActivity() {
   var loadCount = 2
   private fun updateScrollingContent() {
     // already loading
-    if (scrollerUiModel1x.content.value.footeritem != null) return
+    if (scrollerUiModel1x.content.value.items.last() is FooterModel) return
     if (loadCount <= 0) return
 
     MainScope().launch {
@@ -125,7 +127,6 @@ class ScrollerActivity : AppCompatActivity() {
     appendList: List<UiModel> = listOf()
   ): HorizontalScrollerUiContent {
     return HorizontalScrollerUiContent(
-      layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
       uiAction = { position ->
         if (position == scrollerUiModel1x.content.value.items.size - 1) {
           updateScrollingContent()
@@ -134,8 +135,8 @@ class ScrollerActivity : AppCompatActivity() {
       items = mutableListOf<UiModel>().apply {
         addAll(existingList)
         addAll(appendList)
+        if (isLoadingMore) add(FooterModel())
       },
-      footeritem = if (isLoadingMore) FooterModel() else null
     )
   }
 }
@@ -205,10 +206,8 @@ interface HorizontalScrollerLayoutPolicy {
  */
 @Stable
 class HorizontalScrollerUiContent(
-  val layoutPolicy: HorizontalScrollerLayoutPolicy,
   val uiAction: ScrollingUiAction,
   val items: List<UiModel>,
-  val footeritem: UiModel? = null,
 )
 
 /**
@@ -219,37 +218,35 @@ class HorizontalScrollerUiContent(
 @Stable
 class ScrollerUiModel(
   horizontalScrollerUiContent: HorizontalScrollerUiContent,
-  val mapper: UiModelMapper,
 ) : UniformUiModel<HorizontalScrollerUiContent> {
   override val content = mutableStateOf(horizontalScrollerUiContent)
 }
 
 @Composable
-fun HorizontalScrollerUi(uiModel: ScrollerUiModel) = UniformUi(uiModel) { content ->
+fun HorizontalScrollerUi(
+  uiModel: ScrollerUiModel,
+  layoutPolicy: HorizontalScrollerLayoutPolicy,
+  mapper: UiModelMapper,
+) = UniformUi(uiModel) { content ->
   WithConstraints {
     val alignment =
-      if (content.layoutPolicy.shouldCenterContent()) Alignment.Center else Alignment.TopStart
-    val itemSize = content.layoutPolicy.getItemSize(this)
+      if (layoutPolicy.shouldCenterContent()) Alignment.Center else Alignment.TopStart
+    val itemSize = layoutPolicy.getItemSize(this)
 
     Box(alignment = alignment, modifier = Modifier.fillMaxWidth()) {
       LazyRowForIndexed(
         items = content.items,
-        contentPadding = content.layoutPolicy.getContentPadding(),
+        contentPadding = layoutPolicy.getContentPadding(),
       ) { index, item ->
         // Only notify on first composition of a particular item
         onActive {
           content.uiAction.triggerPagination(index)
         }
 
-        uiModel.mapper.map(
+        mapper.map(
           uiModel = item,
           modifier = Modifier.size(width = itemSize.width, height = itemSize.height)
         )
-
-        // Append footer item
-        if (index == content.items.lastIndex && content.footeritem != null) {
-          uiModel.mapper.map(content.footeritem, Modifier)
-        }
       }
     }
   }
