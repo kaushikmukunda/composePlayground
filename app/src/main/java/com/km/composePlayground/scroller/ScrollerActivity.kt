@@ -5,8 +5,10 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.CircularProgressIndicator
@@ -16,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
@@ -46,7 +49,8 @@ class ScrollerActivity : AppCompatActivity() {
                 uiAction = { Log.d("dbg", "load more") },
                 items = testList
               ),
-            )
+            ),
+            itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
           )
           Spacer(modifier = Modifier.height(16.dp))
 
@@ -58,7 +62,7 @@ class ScrollerActivity : AppCompatActivity() {
             ),
             mapper = uiModelMapper,
             uiModel = scrollerUiModel1x,
-            itemDecoration = DividerDecoration(shouldDecorate = { uiModel, index ->
+            itemDecoration = DividerDecoration(shouldDecorate = { uiModel, index, _ ->
               when (uiModel) {
                 is TextModel -> index > 0
                 is FooterModel -> false
@@ -80,7 +84,8 @@ class ScrollerActivity : AppCompatActivity() {
                 uiAction = {},
                 items = testList
               ),
-            )
+            ),
+            itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
           )
 
           Spacer(modifier = Modifier.height(16.dp))
@@ -93,9 +98,25 @@ class ScrollerActivity : AppCompatActivity() {
                 uiAction = {},
                 items = testList.subList(0, 2)
               ),
-            )
+            ),
+            itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
           )
 
+          Spacer(modifier = Modifier.height(16.dp))
+          Text("Fading Edge")
+          Box(modifier = Modifier.align(alignment = Alignment.CenterHorizontally).fillMaxWidth(0.9f)) {
+            HorizontalScrollerUi(
+              mapper = uiModelMapper,
+              layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
+              uiModel = ScrollerUiModel(
+                HorizontalScrollerUiContent(
+                  uiAction = {},
+                  items = testList
+                ),
+              ),
+              itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
+            )
+          }
         }
       }
     }
@@ -166,11 +187,12 @@ class FooterModel() : UiModel
 /** A sample implmentation of UiModel. */
 val uiModelMapper = object : UiModelMapper {
 
-  @Composable
-  override fun map(uiModel: UiModel, modifier: Modifier) {
-    when (uiModel) {
-      is TextModel -> TextItem(uiModel, modifier)
-      is FooterModel -> FooterItem(model = uiModel)
+  //  @Composable
+  override fun map(uiModel: UiModel): @Composable() (Modifier) -> Unit {
+    return when (uiModel) {
+      is TextModel -> { modifier -> TextItem(uiModel, modifier) }
+      is FooterModel -> { _ -> FooterItem(model = uiModel) }
+      else -> { _ -> {} }
     }
   }
 
@@ -188,5 +210,5 @@ private fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
 
 @Composable
 private fun FooterItem(model: FooterModel) {
-  CircularProgressIndicator(modifier=Modifier.padding(start=16.dp))
+  CircularProgressIndicator(modifier = Modifier.padding(start = 16.dp))
 }
