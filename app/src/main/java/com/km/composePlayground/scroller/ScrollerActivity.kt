@@ -8,9 +8,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -50,7 +53,7 @@ class ScrollerActivity : AppCompatActivity() {
                 items = testList
               ),
             ),
-            itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
+            itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
           )
           Spacer(modifier = Modifier.height(16.dp))
 
@@ -62,13 +65,13 @@ class ScrollerActivity : AppCompatActivity() {
             ),
             mapper = uiModelMapper,
             uiModel = scrollerUiModel1x,
-            itemDecoration = DividerDecoration(shouldDecorate = { uiModel, index, _ ->
-              when (uiModel) {
-                is TextModel -> index > 0
-                is FooterModel -> false
-                else -> false
+            itemDecoration = { uiModel, index, _ ->
+              val decorators = mutableListOf<Decorator>()
+              if (uiModel is TextModel && index > 0) {
+                decorators.add(DividerDecorator())
               }
-            })
+              decorators
+            }
           )
 
           Spacer(modifier = Modifier.height(16.dp))
@@ -85,7 +88,7 @@ class ScrollerActivity : AppCompatActivity() {
                 items = testList
               ),
             ),
-            itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
+            itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
           )
 
           Spacer(modifier = Modifier.height(16.dp))
@@ -99,7 +102,7 @@ class ScrollerActivity : AppCompatActivity() {
                 items = testList.subList(0, 2)
               ),
             ),
-            itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
+            itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
           )
 
           Spacer(modifier = Modifier.height(16.dp))
@@ -114,7 +117,7 @@ class ScrollerActivity : AppCompatActivity() {
                   items = testList
                 ),
               ),
-              itemDecoration = SpacerDecoration(shouldDecorate = { _, index, _ -> index > 0 })
+              itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
             )
           }
         }
@@ -187,15 +190,17 @@ class FooterModel() : UiModel
 /** A sample implmentation of UiModel. */
 val uiModelMapper = object : UiModelMapper {
 
-  //  @Composable
   override fun map(uiModel: UiModel): @Composable() (Modifier) -> Unit {
-    return when (uiModel) {
-      is TextModel -> { modifier -> TextItem(uiModel, modifier) }
-      is FooterModel -> { _ -> FooterItem(model = uiModel) }
-      else -> { _ -> {} }
-    }
+    return { modifier -> internalMap(uiModel, modifier) }
   }
 
+  @Composable
+  private fun internalMap(uiModel: UiModel, modifier: Modifier) {
+    when (uiModel) {
+      is TextModel -> TextItem(uiModel, modifier.padding(vertical = 8.dp))
+      is FooterModel -> FooterItem(model = uiModel)
+    }
+  }
 }
 
 @Composable
@@ -204,11 +209,13 @@ private fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
     text = model.text,
     modifier = modifier
       .background(color = Color.Gray)
-      .border(width = 1.dp, color = Color.Red)
+//      .border(width = 1.dp, color = Color.Yellow)
   )
 }
 
 @Composable
 private fun FooterItem(model: FooterModel) {
-  CircularProgressIndicator(modifier = Modifier.padding(start = 16.dp))
+  Box(alignment = Alignment.Center, modifier=Modifier.fillMaxSize()) {
+    CircularProgressIndicator(modifier = Modifier.size(50.dp).padding(start = 16.dp))
+  }
 }

@@ -1,15 +1,10 @@
 package com.km.composePlayground.scroller
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRowForIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.drawBehind
@@ -18,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.layout.WithConstraintsScope
 import androidx.compose.ui.platform.ContextAmbient
-import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
@@ -41,44 +35,72 @@ fun interface UiModelMapper {
   fun map(uiModel: UiModel): @Composable() (Modifier) -> Unit
 }
 
-/** Container class to hold item size in Dp. */
-class DpSize(val width: Dp, val height: Dp)
+/** Describes padding to be applied to the start and end of the scoller content. */
+class ScrollerPadding(val start: Dp, val end: Dp) {
 
-/**
- * Configure the layout parameters for the scroller.
- */
+  fun toPaddingValues() = PaddingValues(start = start, end = end)
+
+}
+
+/** Configure the layout parameters for the scroller. */
 interface HorizontalScrollerLayoutPolicy {
 
   /**
-   * Compute the dimensions of the item provided the scroller layout constraints.
+   * Given the width of the horizontal scroller in density-pixels, returns the width of a child.
+   * The returned width will be equally applied to all children.
    *
    * @param scope Provides the layout constraints of the scroller.
    */
-  @Composable
-  fun getItemSize(scope: WithConstraintsScope): DpSize
+  fun getChildWidth(scope: WithConstraintsScope): Dp
+
+  /**
+   * Given the width of a child, returns the desired height of the horizontal scroller or null if
+   * this height is not a function of the child width, in which case the horizontal scroller height
+   * will not be modified.
+   */
+  fun getScrollerHeight(itemWidth: Dp): Dp?
 
   /** The padding to be set on the scroller. */
-  fun getContentPadding(): PaddingValues
+  fun getContentPadding(): ScrollerPadding
+}
 
+/** Configure additional behavior of the scroller. */
+interface HorizontalScrollerConfig {
   /** If the entire content were to fit in a single screen, should it be centered? */
   fun shouldCenterContent(): Boolean
 
   /** Width of the fading edge that might be drawn at the edges of the scroller. */
-  fun getFadingEdgeWidth(): Dp = 0.dp
+  fun getFadingEdgeWidth(): Dp
 
+  /** Enable snapping of content cards to its edges. */
+  fun shouldEnableSnapping(): Boolean
+}
+
+/** Interface that denotes a decoration to be applied to an item in scroller ui. */
+fun interface Decorator {
+
+  /** Returns a Compose Ui consumable Modifier. */
+  fun decorate(): Modifier
 }
 
 /** Configure item decoration within the scroller. */
-interface ItemDecoration {
+fun interface ItemDecoration {
 
-  /**
-   *  Returns a Modifier that decorates a given item represented by the UiModel.
-   *
-   *  @param uiModel The UiModel to decorate.
-   *  @param itemIndex The index of this item represented by the UiModel.
-   *  @param listSize The number of items in the scroller.
-   */
-  fun decorator(uiModel: UiModel, itemIndex: Int, listSize: Int): Modifier
+  /** Determine the decorations for a given item represented by the UiModel. */
+  fun getDecorators(uiModel: UiModel, itemIndex: Int, listSize: Int): List<Decorator>
+
+}
+
+/**
+ * Resolves the list of decorators to a Compose Ui consumable Modifier.
+ *
+ * Modifier chaining is not associative. When custom chaining of
+ * a group of Modifiers is required, this interface should be overridden.
+ */
+fun interface DecorationResolver {
+
+  fun resolve(decorators: List<Decorator>): Modifier
+
 }
 
 /**
@@ -108,44 +130,64 @@ class ScrollerUiModel(
   override val content = mutableStateOf(horizontalScrollerUiContent)
 }
 
+/**
+ * Displays horizontally scrollable content.
+ *
+ * @param uiModel The UiModel for rendering the scroller.
+ * @param layoutPolicy The policy to apply to the scroller.
+ * @param config Configures additional behavior of the scroller like snapping.
+ * @param mapper Transforms a UiModel to its Compose representation.
+ * @param itemDecoration The decoration to be applied to the individual items in the scroller.
+ * @param decorationResolver Optional resolver that transforms decoration to a Modifier.
+ */
 @Composable
 fun HorizontalScrollerUi(
   uiModel: ScrollerUiModel,
   layoutPolicy: HorizontalScrollerLayoutPolicy,
+  config: HorizontalScrollerConfig = DefaultHorizontalScrollerConfig,
   mapper: UiModelMapper,
   itemDecoration: ItemDecoration = NoDecoration,
+  decorationResolver: DecorationResolver = StandardDecorationResolver
 ) = UniformUi(uiModel) { content ->
   WithConstraints {
     val alignment =
-      if (layoutPolicy.shouldCenterContent()) Alignment.Center else Alignment.TopStart
-    val itemSize = layoutPolicy.getItemSize(this)
+      if (config.shouldCenterContent()) Alignment.Center else Alignment.TopStart
+    val itemWidth = layoutPolicy.getChildWidth(this)
+    val scrollerHeightModifier = layoutPolicy.getScrollerHeight(itemWidth)
+      ?.let { Modifier.height(it) } ?: Modifier
 
-    Box(alignment = alignment,
+    Box(
+      alignment = alignment,
       modifier = Modifier
         .fillMaxWidth()
-        .fadingEdge(this, layoutPolicy.getFadingEdgeWidth())
+        .then(scrollerHeightModifier)
+        .fadingEdge(this, config.getFadingEdgeWidth())
     ) {
       LazyRowForIndexed(
         items = content.items,
-        contentPadding = layoutPolicy.getContentPadding(),
+        contentPadding = layoutPolicy.getContentPadding().toPaddingValues(),
       ) { index, item ->
         content.uiAction.onItemRendered(index)
 
-        val decoratorModifier = itemDecoration
-          .decorator(uiModel = item, itemIndex = index, listSize = content.items.size)
-        mapper.map(uiModel = item).invoke(
-          decoratorModifier.size(
-            width = itemSize.width,
-            height = itemSize.height
-          )
+        val decoratorModifier = decorationResolver.resolve(
+          itemDecoration
+            .getDecorators(
+              uiModel = item,
+              itemIndex = index,
+              listSize = content.items.size
+            )
         )
+        mapper.map(uiModel = item)(decoratorModifier.width(width = itemWidth).fillMaxHeight())
       }
     }
   }
 }
 
 @Composable
-private fun Modifier.fadingEdge(withConstraintsScope: WithConstraintsScope, fadingEdgeWidth: Dp): Modifier {
+private fun Modifier.fadingEdge(
+  withConstraintsScope: WithConstraintsScope,
+  fadingEdgeWidth: Dp
+): Modifier {
   val screenWidth = ContextAmbient.current.resources.configuration.screenWidthDp
   val scrollerWidth = withConstraintsScope.maxWidth
   return if (screenWidth < scrollerWidth.value) this
@@ -153,6 +195,16 @@ private fun Modifier.fadingEdge(withConstraintsScope: WithConstraintsScope, fadi
     val ratio = fadingEdgeWidth / scrollerWidth
     this.fadingEdgeForeground(color = Color.White, leftRatio = ratio, rightRatio = ratio)
   }
+}
+
+/** A default implementation of the HorizontalScrollerConfig. */
+val DefaultHorizontalScrollerConfig = object : HorizontalScrollerConfig {
+  override fun shouldCenterContent() = true
+
+  override fun getFadingEdgeWidth(): Dp = 10.dp
+
+  override fun shouldEnableSnapping() = true
+
 }
 
 /** A simple implementation of fixed layout policy. */
@@ -163,67 +215,63 @@ class FixedLayoutPolicy(
 ) :
   HorizontalScrollerLayoutPolicy {
 
-  @Composable
-  override fun getItemSize(scope: WithConstraintsScope): DpSize {
-    val width = with(DensityAmbient.current) {
-      val widthForChildrenPx =
-        (scope.maxWidth - getContentPadding().start - getContentPadding().end).toIntPx()
+  override fun getChildWidth(scope: WithConstraintsScope): Dp {
+    val widthForChildren =
+      (scope.maxWidth - getContentPadding().start - getContentPadding().end)
+    return Dp(
+      CardCountHelper.getUnitCardWidth(
+        (desiredItemWidth.value * baseWidthMultipler).toInt(),
+        widthForChildren.value.toInt(),
+        childPeekAmount
+      ).toFloat()
+    )
 
-      remember(desiredItemWidth, widthForChildrenPx) {
-        CardCountHelper.getUnitCardWidth(
-          (desiredItemWidth * baseWidthMultipler).toIntPx(),
-          widthForChildrenPx,
-          childPeekAmount
-        )
-      }.toDp()
-    }
-
-    val height: Dp = width.times(9 / 16f)
-
-    return DpSize(width, height)
   }
 
-  override fun getContentPadding() = PaddingValues(16.dp)
-
-  override fun shouldCenterContent() = true
-
-  override fun getFadingEdgeWidth(): Dp {
-    return 10.dp
+  override fun getScrollerHeight(itemWidth: Dp): Dp? {
+    return itemWidth.times(9 / 16f)
   }
+
+  override fun getContentPadding() = ScrollerPadding(start = 16.dp, end = 16.dp)
 }
 
 val NoDecoration = object : ItemDecoration {
-  override fun decorator(uiModel: UiModel, itemIndex: Int, listSize: Int) = Modifier
+  override fun getDecorators(uiModel: UiModel, itemIndex: Int, listSize: Int) =
+    emptyList<Decorator>()
 }
 
-class DividerDecoration(
-  val shouldDecorate: (uiModel: UiModel, index: Int, listSize: Int) -> Boolean) : ItemDecoration {
-  override fun decorator(uiModel: UiModel, itemIndex: Int, listSize: Int): Modifier {
-    return if (shouldDecorate(uiModel, itemIndex, listSize)) {
-      val padding = 16.dp
-      Modifier
-        .padding(start = padding)
-        .drawBehind {
-          val top = center.y - size.height / 2
-          val bot = center.y + size.height / 2
-          val start = center.x - size.width / 2 - padding.toPx() / 2
+class DividerDecorator(
+  private val sidePadding: Dp = 16.dp,
+  private val verticalPadding: Dp = 8.dp)
+  : Decorator {
 
-          drawLine(
-            color = Color.Blue,
-            start = Offset(start, top),
-            end = Offset(start, bot),
-            strokeWidth = 1.dp.toPx()
-          )
-        }
-    } else Modifier
+  override fun decorate(): Modifier {
+    return Modifier
+      .padding(start = sidePadding)
+      .drawBehind {
+        val top = verticalPadding.toPx()
+        val bot = size.height - verticalPadding.toPx()
+        val start = -sidePadding.toPx()/2
+
+        drawLine(
+          color = Color.Green,
+          start = Offset(start, top),
+          end = Offset(start, bot),
+          strokeWidth = 1.dp.toPx()
+        )
+      }
   }
 }
 
-class SpacerDecoration(
-  val spacerSize: Dp = 8.dp,
-  val shouldDecorate: (UiModel, Int, Int) -> Boolean) : ItemDecoration {
+class SpacerDecorator(private val spacerSize: Dp = 8.dp) : Decorator {
 
-  override fun decorator(uiModel: UiModel, itemIndex: Int, listSize: Int) =
-    if (shouldDecorate(uiModel, itemIndex, listSize)) Modifier.padding(start = spacerSize)
-    else Modifier
+  override fun decorate() = Modifier.padding(start = spacerSize)
+}
+
+val StandardDecorationResolver = DecorationResolver { decorators ->
+  var modifier: Modifier = Modifier
+  decorators.forEach { decorator ->
+    modifier = modifier.then(decorator.decorate())
+  }
+  modifier
 }
