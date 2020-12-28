@@ -214,7 +214,7 @@ private fun DelimiterFlowLayoutInternal(
 ) {
     // The layout logic is derived from Jetpack Compose Flow layout : http://shortn/_o7nTAEQgPM
     Layout(
-        children = {
+        content = {
             for (child in children) {
                 child()
                 delimiter(Modifier.layoutId(DELIMITER_ID))

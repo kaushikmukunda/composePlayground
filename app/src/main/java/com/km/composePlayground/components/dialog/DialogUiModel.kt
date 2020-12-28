@@ -1,13 +1,13 @@
 package com.km.composePlayground.components.dialog
 
-import androidx.compose.ui.graphics.ImageAsset
-import androidx.compose.ui.graphics.vector.VectorAsset
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.linkText.MarkdownText
 
 sealed class IconAsset {
-    class ImageIcon(val asset: ImageAsset) : IconAsset()
-    class VectorIcon(val asset: VectorAsset) : IconAsset()
+    class ImageIcon(val asset: ImageBitmap) : IconAsset()
+    class VectorIcon(val asset: ImageVector) : IconAsset()
 }
 
 class HeaderModel(
@@ -44,7 +44,7 @@ interface DialogUiAction {
 
 class DialogUiModel(
     val uiAction: DialogUiAction,
-    val header: HeaderModel?=null,
+    val header: HeaderModel? = null,
     val content: ContentModel,
     val footer: FooterModel,
     val dismissOnTapOutside: Boolean = true,

@@ -7,7 +7,6 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.Button
-import androidx.compose.material.ripple.RippleIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +36,7 @@ import com.km.composePlayground.modifiers.layoutSizeCache
 import com.km.composePlayground.modifiers.rememberState
 import kotlin.math.max
 import androidx.compose.material.Text
+import androidx.compose.material.ripple.rememberRipple
 
 class ConstrainLayoutTestActivity : AppCompatActivity() {
 
@@ -137,12 +137,12 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
             .fillMaxWidth()
             .padding(top = 40.dp, bottom = 20.dp)
             .indication(
-                indication = RippleIndication(color = Color.Red),
+                indication = rememberRipple(color = Color.Red),
                 interactionState = InteractionState().apply {
                     addInteraction(Interaction.Pressed)
                 }
             )
-            .clickable(indication = RippleIndication(color=Color.Red)) {  Log.d("dbg", "clicked")}
+            .clickable(indication = rememberRipple(color=Color.Red)) {  Log.d("dbg", "clicked")}
             .border(width= 1.dp, color = Color.Red),
             constraintSet = ConstraintSet {
                 val textRef = createRefFor(textId)

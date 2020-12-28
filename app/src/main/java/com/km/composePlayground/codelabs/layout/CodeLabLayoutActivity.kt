@@ -37,7 +37,7 @@ class CodeLabLayoutActivity : AppCompatActivity() {
         modifier: Modifier = Modifier,
         children: @Composable() () -> Unit
     ) {
-        Layout(children = children, modifier = modifier) { measurables, constraints ->
+        Layout(content = children, modifier = modifier) { measurables, constraints ->
             val placeables = measurables.map { measurable ->
                 // Measure each children
                 measurable.measure(constraints)

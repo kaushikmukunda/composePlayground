@@ -78,7 +78,7 @@ private fun ButtonUi(
   // Button minHeight < required GAR height. Button is enclosed in an invisible box that extends the
   // click area.
   Box(
-      alignment = Alignment.Center,
+      contentAlignment = Alignment.Center,
       modifier = buttonContainerModifier
           .preferredHeightIn(min = garMinHeight)
           .clickable(indication = null, interactionState = interactionState) { buttonOnClick() }
@@ -148,14 +148,14 @@ private fun iconUi(model: IconModel) {
   when (iconAsset) {
       is IconAsset.ImageIcon -> {
           Image(
-              asset = iconAsset.asset,
+              bitmap = iconAsset.asset,
               colorFilter = model.colorFilter,
               contentScale = contentScale,
               modifier = iconModifier
           )
       }
       is IconAsset.VectorIcon -> Image(
-          asset = iconAsset.asset,
+          imageVector = iconAsset.asset,
           colorFilter = model.colorFilter,
           contentScale = contentScale,
           modifier = iconModifier

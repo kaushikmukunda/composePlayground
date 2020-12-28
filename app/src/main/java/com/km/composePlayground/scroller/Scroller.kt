@@ -157,7 +157,7 @@ fun HorizontalScrollerUi(
       ?.let { Modifier.height(it) } ?: Modifier
 
     Box(
-      alignment = alignment,
+      contentAlignment = alignment,
       modifier = Modifier
         .fillMaxWidth()
         .then(scrollerHeightModifier)

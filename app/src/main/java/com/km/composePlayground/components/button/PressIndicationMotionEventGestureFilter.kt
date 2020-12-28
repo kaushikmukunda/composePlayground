@@ -6,7 +6,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.gesture.pressIndicatorGestureFilter
-import androidx.compose.ui.util.fastForEach
 
 /**
  * This gesture detector wraps around [Modifier.pressIndicatorGestureFilter] and converts
@@ -20,7 +19,7 @@ internal fun Modifier.pressIndicationMotionEventGestureFilter(
         val actionDownEvents = remember { mutableListOf<MotionEvent>() }
 
         onDispose {
-            actionDownEvents.fastForEach { it.recycle() }
+            actionDownEvents.forEach { it.recycle() }
             actionDownEvents.clear()
         }
 

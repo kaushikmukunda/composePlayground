@@ -311,7 +311,7 @@ private val ANIM_DURATION_MS = 667
 fun FullyLoadedTransition() {
     var animState by rememberState { FadeAnimState() }
 
-    Stack(modifier = Modifier.fillMaxWidth()) {
+    Box(modifier = Modifier.fillMaxWidth()) {
         AnimatedVisibility(
             visible = (animState.numText == 1),
             enter = expandHorizontally(

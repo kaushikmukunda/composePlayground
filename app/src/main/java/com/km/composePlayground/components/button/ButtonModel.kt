@@ -3,8 +3,8 @@ package com.km.composePlayground.components.button
 import android.view.MotionEvent
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ImageAsset
-import androidx.compose.ui.graphics.vector.VectorAsset
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -52,8 +52,8 @@ private val DEFAULT_ICON_PADDING = 8.dp
 private val DEFAULT_ICON_SIZE = 18.dp
 
 sealed class IconAsset {
-    class ImageIcon(val asset: ImageAsset) : IconAsset()
-    class VectorIcon(val asset: VectorAsset) : IconAsset()
+    class ImageIcon(val asset: ImageBitmap) : IconAsset()
+    class VectorIcon(val asset: ImageVector) : IconAsset()
 }
 
 class IconModel(

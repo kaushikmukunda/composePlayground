@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.AmbientLayoutDirection
 import androidx.compose.ui.platform.DensityAmbient
 import androidx.compose.ui.platform.LayoutDirectionAmbient
 import androidx.compose.ui.res.dimensionResource
@@ -49,9 +50,9 @@ private fun ButtonGroupUi(
     }
 
     // Wrap the FlowRow within a Box to accomodate the layout modifier as FlowRow does not accept one.
-    val isLtr = LayoutDirectionAmbient.current == LayoutDirection.Ltr
+    val isLtr = AmbientLayoutDirection.current == LayoutDirection.Ltr
     Box(
-        alignment = getLayoutDirectionAwareAlignment(model, isLtr),
+        contentAlignment = getLayoutDirectionAwareAlignment(model, isLtr),
         modifier =
         modifier
             .containerSizeModifier(model)

@@ -215,7 +215,7 @@ private fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
 
 @Composable
 private fun FooterItem(model: FooterModel) {
-  Box(alignment = Alignment.Center, modifier=Modifier.fillMaxSize()) {
+  Box(contentAlignment = Alignment.Center, modifier=Modifier.fillMaxSize()) {
     CircularProgressIndicator(modifier = Modifier.size(50.dp).padding(start = 16.dp))
   }
 }

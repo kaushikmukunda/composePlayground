@@ -21,7 +21,7 @@ class ActionButtonComposer(colorUtility: ColorUtility) : ButtonComposer(colorUti
         val wrapperModel = createWrapperModel(model, layoutSize)
         super.compose(
             model = wrapperModel,
-            modifier = modifier.plus(Modifier.layoutSizeCache(layoutSize = layoutSize))
+            modifier = modifier.then(Modifier.layoutSizeCache(layoutSize = layoutSize))
         )
     }
 
@@ -60,9 +60,9 @@ class ActionButtonComposer(colorUtility: ColorUtility) : ButtonComposer(colorUti
 
 @Composable
 private fun Modifier.layoutSizeCache(layoutSize: LayoutSize): Modifier {
-    return this + Modifier.onGloballyPositioned {
+    return this.then(Modifier.onGloballyPositioned {
         layoutSize.update(it.size)
-    }
+    })
 }
 
 @Composable
