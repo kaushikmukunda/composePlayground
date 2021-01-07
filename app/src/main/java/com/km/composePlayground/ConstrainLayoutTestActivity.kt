@@ -5,11 +5,13 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Box
 import androidx.compose.material.Button
+import androidx.compose.material.Text
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
@@ -35,8 +37,6 @@ import com.km.composePlayground.modifiers.layoutSize
 import com.km.composePlayground.modifiers.layoutSizeCache
 import com.km.composePlayground.modifiers.rememberState
 import kotlin.math.max
-import androidx.compose.material.Text
-import androidx.compose.material.ripple.rememberRipple
 
 class ConstrainLayoutTestActivity : AppCompatActivity() {
 
@@ -58,6 +58,28 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
                     modifier = Modifier.padding(top = 16.dp, bottom = 2.dp)
                 )
                 InstallBarSection(installBarModel.value)
+                ConstraintLessRow()
+            }
+        }
+    }
+
+    @Composable
+    private fun ConstraintLessRow() {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                "smaller string",
+//                "A really long string that should overflow button and ellipsize",
+                modifier = Modifier.weight(0.75f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Button(onClick = {},
+//                modifier = Modifier.wrapContentWidth()
+            ) {
+                Text(
+                    text="click me",
+                    maxLines = 1,
+                )
             }
         }
     }
@@ -142,8 +164,13 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
                     addInteraction(Interaction.Pressed)
                 }
             )
-            .clickable(indication = rememberRipple(color=Color.Red)) {  Log.d("dbg", "clicked")}
-            .border(width= 1.dp, color = Color.Red),
+            .clickable(indication = rememberRipple(color = Color.Red)) {
+                Log.d(
+                    "dbg",
+                    "clicked"
+                )
+            }
+            .border(width = 1.dp, color = Color.Red),
             constraintSet = ConstraintSet {
                 val textRef = createRefFor(textId)
                 val buttonRef = createRefFor(buttonId)
@@ -289,8 +316,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
                     clickData = object : ActionButtonClickData {
                         override var adTrackData: AdTrackData = AdTrackData(0, 0)
                     }
-                )
-                , secondButtonConfig = ButtonConfig(
+                ), secondButtonConfig = ButtonConfig(
                     buttonText = "button2",
                     uiAction = ButtonUiAction({}, {}, { _, _ -> }),
                     clickData = object : ActionButtonClickData {
