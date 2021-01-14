@@ -9,7 +9,6 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.InternalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -66,7 +65,6 @@ import kotlinx.coroutines.launch
  * @param children List of child composables that need to be rendered within the layout.
  */
 @Composable
-@OptIn(InternalLayoutApi::class, ExperimentalAnimationApi::class)
 fun DelimiterFlowLayout(
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     numLines: Int = 1,
@@ -203,7 +201,6 @@ private fun animatedOpacity(
  *
  */
 @Composable
-@OptIn(InternalLayoutApi::class)
 private fun DelimiterFlowLayoutInternal(
     horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
     numLines: Int = 1,
