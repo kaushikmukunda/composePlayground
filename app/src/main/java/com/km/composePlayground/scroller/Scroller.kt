@@ -1,10 +1,8 @@
 package com.km.composePlayground.scroller
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRowForIndexed
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.drawBehind
@@ -163,21 +161,20 @@ fun HorizontalScrollerUi(
         .then(scrollerHeightModifier)
         .fadingEdge(this, config.getFadingEdgeWidth())
     ) {
-      LazyRowForIndexed(
-        items = content.items,
-        contentPadding = layoutPolicy.getContentPadding().toPaddingValues(),
-      ) { index, item ->
-        content.uiAction.onItemRendered(index)
+      LazyRow(contentPadding = layoutPolicy.getContentPadding().toPaddingValues()) {
+        itemsIndexed(content.items) { index, item ->
+          content.uiAction.onItemRendered(index)
 
-        val decoratorModifier = decorationResolver.resolve(
-          itemDecoration
-            .getDecorators(
-              uiModel = item,
-              itemIndex = index,
-              listSize = content.items.size
-            )
-        )
-        mapper.map(uiModel = item)(decoratorModifier.width(width = itemWidth).fillMaxHeight())
+          val decoratorModifier = decorationResolver.resolve(
+            itemDecoration
+              .getDecorators(
+                uiModel = item,
+                itemIndex = index,
+                listSize = content.items.size
+              )
+          )
+          mapper.map(uiModel = item)(decoratorModifier.width(width = itemWidth).fillMaxHeight())
+        }
       }
     }
   }
@@ -251,7 +248,7 @@ class DividerDecorator(
       .drawBehind {
         val top = verticalPadding.toPx()
         val bot = size.height - verticalPadding.toPx()
-        val start = -sidePadding.toPx()/2
+        val start = -sidePadding.toPx() / 2
 
         drawLine(
           color = Color.Green,

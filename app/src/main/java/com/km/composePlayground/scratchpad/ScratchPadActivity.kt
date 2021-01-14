@@ -6,8 +6,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ClickableText
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
@@ -48,7 +51,8 @@ class ScratchPadActivity : AppCompatActivity() {
         setContent(Recomposer.current()) {
             MaterialTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    ModifierSample()
+                  AnimatedVisibilityLazyColumnDemo()
+//                    ModifierSample()
 //                TextAnnotation()
 //          FullScreenDialogSample()
 //          DialogSample()
@@ -63,6 +67,59 @@ class ScratchPadActivity : AppCompatActivity() {
         }
     }
 }
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun AnimatedVisibilityLazyColumnDemo() {
+    var itemNum by remember { mutableStateOf(0) }
+    Column {
+        Row(Modifier.fillMaxWidth()) {
+            Button(
+              { itemNum = itemNum + 1 },
+              enabled = itemNum <= turquoiseColors.size - 1,
+              modifier = Modifier.padding(15.dp).weight(1f)
+            ) {
+                Text("Add")
+            }
+
+            Button(
+              { itemNum = itemNum - 1 },
+              enabled = itemNum >= 1,
+              modifier = Modifier.padding(15.dp).weight(1f)
+            ) {
+                Text("Remove")
+            }
+        }
+        LazyRow {
+            itemsIndexed(turquoiseColors) { i, color ->
+                AnimatedVisibility(
+                  (turquoiseColors.size - itemNum) <= i,
+                  enter = fadeIn(0.1f, animSpec = tween(120)),
+                  exit = fadeOut(0.1f, animSpec = tween(120))
+                ) {
+                    Spacer(Modifier.width(90.dp).height(90.dp).background(color))
+                }
+            }
+        }
+
+        Button(
+          { itemNum = 0 },
+          modifier = Modifier.align(Alignment.End).padding(15.dp)
+        ) {
+            Text("Clear All")
+        }
+    }
+}
+
+private val turquoiseColors = listOf(
+  Color(0xff07688C),
+  Color(0xff1986AF),
+  Color(0xff50B6CD),
+  Color(0xffBCF8FF),
+  Color(0xff8AEAE9),
+  Color(0xff46CECA)
+)
+
 
 @Composable
 fun ModifierSample() {

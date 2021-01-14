@@ -127,11 +127,11 @@ class ScrollerActivity : AppCompatActivity() {
 
   var loadCount = 2
   private fun updateScrollingContent() {
-    // already loading
-    if (scrollerUiModel1x.content.value.items.last() is FooterModel) return
-    if (loadCount <= 0) return
-
     MainScope().launch {
+      // already loading
+      if (scrollerUiModel1x.content.value.items.last() is FooterModel) return@launch
+      if (loadCount <= 0) return@launch
+
       loadCount--
       val appendItems = mutableListOf<UiModel>(
         TextModel("adding $loadCount 0"),
