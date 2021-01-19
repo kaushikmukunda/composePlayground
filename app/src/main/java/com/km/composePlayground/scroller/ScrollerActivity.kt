@@ -74,9 +74,9 @@ class ScrollerActivity : AppCompatActivity() {
         ),
         mapper = uiModelMapper,
         uiModel = scrollerUiModel1x,
-        itemDecoration = { uiModel, index, _ ->
+        decorationCalculator = { uiModel ->
           val decorators = mutableListOf<Decorator>()
-          if (uiModel is TextModel && index > 0) {
+          if (uiModel is TextModel) {
             decorators.add(DividerDecorator())
           }
           decorators
