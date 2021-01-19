@@ -97,6 +97,7 @@ fun AnimatedVisibilityLazyColumnDemo() {
                   enter = fadeIn(0.1f, animSpec = tween(120)),
                   exit = fadeOut(0.1f, animSpec = tween(120))
                 ) {
+                    Log.d("dbg", "rendering i $i")
                     Spacer(Modifier.width(90.dp).height(90.dp).background(color))
                 }
             }

@@ -1,22 +1,28 @@
 package com.km.composePlayground.scroller
 
+import android.annotation.SuppressLint
+import android.util.Log
+import androidx.compose.animation.*
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.WithConstraints
 import androidx.compose.ui.layout.WithConstraintsScope
-import androidx.compose.ui.platform.ContextAmbient
+import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUi
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.fadingEdgeForeground
+import com.km.composePlayground.modifiers.rememberState
 
 
 /** Action associated with Scrolling Ui. */
@@ -138,6 +144,7 @@ class ScrollerUiModel(
  * @param itemDecoration The decoration to be applied to the individual items in the scroller.
  * @param decorationResolver Optional resolver that transforms decoration to a Modifier.
  */
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun HorizontalScrollerUi(
   uiModel: ScrollerUiModel,
@@ -161,19 +168,28 @@ fun HorizontalScrollerUi(
         .then(scrollerHeightModifier)
         .fadingEdge(this, config.getFadingEdgeWidth())
     ) {
+      val numItemsInRow = (maxWidth/itemWidth).toInt() - 1
+      val scrollerAnimationState by rememberState { ScrollerAnimationState(maxIdxRendered = numItemsInRow) }
+
       LazyRow(contentPadding = layoutPolicy.getContentPadding().toPaddingValues()) {
         itemsIndexed(content.items) { index, item ->
-          content.uiAction.onItemRendered(index)
-
-          val decoratorModifier = decorationResolver.resolve(
-            itemDecoration
-              .getDecorators(
-                uiModel = item,
-                itemIndex = index,
-                listSize = content.items.size
-              )
+          renderItemAtIndex(
+            scrollerAnimationState,
+            index,
+            item,
+            decorationResolver,
+            itemDecoration,
+            mapper,
+            itemWidth,
+            content
           )
-          mapper.map(uiModel = item)(decoratorModifier.width(width = itemWidth).fillMaxHeight())
+
+          onCommit {
+            content.uiAction.onItemRendered(index)
+            Log.d("dbg", "rendering $index maxIdx ${scrollerAnimationState.maxIdxRendered}")
+          }
+
+          scrollerAnimationState.updateState(index, content.items)
         }
       }
     }
@@ -181,13 +197,169 @@ fun HorizontalScrollerUi(
 }
 
 @Composable
+private fun renderItemAtIndex(
+  scrollerAnimationState: ScrollerAnimationState,
+  index: Int,
+  item: UiModel,
+  decorationResolver: DecorationResolver,
+  itemDecoration: ItemDecoration,
+  mapper: UiModelMapper,
+  itemWidth: Dp,
+  content: HorizontalScrollerUiContent
+) {
+  val oldItem = scrollerAnimationState.prevList.getOrNull(index)
+  val itemConflict = oldItem != null && oldItem != item
+  if (itemConflict) {
+    // Check if there existed a different item at this index. If yes, animate out that item
+    Log.d("dbg", "inConflict $index $oldItem $item")
+    Box {
+      renderOldItem(
+        decorationResolver,
+        itemDecoration,
+        oldItem!!,
+        index,
+        scrollerAnimationState,
+        mapper,
+        itemWidth
+      )
+
+      renderNewItem(
+        decorationResolver,
+        itemDecoration,
+        item,
+        index,
+        content,
+        mapper,
+        itemWidth,
+        itemConflict,
+        scrollerAnimationState
+      )
+    }
+  } else {
+    renderNewItem(
+      decorationResolver,
+      itemDecoration,
+      item,
+      index,
+      content,
+      mapper,
+      itemWidth,
+      itemConflict,
+      scrollerAnimationState
+    )
+  }
+}
+
+@Composable
+private fun renderOldItem(
+  decorationResolver: DecorationResolver,
+  itemDecoration: ItemDecoration,
+  oldItem: UiModel,
+  index: Int,
+  scrollerAnimationState: ScrollerAnimationState,
+  mapper: UiModelMapper,
+  itemWidth: Dp
+) {
+  val decorationModifier =
+    decorationResolver.resolve(
+      itemDecoration.getDecorators(
+        uiModel = oldItem,
+        itemIndex = index,
+        listSize = scrollerAnimationState.prevList.size
+      )
+    )
+
+  renderItemWithAnimation(
+    mapper = mapper,
+    modifier = decorationModifier.width(itemWidth).fillMaxHeight(),
+    item = oldItem,
+    itemVisible = false,
+    initiallyVisible = true
+  )
+}
+
+@Composable
+private fun renderNewItem(
+  decorationResolver: DecorationResolver,
+  itemDecoration: ItemDecoration,
+  item: UiModel,
+  index: Int,
+  content: HorizontalScrollerUiContent,
+  mapper: UiModelMapper,
+  itemWidth: Dp,
+  itemConflict: Boolean,
+  scrollerAnimationState: ScrollerAnimationState
+) {
+  // Animate in the new item
+  val decorationModifier = decorationResolver.resolve(
+    itemDecoration.getDecorators(
+      uiModel = item,
+      itemIndex = index,
+      listSize = content.items.size
+    )
+  )
+
+  renderItemWithAnimation(
+    mapper,
+    decorationModifier.width(itemWidth).fillMaxHeight(),
+    item = item,
+    itemVisible = true,
+    initiallyVisible = if (itemConflict) !itemConflict else index <= scrollerAnimationState.maxIdxRendered,
+    shouldDelay = itemConflict
+  )
+}
+
+private class ScrollerAnimationState(
+  var prevList: List<UiModel> = emptyList(),
+  var maxIdxRendered: Int = 0
+) {
+
+  fun updateState(index: Int, items: List<UiModel>) {
+    if (maxIdxRendered < index) {
+      maxIdxRendered = index
+
+      // Reached end of currList, replace with newList
+      prevList = items.toList()
+    }
+  }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@SuppressLint("ModifierParameter")
+@Composable
+private fun renderItemWithAnimation(
+  mapper: UiModelMapper,
+  modifier: Modifier,
+  item: UiModel,
+  itemVisible: Boolean,
+  initiallyVisible: Boolean,
+  shouldDelay: Boolean = false,
+) {
+  Log.d(
+    "dbg",
+    "rendering $item delay: $shouldDelay visible: $itemVisible initiallyVisible: $initiallyVisible"
+  )
+  AnimatedVisibility(
+    visible = itemVisible,
+    enter = fadeIn(
+      animSpec = tween(
+        delayMillis = if (shouldDelay) 100 else 0
+      )
+    ),
+    exit = fadeOut(animSpec = tween()),
+    initiallyVisible = initiallyVisible
+  ) {
+    mapper.map(uiModel = item).invoke(modifier)
+  }
+}
+
 private fun Modifier.fadingEdge(
   withConstraintsScope: WithConstraintsScope,
   fadingEdgeWidth: Dp
-): Modifier {
-  val screenWidth = ContextAmbient.current.resources.configuration.screenWidthDp
+): Modifier = composed {
+  val screenWidth = AmbientContext.current.resources.configuration.screenWidthDp
   val scrollerWidth = withConstraintsScope.maxWidth
-  return if (screenWidth < scrollerWidth.value) this
+  if (screenWidth < scrollerWidth.value) this
   else {
     val ratio = fadingEdgeWidth / scrollerWidth
     this.fadingEdgeForeground(color = Color.White, leftRatio = ratio, rightRatio = ratio)
@@ -239,8 +411,8 @@ val NoDecoration = object : ItemDecoration {
 
 class DividerDecorator(
   private val sidePadding: Dp = 16.dp,
-  private val verticalPadding: Dp = 8.dp)
-  : Decorator {
+  private val verticalPadding: Dp = 8.dp
+) : Decorator {
 
   override fun decorate(): Modifier {
     return Modifier

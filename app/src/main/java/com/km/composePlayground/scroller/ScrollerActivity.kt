@@ -4,169 +4,231 @@ import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
+import com.km.composePlayground.base.UniformUiModel
+import com.km.composePlayground.modifiers.rememberState
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ScrollerActivity : AppCompatActivity() {
 
-  var scrollerUiModel1x by mutableStateOf(ScrollerUiModel(getScrollingContent(false)))
+  private var scrollerUiModel1x by mutableStateOf(
+    ScrollerUiModel(
+      HorizontalScrollerUiContent(
+        uiAction = { updateScrollingContent(it) },
+        items = mutableListOf<UiModel>().apply { addAll(testList) }
+      )
+    )
+  )
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
       MaterialTheme {
         Column {
-          Text("0.75x")
-          HorizontalScrollerUi(
-            layoutPolicy = FixedLayoutPolicy(
-              desiredItemWidth = 80.dp,
-              baseWidthMultipler = 0.75f
-            ),
-            mapper = uiModelMapper,
-            uiModel = ScrollerUiModel(
-              HorizontalScrollerUiContent(
-                uiAction = { Log.d("dbg", "load more") },
-                items = testList
-              ),
-            ),
-            itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
-          )
-          Spacer(modifier = Modifier.height(16.dp))
-
-          Text("1x")
-          HorizontalScrollerUi(
-            layoutPolicy = FixedLayoutPolicy(
-              desiredItemWidth = 80.dp,
-              baseWidthMultipler = 1.25f
-            ),
-            mapper = uiModelMapper,
-            uiModel = scrollerUiModel1x,
-            itemDecoration = { uiModel, index, _ ->
-              val decorators = mutableListOf<Decorator>()
-              if (uiModel is TextModel && index > 0) {
-                decorators.add(DividerDecorator())
-              }
-              decorators
-            }
-          )
-
-          Spacer(modifier = Modifier.height(16.dp))
-          Text("1.25x")
-          HorizontalScrollerUi(
-            layoutPolicy = FixedLayoutPolicy(
-              desiredItemWidth = 80.dp,
-              baseWidthMultipler = 1.25f
-            ),
-            mapper = uiModelMapper,
-            uiModel = ScrollerUiModel(
-              HorizontalScrollerUiContent(
-                uiAction = {},
-                items = testList
-              ),
-            ),
-            itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
-          )
-
-          Spacer(modifier = Modifier.height(16.dp))
-          Text("fit entire content")
-          HorizontalScrollerUi(
-            mapper = uiModelMapper,
-            layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
-            uiModel = ScrollerUiModel(
-              HorizontalScrollerUiContent(
-                uiAction = {},
-                items = testList.subList(0, 2)
-              ),
-            ),
-            itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
-          )
-
-          Spacer(modifier = Modifier.height(16.dp))
-          Text("Fading Edge")
-          Box(modifier = Modifier.align(alignment = Alignment.CenterHorizontally).fillMaxWidth(0.9f)) {
-            HorizontalScrollerUi(
-              mapper = uiModelMapper,
-              layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
-              uiModel = ScrollerUiModel(
-                HorizontalScrollerUiContent(
-                  uiAction = {},
-                  items = testList
-                ),
-              ),
-              itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
-            )
-          }
+          HorizontalScrollers()
+//          SimpleListPagination()
         }
       }
     }
   }
 
+  @Composable
+  private fun HorizontalScrollers() {
+    Column {
+//      Text("0.75x")
+//      HorizontalScrollerUi(
+//        layoutPolicy = FixedLayoutPolicy(
+//          desiredItemWidth = 80.dp,
+//          baseWidthMultipler = 0.75f
+//        ),
+//        mapper = uiModelMapper,
+//        uiModel = ScrollerUiModel(
+//          HorizontalScrollerUiContent(
+//            uiAction = { Log.d("dbg", "load more") },
+//            items = testList
+//          ),
+//        ),
+//        itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
+//      )
+//      Spacer(modifier = Modifier.height(16.dp))
+
+      Log.d("dbg", "recomposing top level?")
+      Text("1x")
+      HorizontalScrollerUi(
+        layoutPolicy = FixedLayoutPolicy(
+          desiredItemWidth = 80.dp,
+          baseWidthMultipler = 1.25f
+        ),
+        mapper = uiModelMapper,
+        uiModel = scrollerUiModel1x,
+        itemDecoration = { uiModel, index, _ ->
+          val decorators = mutableListOf<Decorator>()
+          if (uiModel is TextModel && index > 0) {
+            decorators.add(DividerDecorator())
+          }
+          decorators
+        }
+      )
+
+//      Spacer(modifier = Modifier.height(16.dp))
+//      Text("1.25x")
+//      HorizontalScrollerUi(
+//        layoutPolicy = FixedLayoutPolicy(
+//          desiredItemWidth = 80.dp,
+//          baseWidthMultipler = 1.25f
+//        ),
+//        mapper = uiModelMapper,
+//        uiModel = ScrollerUiModel(
+//          HorizontalScrollerUiContent(
+//            uiAction = {},
+//            items = testList
+//          ),
+//        ),
+//        itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
+//      )
+//
+//      Spacer(modifier = Modifier.height(16.dp))
+//      Text("fit entire content")
+//      HorizontalScrollerUi(
+//        mapper = uiModelMapper,
+//        layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
+//        uiModel = ScrollerUiModel(
+//          HorizontalScrollerUiContent(
+//            uiAction = {},
+//            items = testList.subList(0, 2)
+//          ),
+//        ),
+//        itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
+//      )
+//
+//      Spacer(modifier = Modifier.height(16.dp))
+//      Text("Fading Edge")
+//      Box(modifier = Modifier.align(alignment = Alignment.CenterHorizontally).fillMaxWidth(0.9f)) {
+//        HorizontalScrollerUi(
+//          mapper = uiModelMapper,
+//          layoutPolicy = FixedLayoutPolicy(desiredItemWidth = 80.dp),
+//          uiModel = ScrollerUiModel(
+//            HorizontalScrollerUiContent(
+//              uiAction = {},
+//              items = testList
+//            ),
+//          ),
+//          itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
+//        )
+//      }
+    }
+  }
+
   var loadCount = 2
-  private fun updateScrollingContent() {
+  fun updateScrollingContent(index: Int) {
+    val scrollerUiModel = scrollerUiModel1x
+    if (index < scrollerUiModel.content.value.items.lastIndex) return
+
     MainScope().launch {
       // already loading
-      if (scrollerUiModel1x.content.value.items.last() is FooterModel) return@launch
+      if (scrollerUiModel.content.value.items.last() is FooterModel) return@launch
       if (loadCount <= 0) return@launch
 
       loadCount--
-      val appendItems = mutableListOf<UiModel>(
-        TextModel("adding $loadCount 0"),
-        TextModel("adding $loadCount 1"),
-        TextModel("adding $loadCount 2"),
-      )
-      val existingList = scrollerUiModel1x.content.value.items
-      scrollerUiModel1x.content.value =
-        getScrollingContent(true, existingList)
+
+      val scrollingList =
+        mutableListOf<UiModel>().apply { addAll(scrollerUiModel.content.value.items) }
+      scrollerUiModel.content.value =
+        HorizontalScrollerUiContent(
+          uiAction = { updateScrollingContent(it) },
+          items = scrollingList.apply { add(FooterModel()) }
+        )
 
       Log.d("dbg", "loading")
       delay(2000)
       Log.d("dbg", "loading complete")
 
-      scrollerUiModel1x.content.value = getScrollingContent(false, existingList, appendItems)
+      val appendItems = mutableListOf<UiModel>().apply {
+        for (i in 0..6) {
+          add(TextModel("adding $loadCount $i"))
+        }
+      }
+      val newList = scrollingList.apply {
+        removeLast()
+        addAll(appendItems)
+      }
+      scrollerUiModel.content.value =
+        HorizontalScrollerUiContent(
+          uiAction = { updateScrollingContent(it) },
+          items = newList
+        )
+    }
+  }
+}
+
+class SimplePaginationModel(
+  uiContent: SimplePaginationContent
+) : UniformUiModel<SimplePaginationContent> {
+  override val content = mutableStateOf(uiContent)
+}
+
+class SimplePaginationContent(
+  val paginationList: List<String>,
+  val uiAction: (Int) -> Any = {}
+)
+
+@Composable
+private fun SimpleListPagination() {
+  val uiModel = remember {
+    SimplePaginationModel(
+      SimplePaginationContent(
+        listOf("a", "b", "c", "d", "e", "f", "g", "h", "i")
+      )
+    )
+  }
+
+  var pageCount by rememberState { 0 }
+  val content = uiModel.content.value
+
+  fun itemRendered(index: Int) {
+    MainScope().launch {
+      if (index == content.paginationList.size - 1 && pageCount < 1) {
+        pageCount++
+
+        var paginationList = content.paginationList + "loading"
+        uiModel.content.value = SimplePaginationContent(paginationList)
+        Log.d("dbg", "simulate loading pagecnt $pageCount")
+        delay(1000)
+        Log.d("dbg", "finish loading $pageCount")
+
+        paginationList = paginationList - "loading" + listOf("k", "l", "m", "n", "o")
+        uiModel.content.value = SimplePaginationContent(paginationList)
+      }
     }
   }
 
-  private fun getScrollingContent(
-    isLoadingMore: Boolean,
-    existingList: List<UiModel> = testList,
-    appendList: List<UiModel> = listOf()
-  ): HorizontalScrollerUiContent {
-    return HorizontalScrollerUiContent(
-      uiAction = { position ->
-        if (position == scrollerUiModel1x.content.value.items.size - 1) {
-          updateScrollingContent()
-        }
-      },
-      items = mutableListOf<UiModel>().apply {
-        addAll(existingList)
-        addAll(appendList)
-        if (isLoadingMore) add(FooterModel())
-      },
-    )
+  Log.d("dbg", "recomposing simple list")
+  LazyRow(modifier = Modifier.fillMaxWidth()) {
+    Log.d("dbg", "recomposing lazy row")
+    itemsIndexed(content.paginationList) { index, item ->
+      itemRendered(index)
+      onCommit {
+        uiModel.content.value.uiAction(index)
+      }
+      Text(
+        item,
+        modifier = Modifier.size(80.dp).padding(start = 8.dp).background(color = Color.LightGray)
+      )
+      Log.d("dbg", "rendering $index")
+    }
   }
 }
 
@@ -215,7 +277,7 @@ private fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
 
 @Composable
 private fun FooterItem(model: FooterModel) {
-  Box(contentAlignment = Alignment.Center, modifier=Modifier.fillMaxSize()) {
+  Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
     CircularProgressIndicator(modifier = Modifier.size(50.dp).padding(start = 16.dp))
   }
 }
