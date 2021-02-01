@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
@@ -114,7 +115,7 @@ private fun HeaderUi(model: HeaderModel?, modifier: Modifier) {
     verticalAlignment = Alignment.CenterVertically
   ) {
     model?.let {
-      Text(it.title, maxLines = 2, overflow = TextOverflow.Clip)
+      Text(text=it.title, maxLines = 2, overflow = TextOverflow.Clip)
     }
   }
 }

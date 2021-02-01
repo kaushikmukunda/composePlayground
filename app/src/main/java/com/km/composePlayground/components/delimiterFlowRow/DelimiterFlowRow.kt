@@ -317,13 +317,9 @@ private fun DelimiterFlowLayoutInternal(
                 val childrenWidths = IntArray(placeables.size) { j -> placeables[j].width }
                 val horizontalPositions = IntArray(placeables.size)
 
-                horizontalArrangement.arrange(
-                    layoutWidth,
-                    childrenWidths,
-                    layoutDirection,
-                    density = this@Layout,
-                    horizontalPositions
-                )
+                with(horizontalArrangement) {
+                    arrange(layoutWidth, childrenWidths, layoutDirection, horizontalPositions)
+                }
 
                 placeables.fastForEachIndexed { j, placeable ->
                     // If delimiter and content are of unequal height, offset ensures they are center aligned.

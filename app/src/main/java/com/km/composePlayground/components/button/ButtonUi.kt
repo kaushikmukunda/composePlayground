@@ -4,8 +4,9 @@ import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
-import androidx.compose.material.ButtonConstants
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.onCommit
@@ -17,7 +18,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.semantics.accessibilityLabel
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -90,7 +91,7 @@ private fun ButtonUi(
         // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
         // based on enabled state. The button background color also depends on buttonStyle. By passing
         // the same value, this wrapper maintains control over background color.
-        colors = ButtonConstants.defaultButtonColors(
+        colors = ButtonDefaults.buttonColors(
             backgroundColor = backgroundColor,
             disabledBackgroundColor = backgroundColor,
             contentColor = getButtonTextColor(model, colorUtility),
@@ -101,7 +102,7 @@ private fun ButtonUi(
             end = buttonWidthPadding
         ),
         border = getBorder(model, colorUtility),
-        elevation = ButtonConstants.defaultElevation(0.dp, 0.dp, 0.dp),
+        elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp),
         modifier = buttonModifier
 //            .then(loggingModifier)
             .minSizeModifier(model)
@@ -151,14 +152,16 @@ private fun iconUi(model: IconModel) {
               bitmap = iconAsset.asset,
               colorFilter = model.colorFilter,
               contentScale = contentScale,
-              modifier = iconModifier
+              modifier = iconModifier,
+              contentDescription = null
           )
       }
       is IconAsset.VectorIcon -> Image(
           imageVector = iconAsset.asset,
           colorFilter = model.colorFilter,
           contentScale = contentScale,
-          modifier = iconModifier
+          modifier = iconModifier,
+          contentDescription = null
       )
   }
 }
@@ -250,7 +253,7 @@ private fun Modifier.touchModifier(model: ButtonUiModel): Modifier {
 private fun Modifier.accessibilityModifier(model: ButtonUiModel): Modifier {
   return this.then(
       Modifier.semantics {
-          accessibilityLabel = model.accessibilityLabel ?: model.buttonText
+          contentDescription = model.accessibilityLabel ?: model.buttonText
       }
   )
 }

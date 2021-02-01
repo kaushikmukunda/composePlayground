@@ -164,12 +164,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
                     addInteraction(Interaction.Pressed)
                 }
             )
-            .clickable(indication = rememberRipple(color = Color.Red)) {
-                Log.d(
-                    "dbg",
-                    "clicked"
-                )
-            }
+            .clickable() { Log.d("dbg", "clicked") }
             .border(width = 1.dp, color = Color.Red),
             constraintSet = ConstraintSet {
                 val textRef = createRefFor(textId)
