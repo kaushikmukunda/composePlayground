@@ -39,11 +39,37 @@ class ScrollerActivity : AppCompatActivity() {
     setContent {
       MaterialTheme {
         Column {
-          HorizontalScrollers()
+//          HorizontalScrollers()
 //          SimpleListPagination()
+          GridScroller()
         }
       }
     }
+  }
+
+  @Composable
+  private fun GridScroller() {
+    StaticGridUi(
+      model = StaticGridUiModel(
+        StaticGridUiModelContent(
+          itemList = testList,
+          spanCount = 3,
+          spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
+          ""
+        )
+      )
+    )
+
+//    DynamicGridUi(
+//      model = DynamicGridUiModel(
+//        DynamicGridUiModelContent(
+//          itemList = testList,
+//          desiredCellSize = 240,
+//          spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
+//          ""
+//        )
+//      )
+//    )
   }
 
   @Composable
@@ -234,17 +260,11 @@ private fun SimpleListPagination() {
 }
 
 
-val testList = mutableListOf<UiModel>(
-  TextModel("Hello World"),
-  TextModel("Foo"),
-  TextModel("Bar"),
-  TextModel("Baz"),
-  TextModel("Word 1"),
-  TextModel("Word 2"),
-  TextModel("Word 3"),
-  TextModel("Word 4"),
-  TextModel("Word 5"),
-)
+val testList = mutableListOf<UiModel>().apply {
+  for (i in 0..100) {
+    add(TextModel("Word $i"))
+  }
+}
 
 class TextModel(val text: String) : UiModel
 class FooterModel() : UiModel
@@ -267,7 +287,7 @@ val uiModelMapper = object : UiModelMapper {
 }
 
 @Composable
-private fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
+fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
   Text(
     text = model.text,
     modifier = modifier

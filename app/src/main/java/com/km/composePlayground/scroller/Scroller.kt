@@ -58,7 +58,7 @@ interface HorizontalScrollerLayoutPolicy {
    *
    * @param scope Provides the layout constraints of the scroller.
    */
-  fun getChildWidth(scope: WithConstraintsScope): Dp
+  fun getChildWidth(scope: BoxWithConstraintsScope): Dp
 
   /**
    * Given the width of a child, returns the desired height of the horizontal scroller or null if
@@ -186,7 +186,7 @@ fun HorizontalScrollerUi(
   decorationCalculator: DecorationCalculator = NoDecoration,
   decorationResolver: DecorationModifierCalculator = StandardDecorationResolver
 ) = UniformUi(uiModel) { content ->
-  WithConstraints {
+  BoxWithConstraints {
     val alignment =
       if (config.shouldCenterContent()) Alignment.Center else Alignment.TopStart
     val itemWidth = layoutPolicy.getChildWidth(this)
@@ -202,7 +202,7 @@ fun HorizontalScrollerUi(
     ) {
       // The initial set of items should not be animated. Initialize the maxIdxRendered to
       // the number of items displayed in row.
-      val numItemsInRow = (maxWidth / itemWidth).toInt() - 1
+      val numItemsInRow = (this@BoxWithConstraints.maxWidth / itemWidth).toInt() - 1
       val scrollerAnimationState by rememberState {
         ScrollerAnimationState(maxIdxRendered = numItemsInRow, initial = content.items)
       }
@@ -353,7 +353,7 @@ private fun RenderItemWithAnimation(
 }
 
 private fun Modifier.fadingEdge(
-  withConstraintsScope: WithConstraintsScope,
+  withConstraintsScope: BoxWithConstraintsScope,
   fadingEdgeWidth: Dp
 ): Modifier = composed {
   val screenWidth = AmbientContext.current.resources.configuration.screenWidthDp
@@ -383,7 +383,7 @@ class FixedLayoutPolicy(
 ) :
   HorizontalScrollerLayoutPolicy {
 
-  override fun getChildWidth(scope: WithConstraintsScope): Dp {
+  override fun getChildWidth(scope: BoxWithConstraintsScope): Dp {
     val widthForChildren =
       (scope.maxWidth - getContentPadding().start - getContentPadding().end)
     return Dp(
