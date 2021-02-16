@@ -15,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.setContent
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
@@ -26,12 +27,12 @@ import kotlinx.coroutines.launch
 class ScrollerActivity : AppCompatActivity() {
 
   private var scrollerUiModel1x by mutableStateOf(
-    ScrollerUiModel(
-      HorizontalScrollerUiContent(
-        uiAction = { updateScrollingContent(it) },
-        items = mutableListOf<UiModel>().apply { addAll(testList) }
+      ScrollerUiModel(
+          HorizontalScrollerUiContent(
+              uiAction = { updateScrollingContent(it) },
+              items = mutableListOf<UiModel>().apply { addAll(testList) }
+          )
       )
-    )
   )
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,27 +50,45 @@ class ScrollerActivity : AppCompatActivity() {
 
   @Composable
   private fun GridScroller() {
-    StaticGridUi(
-      model = StaticGridUiModel(
-        StaticGridUiModelContent(
-          itemList = testList,
-          spanCount = 3,
-          spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
-          ""
-        )
-      )
-    )
+    VerticalScroller(
+        uiModel = VerticalScrollerUiModel(
+            uiContent = VerticalScrollerUiModelContent(
+                itemList = listOf(
+                    UnderlineTextModel("Static Grid"),
+                    StaticGridUiModel(
+                        StaticGridUiModelContent(
+                            itemList = testList,
+                            spanCount = 3,
+                            spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
+                            ""
+                        )
+                    ),
 
-//    DynamicGridUi(
-//      model = DynamicGridUiModel(
-//        DynamicGridUiModelContent(
-//          itemList = testList,
-//          desiredCellSize = 240,
-//          spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
-//          ""
-//        )
-//      )
-//    )
+                    UnderlineTextModel("Horizontal Scroller"),
+                    scrollerUiModel1x,
+
+                    UnderlineTextModel("Dynamic Grid"),
+                    DynamicGridUiModel(
+                        DynamicGridUiModelContent(
+                            itemList = testList,
+                            desiredCellSize = 240,
+                            spanLookup = { idx -> if (idx > 0 && (idx % 7 == 0 || idx % 11 == 0)) 2 else 1 },
+                            ""
+                        )
+                    ),
+
+                    UnderlineTextModel("Linear Section"),
+                    SectionUiModel(
+                        SectionUiModelContent(
+                            itemList = testList.subList(0, 10),
+                            identity = "",
+                        )
+                    )
+                )
+            )
+        ),
+        mapper = uiModelMapper
+    )
   }
 
   @Composable
@@ -95,19 +114,19 @@ class ScrollerActivity : AppCompatActivity() {
       Log.d("dbg", "recomposing top level?")
       Text("1x")
       HorizontalScrollerUi(
-        layoutPolicy = FixedLayoutPolicy(
-          desiredItemWidth = 80.dp,
-          baseWidthMultipler = 1.25f
-        ),
-        mapper = uiModelMapper,
-        uiModel = scrollerUiModel1x,
-        decorationCalculator = { uiModel ->
-          val decorators = mutableListOf<Decorator>()
-          if (uiModel is TextModel) {
-            decorators.add(DividerDecorator())
+          layoutPolicy = FixedLayoutPolicy(
+              desiredItemWidth = 80.dp,
+              baseWidthMultipler = 1.25f
+          ),
+          mapper = uiModelMapper,
+          uiModel = scrollerUiModel1x,
+          decorationCalculator = { uiModel ->
+            val decorators = mutableListOf<Decorator>()
+            if (uiModel is TextModel) {
+              decorators.add(DividerDecorator())
+            }
+            decorators
           }
-          decorators
-        }
       )
 
 //      Spacer(modifier = Modifier.height(16.dp))
@@ -172,12 +191,12 @@ class ScrollerActivity : AppCompatActivity() {
       loadCount--
 
       val scrollingList =
-        mutableListOf<UiModel>().apply { addAll(scrollerUiModel.content.value.items) }
+          mutableListOf<UiModel>().apply { addAll(scrollerUiModel.content.value.items) }
       scrollerUiModel.content.value =
-        HorizontalScrollerUiContent(
-          uiAction = { updateScrollingContent(it) },
-          items = scrollingList.apply { add(FooterModel()) }
-        )
+          HorizontalScrollerUiContent(
+              uiAction = { updateScrollingContent(it) },
+              items = scrollingList.apply { add(FooterModel()) }
+          )
 
       Log.d("dbg", "loading")
       delay(2000)
@@ -193,32 +212,32 @@ class ScrollerActivity : AppCompatActivity() {
         addAll(appendItems)
       }
       scrollerUiModel.content.value =
-        HorizontalScrollerUiContent(
-          uiAction = { updateScrollingContent(it) },
-          items = newList
-        )
+          HorizontalScrollerUiContent(
+              uiAction = { updateScrollingContent(it) },
+              items = newList
+          )
     }
   }
 }
 
 class SimplePaginationModel(
-  uiContent: SimplePaginationContent
+    uiContent: SimplePaginationContent
 ) : UniformUiModel<SimplePaginationContent> {
   override val content = mutableStateOf(uiContent)
 }
 
 class SimplePaginationContent(
-  val paginationList: List<String>,
-  val uiAction: (Int) -> Any = {}
+    val paginationList: List<String>,
+    val uiAction: (Int) -> Any = {}
 )
 
 @Composable
 private fun SimpleListPagination() {
   val uiModel = remember {
     SimplePaginationModel(
-      SimplePaginationContent(
-        listOf("a", "b", "c", "d", "e", "f", "g", "h", "i")
-      )
+        SimplePaginationContent(
+            listOf("a", "b", "c", "d", "e", "f", "g", "h", "i")
+        )
     )
   }
 
@@ -251,8 +270,9 @@ private fun SimpleListPagination() {
         uiModel.content.value.uiAction(index)
       }
       Text(
-        item,
-        modifier = Modifier.size(80.dp).padding(start = 8.dp).background(color = Color.LightGray)
+          item,
+          modifier = Modifier.size(80.dp).padding(start = 8.dp)
+              .background(color = Color.LightGray)
       )
       Log.d("dbg", "rendering $index")
     }
@@ -267,11 +287,12 @@ val testList = mutableListOf<UiModel>().apply {
 }
 
 class TextModel(val text: String) : UiModel
+class UnderlineTextModel(val text: String) : UiModel
 class FooterModel() : UiModel
 
 
 /** A sample implmentation of UiModel. */
-val uiModelMapper = object : UiModelMapper {
+val uiModelMapper = object : UiModelComposableMapper {
 
   override fun map(uiModel: UiModel): @Composable() (Modifier) -> Unit {
     return { modifier -> internalMap(uiModel, modifier) }
@@ -280,8 +301,25 @@ val uiModelMapper = object : UiModelMapper {
   @Composable
   private fun internalMap(uiModel: UiModel, modifier: Modifier) {
     when (uiModel) {
-      is TextModel -> TextItem(uiModel, modifier.padding(vertical = 8.dp))
+      is TextModel -> TextItem(uiModel, modifier)
+      is UnderlineTextModel -> UnderlineTextItem(model = uiModel)
       is FooterModel -> FooterItem(model = uiModel)
+      is ScrollerUiModel ->
+        HorizontalScrollerUi(
+          layoutPolicy = FixedLayoutPolicy(
+              desiredItemWidth = 80.dp,
+              baseWidthMultipler = 1.25f
+          ),
+          mapper = this,
+          uiModel = uiModel,
+          decorationCalculator = { itemModel ->
+            val decorators = mutableListOf<Decorator>()
+            if (itemModel is TextModel) {
+              decorators.add(DividerDecorator(verticalPadding = 0.dp))
+            }
+            decorators
+          }
+      )
     }
   }
 }
@@ -289,10 +327,20 @@ val uiModelMapper = object : UiModelMapper {
 @Composable
 fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
   Text(
-    text = model.text,
-    modifier = modifier
-      .background(color = Color.Gray)
+      text = model.text,
+      modifier = modifier
+          .padding(bottom = 8.dp, end = 8.dp)
+          .background(color = Color.Gray)
 //      .border(width = 1.dp, color = Color.Yellow)
+  )
+}
+
+@Composable
+fun UnderlineTextItem(model: UnderlineTextModel, modifier: Modifier = Modifier) {
+  Text(
+      text = model.text,
+      textDecoration = TextDecoration.Underline,
+      modifier = modifier.padding(8.dp)
   )
 }
 

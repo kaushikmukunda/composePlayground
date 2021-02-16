@@ -9,14 +9,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.*
+import androidx.compose.runtime.savedinstancestate.rememberSavedInstanceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.drawBehind
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.WithConstraints
-import androidx.compose.ui.layout.WithConstraintsScope
 import androidx.compose.ui.platform.AmbientContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -37,7 +36,7 @@ fun interface ScrollingUiAction {
 }
 
 /** Maps UiModels to composables. */
-fun interface UiModelMapper {
+fun interface UiModelComposableMapper {
 
   fun map(uiModel: UiModel): @Composable() (Modifier) -> Unit
 }
@@ -98,6 +97,9 @@ fun interface DecorationCalculator {
 
 }
 
+/** Placeholder calculator that provides no decorations. */
+val EMPTY_DECORATION_CALCULATOR: DecorationCalculator = DecorationCalculator { emptyList() }
+
 /**
  * Resolves the list of decorators to a Compose Ui consumable Modifier.
  *
@@ -109,6 +111,10 @@ fun interface DecorationModifierCalculator {
   fun getModifierForDecorations(decorationList: List<Decorator>): Modifier
 
 }
+
+/** Placeholder calculator that provides no decorations. */
+val EMPTY_DECORATION_MODIFIER_CALCULATOR: DecorationModifierCalculator =
+  DecorationModifierCalculator { Modifier }
 
 /**
  * UiContent for the horizontal scroller.
@@ -182,7 +188,7 @@ fun HorizontalScrollerUi(
   uiModel: ScrollerUiModel,
   layoutPolicy: HorizontalScrollerLayoutPolicy,
   config: HorizontalScrollerConfig = DefaultHorizontalScrollerConfig,
-  mapper: UiModelMapper,
+  mapper: UiModelComposableMapper,
   decorationCalculator: DecorationCalculator = NoDecoration,
   decorationResolver: DecorationModifierCalculator = StandardDecorationResolver
 ) = UniformUi(uiModel) { content ->
@@ -219,7 +225,7 @@ fun HorizontalScrollerUi(
             itemWidth
           )
 
-          onCommit {
+          SideEffect {
             content.uiAction.onItemRendered(index)
             Log.d("dbg", "rendering $index maxIdx ${scrollerAnimationState.maxIdxRendered}")
           }
@@ -238,7 +244,7 @@ private fun RenderItemAtIndex(
   item: UiModel,
   decorationModifierCalculator: DecorationModifierCalculator,
   decorationCalculator: DecorationCalculator,
-  mapper: UiModelMapper,
+  mapper: UiModelComposableMapper,
   itemWidth: Dp
 ) {
   val oldItem = scrollerAnimationState.items.getOrNull(index)
@@ -286,7 +292,7 @@ private fun RenderOldItem(
   decorationResolver: DecorationModifierCalculator,
   decorationCalculator: DecorationCalculator,
   oldItem: UiModel,
-  mapper: UiModelMapper,
+  mapper: UiModelComposableMapper,
   itemWidth: Dp
 ) {
   val decorationModifier = decorationResolver.getModifierForDecorations(
@@ -308,7 +314,7 @@ private fun RenderNewItem(
   decorationCalculator: DecorationCalculator,
   item: UiModel,
   index: Int,
-  mapper: UiModelMapper,
+  mapper: UiModelComposableMapper,
   itemWidth: Dp,
   itemConflict: Boolean,
   scrollerAnimationState: ScrollerAnimationState
@@ -334,7 +340,7 @@ private const val ANIM_DELAY_MS = 100
 @SuppressLint("ModifierParameter")
 @Composable
 private fun RenderItemWithAnimation(
-  mapper: UiModelMapper,
+  mapper: UiModelComposableMapper,
   modifier: Modifier,
   item: UiModel,
   itemVisible: Boolean,
@@ -410,6 +416,7 @@ class DividerDecorator(
   private val verticalPadding: Dp = 8.dp
 ) : Decorator {
 
+  @SuppressLint("ModifierFactoryExtensionFunction")
   override fun decorate(): Modifier {
     return Modifier
       .padding(start = sidePadding)
@@ -426,11 +433,6 @@ class DividerDecorator(
         )
       }
   }
-}
-
-class SpacerDecorator(private val spacerSize: Dp = 8.dp) : Decorator {
-
-  override fun decorate() = Modifier.padding(start = spacerSize)
 }
 
 val StandardDecorationResolver = DecorationModifierCalculator { decorators ->
