@@ -42,7 +42,7 @@ class SectionUiModel(
 @Stable
 open class SectionUiModelContent(
   val itemList: List<UiModel>,
-  identity: String,
+  val identity: String,
   val scrollingUiAction: ScrollingUiAction = ScrollingUiAction {},
 ) //: Identifiable {
 //  override val dataId: String = identity

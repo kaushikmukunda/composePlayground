@@ -3,53 +3,53 @@ package com.km.composePlayground.scroller
 import android.util.Log
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 
-fun LazyListScope.StaticGridUi(
-    model: StaticGridUiModel,
-    mapper: UiModelComposableMapper,
-    decorationResolver: DecorationResolver) {
+internal fun LazyListScope.StaticGridUi(
+  model: StaticGridUiModel,
+  elementRenderer: ElementRenderer
+) {
   val content = model.content.value
 
   VerticalGridUi(
-      itemList = content.itemList,
-      mapper = mapper,
-      decorationResolver = decorationResolver,
-      getCellWidth = { maxWidth / content.spanCount },
-      getNumColumns = { content.spanCount },
-      spanLookup = content.spanLookup
+    itemList = content.itemList,
+    elementRenderer = elementRenderer,
+    getCellWidth = { maxWidth / content.spanCount },
+    getNumColumns = { content.spanCount },
+    spanLookup = content.spanLookup,
+    scrollingUiAction = content.scrollingUiAction
   )
 }
 
-fun LazyListScope.DynamicGridUi(
-    model: DynamicGridUiModel,
-    mapper: UiModelComposableMapper,
-    decorationResolver: DecorationResolver) {
+internal fun LazyListScope.DynamicGridUi(
+  model: DynamicGridUiModel,
+  elementRenderer: ElementRenderer
+) {
   val content = model.content.value
 
   VerticalGridUi(
-      itemList = content.itemList,
-      mapper = mapper,
-      decorationResolver = decorationResolver,
-      getCellWidth = { density -> with(density) { content.desiredCellSize.toDp() } },
-      getNumColumns = { constraints.maxWidth / content.desiredCellSize },
-      spanLookup = content.spanLookup,
+    itemList = content.itemList,
+    elementRenderer = elementRenderer,
+    getCellWidth = { density -> with(density) { content.desiredCellSize.toDp() } },
+    getNumColumns = { constraints.maxWidth / content.desiredCellSize },
+    spanLookup = content.spanLookup,
+    scrollingUiAction = content.scrollingUiAction
   )
 }
 
 private fun LazyListScope.VerticalGridUi(
-    itemList: List<UiModel>,
-    mapper: UiModelComposableMapper,
-    decorationResolver: DecorationResolver,
-    getCellWidth: BoxWithConstraintsScope.(density: Density) -> Dp,
-    getNumColumns: BoxWithConstraintsScope.() -> Int,
-    spanLookup: ItemSpanLookup) {
+  itemList: List<UiModel>,
+  elementRenderer: ElementRenderer,
+  getCellWidth: BoxWithConstraintsScope.(density: Density) -> Dp,
+  getNumColumns: BoxWithConstraintsScope.() -> Int,
+  spanLookup: ItemSpanLookup,
+  scrollingUiAction: ScrollingUiAction
+) {
 
   // Keeps track of start and end indexes of items from itemList that are placed in each Row.
   val gridRowIndexes = mutableListOf<GridRowIndexes>()
@@ -74,13 +74,13 @@ private fun LazyListScope.VerticalGridUi(
       }
 
       Row(modifier = Modifier.fillMaxWidth()) {
-        // cellIdx specifies the next cell to be placed in the grid.
-        var cellIdx = 0
         // The first item from the list to be placed is the element after the last element placed
         // in the previous row.
         val startIdx = if (rowIdx == 0) 0 else gridRowIndexes[rowIdx - 1].endIndex + 1
         // itemIdx specifies the next item from the list that needs to be placed.
         var itemIdx = startIdx
+        // cellIdx specifies the next cell to be populated in the row.
+        var cellIdx = 0
 
         while (cellIdx < numColumns && !isEndOfList(itemIdx)) {
           val itemCellWidth = spanLookup(itemIdx)
@@ -94,24 +94,18 @@ private fun LazyListScope.VerticalGridUi(
           gridRowIndexes.addOrUpdate(rowIdx, startIdx, itemIdx)
           Log.d("dbg", "rendering $itemIdx")
           val item = itemList[itemIdx++]
-          renderItem(
-              item,
-              mapper,
-              Modifier
-                  .width(cellWidth.times(itemCellWidth))
-                  .then(decorationResolver.getDecorationModifier(item))
+          elementRenderer.Render(
+            uiModel = item,
+            modifier = Modifier.width(cellWidth.times(itemCellWidth))
           )
+
+          SideEffect {
+            scrollingUiAction.onItemRendered(itemIdx)
+          }
         }
       }
     }
   }
-}
-
-@Composable
-internal fun renderItem(item: UiModel,
-                       mapper: UiModelComposableMapper,
-                       modifier: Modifier) {
-  mapper.map(item).invoke(modifier)
 }
 
 private fun MutableList<GridRowIndexes>.addOrUpdate(idx: Int, startIdx: Int, endIdx: Int) {

@@ -7,7 +7,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.AmbientDensity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUi
 
@@ -37,34 +39,97 @@ fun VerticalScroller(
   contentPadding: PaddingValues = NO_CONTENT_PADDING,
   containerModifier: Modifier = Modifier
 ) = UniformUi(uiModel) { content ->
-  val decorationResolver = remember(decorationCalculator, decorationModifierCalculator) {
-    DecorationResolver(decorationCalculator, decorationModifierCalculator)
-  }
+  val scrollerElementRenderer =
+    remember(mapper, decorationCalculator, decorationModifierCalculator) {
+      ElementRenderer(mapper, decorationCalculator, decorationModifierCalculator)
+    }
 
   LazyColumn(modifier = containerModifier.fillMaxSize(), contentPadding = contentPadding) {
-    for (listItem in content.itemList) {
-      when (listItem) {
-        is DynamicGridUiModel -> DynamicGridUi(listItem, mapper, decorationResolver)
-        is StaticGridUiModel -> StaticGridUi(listItem, mapper, decorationResolver)
-        is SectionUiModel -> LinearUi(listItem, mapper, decorationResolver)
+    // UiModels following a RenderBlockingUiModel should not be displayed. As such we filter the
+    // nested list in two phases - truncate any models below a RenderBlockingUiModel at the top-level
+    // and then once again within Sections - DynamicGrid, StaticGrid, Section.
+    filterRenderBlockingModels(content.itemList).forEachIndexed { index, listItem ->
+      val filteredModel = filterRenderableContent(listItem)
+      when (filteredModel) {
+        is DynamicGridUiModel -> DynamicGridUi(filteredModel, scrollerElementRenderer)
+        is StaticGridUiModel -> StaticGridUi(filteredModel, scrollerElementRenderer)
+        is SectionUiModel -> LinearUi(filteredModel, scrollerElementRenderer)
         else -> item {
-          mapper.map(listItem).invoke(Modifier)
+          val decorationModifier = decorationModifierCalculator
+            .getModifierForDecorations(decorationCalculator.getDecorationsForUiModel(listItem))
+          mapper.map(listItem).invoke(decorationModifier)
         }
       }
+
+      content.scrollingUiAction.onItemRendered(index)
     }
   }
 }
 
-/** Convenience class to allow Compose scrollers to obtain the Modifier for decoration. */
-internal class DecorationResolver(
+private fun filterRenderableContent(uiModel: UiModel): UiModel {
+  return when (uiModel) {
+    is DynamicGridUiModel -> {
+      val content = uiModel.content.value
+      DynamicGridUiModel(
+        DynamicGridUiModelContent(
+          itemList = filterRenderBlockingModels(content.itemList),
+          desiredCellSize = content.desiredCellSize,
+          spanLookup = content.spanLookup,
+          identity = content.identity,
+          scrollingUiAction = content.scrollingUiAction
+        )
+      )
+    }
+    is StaticGridUiModel -> {
+      val content = uiModel.content.value
+      StaticGridUiModel(
+        StaticGridUiModelContent(
+          itemList = filterRenderBlockingModels(content.itemList),
+          spanCount = content.spanCount,
+          spanLookup = content.spanLookup,
+          identity = content.identity,
+          scrollingUiAction = content.scrollingUiAction
+        )
+      )
+    }
+    is SectionUiModel -> {
+      val content = uiModel.content.value
+      SectionUiModel(
+        SectionUiModelContent(
+          itemList = filterRenderBlockingModels(content.itemList),
+          identity = content.identity,
+          scrollingUiAction = content.scrollingUiAction
+        )
+      )
+    }
+    else -> uiModel
+  }
+}
+
+private fun filterRenderBlockingModels(uiModels: List<UiModel>): List<UiModel> {
+  val firstBlockingUiModel = uiModels.find { uiModel -> uiModel is RenderBlockingUiModel }
+  return firstBlockingUiModel?.let {
+    uiModels.subList(0, uiModels.indexOf(firstBlockingUiModel) + 1)
+  } ?: uiModels
+
+}
+
+/**
+ * Convenience class that helps transform a [UiModel] to its Composable with decorations.
+ * This abstracts out the rendering dependencies for scroller sections - linear, static grid,
+ * dynamic grid.
+ */
+internal class ElementRenderer(
+  private val mapper: UiModelComposableMapper,
   private val decorationCalculator: DecorationCalculator,
   private val decorationModifierCalculator: DecorationModifierCalculator
 ) {
 
-  @SuppressLint("ModifierFactoryExtensionFunction")
-  fun getDecorationModifier(uiModel: UiModel): Modifier {
-    return decorationModifierCalculator.getModifierForDecorations(
-      decorationCalculator.getDecorationsForUiModel(uiModel)
-    )
+  @Composable
+  fun Render(uiModel: UiModel, modifier: Modifier) {
+    val decorationModifier = decorationModifierCalculator
+      .getModifierForDecorations(decorationCalculator.getDecorationsForUiModel(uiModel))
+
+    mapper.map(uiModel).invoke(modifier.then(decorationModifier))
   }
 }

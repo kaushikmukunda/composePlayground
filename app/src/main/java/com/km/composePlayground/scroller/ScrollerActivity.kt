@@ -57,7 +57,9 @@ class ScrollerActivity : AppCompatActivity() {
                     UnderlineTextModel("Static Grid"),
                     StaticGridUiModel(
                         StaticGridUiModelContent(
-                            itemList = testList,
+                            itemList = testList.subList(0, 10) +
+//                                object : RenderBlockingUiModel {} +
+                                testList.subList(11, 100),
                             spanCount = 3,
                             spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
                             ""
@@ -66,6 +68,8 @@ class ScrollerActivity : AppCompatActivity() {
 
                     UnderlineTextModel("Horizontal Scroller"),
                     scrollerUiModel1x,
+
+//                    object : RenderBlockingUiModel {},
 
                     UnderlineTextModel("Dynamic Grid"),
                     DynamicGridUiModel(
@@ -306,20 +310,21 @@ val uiModelMapper = object : UiModelComposableMapper {
       is FooterModel -> FooterItem(model = uiModel)
       is ScrollerUiModel ->
         HorizontalScrollerUi(
-          layoutPolicy = FixedLayoutPolicy(
-              desiredItemWidth = 80.dp,
-              baseWidthMultipler = 1.25f
-          ),
-          mapper = this,
-          uiModel = uiModel,
-          decorationCalculator = { itemModel ->
-            val decorators = mutableListOf<Decorator>()
-            if (itemModel is TextModel) {
-              decorators.add(DividerDecorator(verticalPadding = 0.dp))
+            layoutPolicy = FixedLayoutPolicy(
+                desiredItemWidth = 80.dp,
+                baseWidthMultipler = 1.25f
+            ),
+            mapper = this,
+            uiModel = uiModel,
+            decorationCalculator = { itemModel ->
+              val decorators = mutableListOf<Decorator>()
+              if (itemModel is TextModel) {
+                decorators.add(DividerDecorator(verticalPadding = 0.dp))
+              }
+              decorators
             }
-            decorators
-          }
-      )
+        )
+      is RenderBlockingUiModel -> TextItem(TextModel("blocking item"))
     }
   }
 }
