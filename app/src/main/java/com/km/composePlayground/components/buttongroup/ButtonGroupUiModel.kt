@@ -10,43 +10,51 @@ enum class ButtonGroupVariant {
    * https://screenshot.googleplex.com/Wi3X9mcctnF
    */
   OUTLINE_FILL,
+
   /**
    * Primary button will use the filled style and secondary button will use the outline style. The
    * buttons will scale to fill the entire button group view width.
    * https://screenshot.googleplex.com/JSDPGvFa0pz
    */
   OUTLINE_FILL_50_50,
+
   /**
    * Primary button will use the filled style and secondary button will use the invisible style.
    * https://screenshot.googleplex.com/joHDyL33YJw
    */
   INVISIBLE_FILL,
+
   /**
    * Primary button and secondary button will use the invisible style.
    * https://screenshot.googleplex.com/gARrrxGr428
    */
   INVISIBLE_INVISIBLE,
+
   /**
    * Primary button will use the outline style and secondary button will use the filled style.
    * https://screenshot.googleplex.com/wWg6xg5OrAL
    */
   FILL_OUTLINE,
+
   /**
    * Primary button will use the outline style and secondary button will use the filled style. The
    * buttons will scale to fill the entire button group view width.
    * https://screenshot.googleplex.com/pg0NO8ApiTh
    */
   FILL_OUTLINE_50_50,
+
   /**
    * Both primary button and secondary button will use the outline style. The buttons will scale
    * to fill the entire button group view width. https://screenshot.googleplex.com/hxa6WqFZaby
    */
   OUTLINE_OUTLINE_50_50,
+
   /**
    * Primary button will use the invisible style and secondary button will use the fill style.
    * https://screenshot.googleplex.com/JDgsdJRLsJQ
    */
   FILL_INVISIBLE,
+
   /**
    * Primary button will use the invisible style and secondary button will use the outline style.
    * https://screenshot.googleplex.com/JspeO23FC0x

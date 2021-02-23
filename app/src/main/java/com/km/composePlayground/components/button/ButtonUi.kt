@@ -1,6 +1,5 @@
 package com.km.composePlayground.components.button
 
-import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -9,7 +8,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,8 +37,8 @@ open class ButtonComposer constructor(private val colorUtility: ColorUtility) {
    */
   @Composable
   open fun compose(
-      model: ButtonUiModel,
-      modifier: Modifier = Modifier,
+    model: ButtonUiModel,
+    modifier: Modifier = Modifier,
   ) {
     ButtonUi(colorUtility, model, modifier, Modifier)
   }
@@ -59,10 +57,10 @@ open class ButtonComposer constructor(private val colorUtility: ColorUtility) {
  */
 @Composable
 private fun ButtonUi(
-    colorUtility: ColorUtility,
-    model: ButtonUiModel,
-    buttonModifier: Modifier,
-    buttonContainerModifier: Modifier
+  colorUtility: ColorUtility,
+  model: ButtonUiModel,
+  buttonModifier: Modifier,
+  buttonContainerModifier: Modifier
 ) {
   if (model.buttonState == ButtonState.HIDDEN) {
     return
@@ -79,46 +77,46 @@ private fun ButtonUi(
   // Button minHeight < required GAR height. Button is enclosed in an invisible box that extends the
   // click area.
   Box(
-      contentAlignment = Alignment.Center,
-      modifier = buttonContainerModifier
-          .preferredHeightIn(min = garMinHeight)
-          .clickable(indication = null, interactionState = interactionState) { buttonOnClick() }
+    contentAlignment = Alignment.Center,
+    modifier = buttonContainerModifier
+      .preferredHeightIn(min = garMinHeight)
+      .clickable(indication = null, interactionState = interactionState) { buttonOnClick() }
   ) {
     Button(
-        onClick = { buttonOnClick() },
-        interactionState = interactionState,
-        enabled = model.isEnabled(),
-        // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
-        // based on enabled state. The button background color also depends on buttonStyle. By passing
-        // the same value, this wrapper maintains control over background color.
-        colors = ButtonDefaults.buttonColors(
-            backgroundColor = backgroundColor,
-            disabledBackgroundColor = backgroundColor,
-            contentColor = getButtonTextColor(model, colorUtility),
-            disabledContentColor = disabledContentColor
-        ),
-        contentPadding = PaddingValues(
-            start = buttonWidthPadding,
-            end = buttonWidthPadding
-        ),
-        border = getBorder(model, colorUtility),
-        elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp),
-        modifier = buttonModifier
+      onClick = { buttonOnClick() },
+      interactionState = interactionState,
+      enabled = model.isEnabled(),
+      // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
+      // based on enabled state. The button background color also depends on buttonStyle. By passing
+      // the same value, this wrapper maintains control over background color.
+      colors = ButtonDefaults.buttonColors(
+        backgroundColor = backgroundColor,
+        disabledBackgroundColor = backgroundColor,
+        contentColor = getButtonTextColor(model, colorUtility),
+        disabledContentColor = disabledContentColor
+      ),
+      contentPadding = PaddingValues(
+        start = buttonWidthPadding,
+        end = buttonWidthPadding
+      ),
+      border = getBorder(model, colorUtility),
+      elevation = ButtonDefaults.elevation(0.dp, 0.dp, 0.dp),
+      modifier = buttonModifier
 //            .then(loggingModifier)
-            .minSizeModifier(model)
-            .touchModifier(model)
-            .accessibilityModifier(model)
+        .minSizeModifier(model)
+        .touchModifier(model)
+        .accessibilityModifier(model)
     ) {
       Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.Center
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
       ) {
         positionalIconComposable(model.iconModel, IconPlacement.START)
         Text(
-            text = model.buttonText,
-            style = MaterialTheme.typography.subtitle2,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+          text = model.buttonText,
+          style = MaterialTheme.typography.subtitle2,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis
         )
         positionalIconComposable(model.iconModel, IconPlacement.END)
       }
@@ -147,30 +145,30 @@ private fun iconUi(model: IconModel) {
   val contentScale = ContentScale.Fit
   val iconAsset = model.icon
   when (iconAsset) {
-      is IconAsset.ImageIcon -> {
-          Image(
-              bitmap = iconAsset.asset,
-              colorFilter = model.colorFilter,
-              contentScale = contentScale,
-              modifier = iconModifier,
-              contentDescription = null
-          )
-      }
-      is IconAsset.VectorIcon -> Image(
-          imageVector = iconAsset.asset,
-          colorFilter = model.colorFilter,
-          contentScale = contentScale,
-          modifier = iconModifier,
-          contentDescription = null
+    is IconAsset.ImageIcon -> {
+      Image(
+        bitmap = iconAsset.asset,
+        colorFilter = model.colorFilter,
+        contentScale = contentScale,
+        modifier = iconModifier,
+        contentDescription = null
       )
+    }
+    is IconAsset.VectorIcon -> Image(
+      imageVector = iconAsset.asset,
+      colorFilter = model.colorFilter,
+      contentScale = contentScale,
+      modifier = iconModifier,
+      contentDescription = null
+    )
   }
 }
 
 @Composable
 private fun getButtonTextColor(model: ButtonUiModel, colorUtility: ColorUtility): Color {
   return when (model.buttonStyle) {
-      ButtonStyle.FILLED -> colorResource(R.color.colorPrimary)
-      ButtonStyle.OUTLINE, ButtonStyle.LINK -> colorResource(R.color.colorPrimaryDark)
+    ButtonStyle.FILLED -> colorResource(R.color.colorPrimary)
+    ButtonStyle.OUTLINE, ButtonStyle.LINK -> colorResource(R.color.colorPrimaryDark)
   }
 }
 
@@ -198,10 +196,10 @@ private fun getButtonWidthPadding(model: ButtonUiModel): Dp {
     return 0.dp
   }
   val paddingRes = when (model.buttonPadding) {
-      ButtonPadding.NONE -> R.dimen.componentized_none_button_width_padding
-      ButtonPadding.DEFAULT -> R.dimen.componentized_default_button_width_padding
-      ButtonPadding.COMPACT -> R.dimen.componentized_compact_button_width_padding
-      ButtonPadding.LOOSE -> R.dimen.componentized_loose_button_width_padding
+    ButtonPadding.NONE -> R.dimen.componentized_none_button_width_padding
+    ButtonPadding.DEFAULT -> R.dimen.componentized_default_button_width_padding
+    ButtonPadding.COMPACT -> R.dimen.componentized_compact_button_width_padding
+    ButtonPadding.LOOSE -> R.dimen.componentized_loose_button_width_padding
   }
   return dimensionResource(paddingRes)
 }
@@ -210,8 +208,8 @@ private fun getButtonWidthPadding(model: ButtonUiModel): Dp {
 private fun getBorder(model: ButtonUiModel, colorUtility: ColorUtility): BorderStroke? {
   return if (model.buttonStyle == ButtonStyle.OUTLINE && model.isEnabled()) {
     BorderStroke(
-        dimensionResource(R.dimen.componentized_button_outline),
-        Color.Black
+      dimensionResource(R.dimen.componentized_button_outline),
+      Color.Black
     )
   } else {
     null
@@ -242,18 +240,18 @@ private fun Modifier.minSizeModifier(model: ButtonUiModel): Modifier {
 @Composable
 private fun Modifier.touchModifier(model: ButtonUiModel): Modifier {
   return this.then(
-      Modifier.pointerInteropFilter { motionEvent ->
-          model.uiAction.onTouch.invoke(model.clickData, motionEvent)
-          false
-      }
+    Modifier.pointerInteropFilter { motionEvent ->
+      model.uiAction.onTouch.invoke(model.clickData, motionEvent)
+      false
+    }
   )
 }
 
 @Composable
 private fun Modifier.accessibilityModifier(model: ButtonUiModel): Modifier {
   return this.then(
-      Modifier.semantics {
-          contentDescription = model.accessibilityLabel ?: model.buttonText
-      }
+    Modifier.semantics {
+      contentDescription = model.accessibilityLabel ?: model.buttonText
+    }
   )
 }

@@ -2,25 +2,37 @@ package com.km.composePlayground
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.layout.*
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.preferredHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-
 import com.km.composePlayground.components.actionbutton.ActionButtonClickData
 import com.km.composePlayground.components.actionbutton.ActionButtonComposer
 import com.km.composePlayground.components.actionbutton.AdTrackData
 import com.km.composePlayground.components.actionbuttongroup.ActionButtonGroupComposer
 import com.km.composePlayground.components.actionbuttongroup.ActionButtonGroupComposer2
 import com.km.composePlayground.components.actionbuttongroup.ActionButtonGroupUiModel
-import com.km.composePlayground.components.button.*
+import com.km.composePlayground.components.button.ButtonComposer
+import com.km.composePlayground.components.button.ButtonStyle
+import com.km.composePlayground.components.button.ButtonUiAction
+import com.km.composePlayground.components.button.ButtonUiModel
+import com.km.composePlayground.components.button.ButtonVariant
+import com.km.composePlayground.components.button.ColorUtility
+import com.km.composePlayground.components.button.IconAsset
+import com.km.composePlayground.components.button.IconModel
+import com.km.composePlayground.components.button.IconPlacement
 import com.km.composePlayground.components.buttongroup.ButtonConfig
 import com.km.composePlayground.components.buttongroup.ButtonGroupComposer
 import com.km.composePlayground.components.buttongroup.ButtonGroupUiModel
@@ -43,7 +55,8 @@ class ButtonActivity : ComponentActivity() {
 
 @Composable
 private fun ActionButtonGroupContent2() {
-  val actionbuttonGroupComposer = ActionButtonGroupComposer2(ButtonGroupComposer(ButtonComposer(ColorUtility())))
+  val actionbuttonGroupComposer =
+    ActionButtonGroupComposer2(ButtonGroupComposer(ButtonComposer(ColorUtility())))
   actionbuttonGroupComposer.compose(
     ActionButtonGroupUiModel(
       ButtonGroupUiModel(
@@ -203,7 +216,7 @@ private fun ButtonScreenContent() {
             IconAsset.VectorIcon(vectorResource(id = R.drawable.ic_open_in_new)),
             IconPlacement.END,
             iconPadding = 0.dp,
-            colorFilter = ColorFilter(Color.Red, BlendMode.SrcAtop)
+            colorFilter = ColorFilter.tint(Color.Red, BlendMode.SrcAtop)
           )
         )
       )

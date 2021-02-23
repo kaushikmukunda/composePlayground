@@ -10,59 +10,59 @@ import androidx.compose.ui.unit.dp
 
 /** Actions associated with [ButtonUi]. */
 class ButtonUiAction(
-    val onShown: () -> Unit,
-    val onClick: (Any?) -> Unit,
-    val onTouch: (Any?, MotionEvent) -> Unit
+  val onShown: () -> Unit,
+  val onClick: (Any?) -> Unit,
+  val onTouch: (Any?, MotionEvent) -> Unit
 )
 
 /** Preset padding for button. */
 enum class ButtonPadding {
-    NONE,
-    DEFAULT,
-    COMPACT,
-    LOOSE
+  NONE,
+  DEFAULT,
+  COMPACT,
+  LOOSE
 }
 
 /** The type of button. See http://shortn/_lfmC8xpzFo */
 enum class ButtonVariant {
-    STANDARD,
-    SMALL
+  STANDARD,
+  SMALL
 }
 
 /** The style of button. See http://shortn/_lfmC8xpzFo */
 enum class ButtonStyle {
-    FILLED,
-    OUTLINE,
-    LINK
+  FILLED,
+  OUTLINE,
+  LINK
 }
 
 /** The state of button. See http://shortn/_lfmC8xpzFo */
 enum class ButtonState {
-    ENABLED,
-    DISABLED,
-    HIDDEN
+  ENABLED,
+  DISABLED,
+  HIDDEN
 }
 
 enum class IconPlacement {
-    START,
-    END
+  START,
+  END
 }
 
 private val DEFAULT_ICON_PADDING = 8.dp
 private val DEFAULT_ICON_SIZE = 18.dp
 
 sealed class IconAsset {
-    class ImageIcon(val asset: ImageBitmap) : IconAsset()
-    class VectorIcon(val asset: ImageVector) : IconAsset()
+  class ImageIcon(val asset: ImageBitmap) : IconAsset()
+  class VectorIcon(val asset: ImageVector) : IconAsset()
 }
 
 class IconModel(
-    val icon: IconAsset,
-    val iconPlacement: IconPlacement,
-    val iconPadding: Dp = DEFAULT_ICON_PADDING,
-    val iconWidth: Dp = DEFAULT_ICON_SIZE,
-    val iconHeight: Dp = DEFAULT_ICON_SIZE,
-    val colorFilter: ColorFilter? = null
+  val icon: IconAsset,
+  val iconPlacement: IconPlacement,
+  val iconPadding: Dp = DEFAULT_ICON_PADDING,
+  val iconWidth: Dp = DEFAULT_ICON_SIZE,
+  val iconHeight: Dp = DEFAULT_ICON_SIZE,
+  val colorFilter: ColorFilter? = null
 )
 
 /**
@@ -80,15 +80,15 @@ class IconModel(
  */
 @Immutable
 class ButtonUiModel(
-    val buttonText: String,
-    val uiAction: ButtonUiAction,
-    val clickData: Any?,
-    val buttonVariant: ButtonVariant = ButtonVariant.STANDARD,
-    val buttonStyle: ButtonStyle = ButtonStyle.FILLED,
-    val buttonPadding: ButtonPadding = ButtonPadding.DEFAULT,
-    val buttonState: ButtonState = ButtonState.ENABLED,
-    val iconModel: IconModel? = null,
-    val accessibilityLabel: String? = null
+  val buttonText: String,
+  val uiAction: ButtonUiAction,
+  val clickData: Any?,
+  val buttonVariant: ButtonVariant = ButtonVariant.STANDARD,
+  val buttonStyle: ButtonStyle = ButtonStyle.FILLED,
+  val buttonPadding: ButtonPadding = ButtonPadding.DEFAULT,
+  val buttonState: ButtonState = ButtonState.ENABLED,
+  val iconModel: IconModel? = null,
+  val accessibilityLabel: String? = null
 ) {
-    fun isEnabled(): Boolean = buttonState == ButtonState.ENABLED
+  fun isEnabled(): Boolean = buttonState == ButtonState.ENABLED
 }

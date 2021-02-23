@@ -5,8 +5,8 @@ import com.km.composePlayground.base.UiModel
 
 /** Actions user can perform on a link text. */
 fun interface LinkTextUiAction {
-    /** Called when the link text is clicked. [LinkTextUiModel.clickData] is passed back. */
-    fun onClick(clickData: Any?)
+  /** Called when the link text is clicked. [LinkTextUiModel.clickData] is passed back. */
+  fun onClick(clickData: Any?)
 }
 
 /**

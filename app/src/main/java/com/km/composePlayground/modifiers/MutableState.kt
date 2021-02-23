@@ -15,8 +15,8 @@ import androidx.compose.runtime.structuralEqualityPolicy
  */
 @Composable
 inline fun <T> rememberState(
-    policy: SnapshotMutationPolicy<T> = structuralEqualityPolicy(),
-    init: @ComposableContract(preventCapture = true) () -> T
+  policy: SnapshotMutationPolicy<T> = structuralEqualityPolicy(),
+  init: @ComposableContract(preventCapture = true) () -> T
 ): MutableState<T> = remember { mutableStateOf(init(), policy) }
 
 /**
@@ -25,8 +25,8 @@ inline fun <T> rememberState(
  */
 @Composable
 inline fun <T, /*reified*/ V1> rememberStateFor(
-    v1: V1,
-    init: @ComposableContract(preventCapture = true) () -> T
+  v1: V1,
+  init: @ComposableContract(preventCapture = true) () -> T
 ): MutableState<T> = remember(v1) { mutableStateOf(init()) }
 
 /**
@@ -35,9 +35,9 @@ inline fun <T, /*reified*/ V1> rememberStateFor(
  */
 @Composable
 inline fun <T, reified V1, reified V2> rememberStateFor(
-    v1: V1,
-    v2: V2,
-    init: @ComposableContract(preventCapture = true) () -> T
+  v1: V1,
+  v2: V2,
+  init: @ComposableContract(preventCapture = true) () -> T
 ): MutableState<T> = remember(v1, v2) { mutableStateOf(init()) }
 
 /**
@@ -46,6 +46,6 @@ inline fun <T, reified V1, reified V2> rememberStateFor(
  */
 @Composable
 inline fun <T> rememberStateFor(
-    vararg inputs: Any?,
-    init: @ComposableContract(preventCapture = true) () -> T
+  vararg inputs: Any?,
+  init: @ComposableContract(preventCapture = true) () -> T
 ): MutableState<T> = remember(*inputs) { mutableStateOf(init()) }

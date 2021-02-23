@@ -1,21 +1,21 @@
 package com.km.composePlayground.components.delimiterFlowRow
 
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animatedFloat
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimatedFloat
 import androidx.compose.animation.core.AnimationEndReason
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,10 +30,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import com.km.composePlayground.modifiers.rememberState
-import kotlin.math.max
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.max
 
 /**
  * Arranges children in left-to-right flow, packing as many child views as possible on
@@ -65,71 +65,71 @@ import kotlinx.coroutines.launch
  */
 @Composable
 fun DelimiterFlowLayout(
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    numLines: Int = 1,
-    modifier: Modifier = Modifier,
-    delimiter: @Composable() (Modifier) -> Unit,
-    children: List<@Composable() () -> Unit>
+  horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+  numLines: Int = 1,
+  modifier: Modifier = Modifier,
+  delimiter: @Composable() (Modifier) -> Unit,
+  children: List<@Composable() () -> Unit>
 ) {
-    var animationState by rememberState { AnimationState() }
+  var animationState by rememberState { AnimationState() }
 
-    val opacity = animatedOpacity(
-        animation = tween(
-            durationMillis = ANIMATION_DURATION_MS,
-            easing = LinearEasing
-        ),
-        visible = animationState.visible,
-        onAnimationFinish = {
-            // If the current and next indexes are the same, all the content fit in the available space,
-            // no animation is required.
-            if (animationState.currentIndex == animationState.nextIndex) {
-                return@animatedOpacity
-            }
+  val opacity = animatedOpacity(
+    animation = tween(
+      durationMillis = ANIMATION_DURATION_MS,
+      easing = LinearEasing
+    ),
+    visible = animationState.visible,
+    onAnimationFinish = {
+      // If the current and next indexes are the same, all the content fit in the available space,
+      // no animation is required.
+      if (animationState.currentIndex == animationState.nextIndex) {
+        return@animatedOpacity
+      }
 
-            MainScope().launch {
-                // Leave the current content visible for ANIMATION_DELAY_MS before fading out.
-                if (animationState.visible) {
-                    delay(ANIMATION_DELAY_MS)
-                }
-
-                // If the animationState is currently visible, the opacity will be changed to invisible.
-                // We want to keep the currentIndex for the fade-out so that the same content is faded out.
-                // On the flip side, if the current visibility is invisible, update current index to the
-                // next index for the fade-in transition.
-                animationState = AnimationState(
-                    visible = !animationState.visible,
-                    currentIndex =
-                    if (animationState.visible) animationState.currentIndex else animationState.nextIndex,
-                    nextIndex = animationState.nextIndex
-                )
-            }
+      MainScope().launch {
+        // Leave the current content visible for ANIMATION_DELAY_MS before fading out.
+        if (animationState.visible) {
+          delay(ANIMATION_DELAY_MS)
         }
-    )
 
-    DelimiterFlowLayoutInternal(
-        horizontalArrangement = horizontalArrangement,
-        numLines = numLines,
-        startIdx = animationState.currentIndex,
-        modifier = modifier
-            .alpha(opacity.value)
-            .onChildrenPlaced { idx, isLastIdx ->
-                // If the lastIdx was placed, we need to loop back from the start.
-                animationState.nextIndex = if (isLastIdx) 0 else idx
-            },
-        delimiter = delimiter,
-        children = children
-    )
+        // If the animationState is currently visible, the opacity will be changed to invisible.
+        // We want to keep the currentIndex for the fade-out so that the same content is faded out.
+        // On the flip side, if the current visibility is invisible, update current index to the
+        // next index for the fade-in transition.
+        animationState = AnimationState(
+          visible = !animationState.visible,
+          currentIndex =
+          if (animationState.visible) animationState.currentIndex else animationState.nextIndex,
+          nextIndex = animationState.nextIndex
+        )
+      }
+    }
+  )
+
+  DelimiterFlowLayoutInternal(
+    horizontalArrangement = horizontalArrangement,
+    numLines = numLines,
+    startIdx = animationState.currentIndex,
+    modifier = modifier
+      .alpha(opacity.value)
+      .onChildrenPlaced { idx, isLastIdx ->
+        // If the lastIdx was placed, we need to loop back from the start.
+        animationState.nextIndex = if (isLastIdx) 0 else idx
+      },
+    delimiter = delimiter,
+    children = children
+  )
 }
 
 /** Invoke [OnChildrenPlaced] with the nextChild index that needs to be placed. */
 private fun Modifier.onChildrenPlaced(onRendered: (Int, Boolean) -> Unit): Modifier =
-    this.then(
-        object : OnChildrenPlaced {
-            override fun onPlaced(nextChildIdx: Int, isLastIndex: Boolean) {
-                onRendered(nextChildIdx, isLastIndex)
-            }
-        }
-    )
+  this.then(
+    object : OnChildrenPlaced {
+      override fun onPlaced(nextChildIdx: Int, isLastIndex: Boolean) {
+        onRendered(nextChildIdx, isLastIndex)
+      }
+    }
+  )
 
 /**
  * A Modifier who's onLayout is called when [DelimiterFlowLayoutInternal] has placed children
@@ -137,7 +137,7 @@ private fun Modifier.onChildrenPlaced(onRendered: (Int, Boolean) -> Unit): Modif
  */
 private interface OnChildrenPlaced : Modifier.Element {
 
-    fun onPlaced(nextChildIdx: Int, isLastIndex: Boolean)
+  fun onPlaced(nextChildIdx: Int, isLastIndex: Boolean)
 }
 
 /** Layout animation constants. */
@@ -152,9 +152,9 @@ private const val ANIMATION_DURATION_MS = 250
  * @property nextIndex Child index at which to begin rendering children in the subsequent fade-in.
  */
 private class AnimationState(
-    var visible: Boolean = true,
-    var currentIndex: Int = 0,
-    var nextIndex: Int = 0
+  var visible: Boolean = true,
+  var currentIndex: Int = 0,
+  var nextIndex: Int = 0
 )
 
 /**
@@ -163,23 +163,23 @@ private class AnimationState(
  */
 @Composable
 private fun animatedOpacity(
-    animation: AnimationSpec<Float>,
-    visible: Boolean,
-    onAnimationFinish: () -> Unit = {}
+  animation: AnimationSpec<Float>,
+  visible: Boolean,
+  onAnimationFinish: () -> Unit = {}
 ): AnimatedFloat {
-    val animatedFloat = animatedFloat(if (!visible) 1f else 0f)
-    SideEffect() {
-        animatedFloat.animateTo(
-            if (visible) 1f else 0f,
-            anim = animation,
-            onEnd = { reason, _ ->
-                if (reason == AnimationEndReason.TargetReached) {
-                    onAnimationFinish()
-                }
-            }
-        )
-    }
-    return animatedFloat
+  val animatedFloat = remember { Animatable(if (!visible) 1f else 0f) }
+  SideEffect {
+    animatedFloat.animateTo(
+      if (visible) 1f else 0f,
+      anim = animation,
+      onEnd = { reason, _ ->
+        if (reason == AnimationEndReason.TargetReached) {
+          onAnimationFinish()
+        }
+      }
+    )
+  }
+  return animatedFloat
 }
 
 /**
@@ -201,138 +201,139 @@ private fun animatedOpacity(
  */
 @Composable
 private fun DelimiterFlowLayoutInternal(
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    numLines: Int = 1,
-    startIdx: Int,
-    modifier: Modifier = Modifier,
-    delimiter: @Composable() (Modifier) -> Unit,
-    children: List<@Composable() () -> Unit>
+  horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
+  numLines: Int = 1,
+  startIdx: Int,
+  modifier: Modifier = Modifier,
+  delimiter: @Composable() (Modifier) -> Unit,
+  children: List<@Composable() () -> Unit>
 ) {
-    // The layout logic is derived from Jetpack Compose Flow layout : http://shortn/_o7nTAEQgPM
-    Layout(
-        content = {
-            for (child in children) {
-                child()
-                delimiter(Modifier.layoutId(DELIMITER_ID))
-            }
-        },
-        modifier = modifier
-    ) { measurables, outerConstraints ->
-        val sequences = mutableListOf<List<Placeable>>()
-        val rowHeights = mutableListOf<Int>()
-        val rowVerticalPositions = mutableListOf<Int>()
+  // The layout logic is derived from Jetpack Compose Flow layout : http://shortn/_o7nTAEQgPM
+  Layout(
+    content = {
+      for (child in children) {
+        child()
+        delimiter(Modifier.layoutId(DELIMITER_ID))
+      }
+    },
+    modifier = modifier
+  ) { measurables, outerConstraints ->
+    val sequences = mutableListOf<List<Placeable>>()
+    val rowHeights = mutableListOf<Int>()
+    val rowVerticalPositions = mutableListOf<Int>()
 
-        var totalWidth = 0
-        var totalHeight = 0
+    var totalWidth = 0
+    var totalHeight = 0
 
-        val currentSequence = mutableListOf<Placeable>()
-        var currentWidth = 0
-        var currentHeight = 0
+    val currentSequence = mutableListOf<Placeable>()
+    var currentWidth = 0
+    var currentHeight = 0
 
-        val childConstraints = Constraints(maxWidth = outerConstraints.maxWidth)
-        var delimiterWidth = 0
+    val childConstraints = Constraints(maxWidth = outerConstraints.maxWidth)
+    var delimiterWidth = 0
 
-        var measurableIdx = startIdx - 1
+    var measurableIdx = startIdx - 1
 
-        fun trimLastLineDelimiter() {
-            if (measurables[measurableIdx].layoutId == DELIMITER_ID) {
-                currentSequence.removeAt(currentSequence.lastIndex)
-            }
-        }
-
-        // Return whether the placeable can be added to the current sequence.
-        fun canAddToCurrentSequence(placeable: Placeable): Boolean {
-            return currentSequence.isEmpty() ||
-                    (currentWidth + placeable.width + delimiterWidth) <= outerConstraints.maxWidth
-        }
-
-        // Store current sequence information and start a new sequence.
-        fun commitCurrentSequence() {
-            sequences += currentSequence.toList()
-            rowHeights += currentHeight
-            rowVerticalPositions += totalHeight
-
-            totalHeight += currentHeight
-            totalWidth = max(totalWidth, currentWidth)
-
-            currentSequence.clear()
-            currentWidth = 0
-            currentHeight = 0
-        }
-
-        fun commitLastSequence() {
-            trimLastLineDelimiter()
-            commitCurrentSequence()
-        }
-
-        for (idx in startIdx until measurables.size) {
-            val measurable = measurables[idx]
-            measurableIdx++
-
-            // Ask the child for its preferred size.
-            val placeable = measurable.measure(childConstraints)
-
-            // Lazily initialize delimiter width
-            if (delimiterWidth == 0 && measurable.layoutId == DELIMITER_ID) {
-                delimiterWidth = placeable.width
-            }
-
-            // Start a new sequence if there is not enough space.
-            if (!canAddToCurrentSequence(placeable)) commitCurrentSequence()
-
-            // Stop placing children if it already filled configured number of lines
-            if (sequences.size >= numLines) {
-                break
-            }
-
-            // Do not start line with delimiter
-            if (currentSequence.isEmpty() && measurable.layoutId == DELIMITER_ID) {
-                continue
-            }
-
-            // Add the child to the current sequence.
-            currentSequence.add(placeable)
-            currentWidth += placeable.width
-            currentHeight = max(currentHeight, placeable.height)
-        }
-
-        // Add last line
-        if (currentSequence.isNotEmpty()) commitLastSequence()
-
-        modifier.foldOut(null) { mod, _ ->
-            if (mod is OnChildrenPlaced) {
-                mod.onPlaced(measurableIdx, measurableIdx == measurables.lastIndex)
-            }
-            null
-        }
-
-        val layoutWidth = max(totalWidth, outerConstraints.minWidth)
-        val layoutHeight = max(totalHeight, outerConstraints.minHeight)
-
-        // Layout all the children
-        // Note: This is based of java/com/google/supplychain/scales/store/access/FlowRow.java
-        layout(layoutWidth, layoutHeight) {
-            sequences.fastForEachIndexed { i, placeables ->
-                val childrenWidths = IntArray(placeables.size) { j -> placeables[j].width }
-                val horizontalPositions = IntArray(placeables.size)
-
-                with(horizontalArrangement) {
-                    arrange(layoutWidth, childrenWidths, layoutDirection, horizontalPositions)
-                }
-
-                placeables.fastForEachIndexed { j, placeable ->
-                    // If delimiter and content are of unequal height, offset ensures they are center aligned.
-                    val verticalOffset = Alignment.CenterVertically.align(
-                        rowHeights[i] - placeable.height, placeable.height)
-
-                    placeable.place(
-                        x = horizontalPositions[j],
-                        y = rowVerticalPositions[i] + verticalOffset
-                    )
-                }
-            }
-        }
+    fun trimLastLineDelimiter() {
+      if (measurables[measurableIdx].layoutId == DELIMITER_ID) {
+        currentSequence.removeAt(currentSequence.lastIndex)
+      }
     }
+
+    // Return whether the placeable can be added to the current sequence.
+    fun canAddToCurrentSequence(placeable: Placeable): Boolean {
+      return currentSequence.isEmpty() ||
+        (currentWidth + placeable.width + delimiterWidth) <= outerConstraints.maxWidth
+    }
+
+    // Store current sequence information and start a new sequence.
+    fun commitCurrentSequence() {
+      sequences += currentSequence.toList()
+      rowHeights += currentHeight
+      rowVerticalPositions += totalHeight
+
+      totalHeight += currentHeight
+      totalWidth = max(totalWidth, currentWidth)
+
+      currentSequence.clear()
+      currentWidth = 0
+      currentHeight = 0
+    }
+
+    fun commitLastSequence() {
+      trimLastLineDelimiter()
+      commitCurrentSequence()
+    }
+
+    for (idx in startIdx until measurables.size) {
+      val measurable = measurables[idx]
+      measurableIdx++
+
+      // Ask the child for its preferred size.
+      val placeable = measurable.measure(childConstraints)
+
+      // Lazily initialize delimiter width
+      if (delimiterWidth == 0 && measurable.layoutId == DELIMITER_ID) {
+        delimiterWidth = placeable.width
+      }
+
+      // Start a new sequence if there is not enough space.
+      if (!canAddToCurrentSequence(placeable)) commitCurrentSequence()
+
+      // Stop placing children if it already filled configured number of lines
+      if (sequences.size >= numLines) {
+        break
+      }
+
+      // Do not start line with delimiter
+      if (currentSequence.isEmpty() && measurable.layoutId == DELIMITER_ID) {
+        continue
+      }
+
+      // Add the child to the current sequence.
+      currentSequence.add(placeable)
+      currentWidth += placeable.width
+      currentHeight = max(currentHeight, placeable.height)
+    }
+
+    // Add last line
+    if (currentSequence.isNotEmpty()) commitLastSequence()
+
+    modifier.foldOut(null) { mod, _ ->
+      if (mod is OnChildrenPlaced) {
+        mod.onPlaced(measurableIdx, measurableIdx == measurables.lastIndex)
+      }
+      null
+    }
+
+    val layoutWidth = max(totalWidth, outerConstraints.minWidth)
+    val layoutHeight = max(totalHeight, outerConstraints.minHeight)
+
+    // Layout all the children
+    // Note: This is based of java/com/google/supplychain/scales/store/access/FlowRow.java
+    layout(layoutWidth, layoutHeight) {
+      sequences.fastForEachIndexed { i, placeables ->
+        val childrenWidths = IntArray(placeables.size) { j -> placeables[j].width }
+        val horizontalPositions = IntArray(placeables.size)
+
+        with(horizontalArrangement) {
+          arrange(layoutWidth, childrenWidths, layoutDirection, horizontalPositions)
+        }
+
+        placeables.fastForEachIndexed { j, placeable ->
+          // If delimiter and content are of unequal height, offset ensures they are center aligned.
+          val verticalOffset = Alignment.CenterVertically.align(
+            rowHeights[i] - placeable.height, placeable.height
+          )
+
+          placeable.place(
+            x = horizontalPositions[j],
+            y = rowVerticalPositions[i] + verticalOffset
+          )
+        }
+      }
+    }
+  }
 }
 
 /**
@@ -350,19 +351,19 @@ internal const val DELIMITER_ID = "delimiterId"
  */
 @Composable
 fun BulletDelimiter(
-    bulletColor: Color = MaterialTheme.colors.primary,
-    bulletRadius: Dp = 2.dp,
-    bulletGap: Dp = 6.dp,
-    modifier: Modifier
+  bulletColor: Color = MaterialTheme.colors.primary,
+  bulletRadius: Dp = 2.dp,
+  bulletGap: Dp = 6.dp,
+  modifier: Modifier
 ) {
-    Text(
-        text = "",
-        modifier = modifier
-            .padding(horizontal = bulletGap)
-            .drawWithContent {
-                drawCircle(color = bulletColor, radius = bulletRadius.toPx())
-            }
-    )
+  Text(
+    text = "",
+    modifier = modifier
+      .padding(horizontal = bulletGap)
+      .drawWithContent {
+        drawCircle(color = bulletColor, radius = bulletRadius.toPx())
+      }
+  )
 }
 
 /**
@@ -372,5 +373,5 @@ fun BulletDelimiter(
  */
 @Composable
 fun SpaceDelimiter(width: Dp, modifier: Modifier) {
-    Spacer(modifier = modifier.width(width = width))
+  Spacer(modifier = modifier.width(width = width))
 }

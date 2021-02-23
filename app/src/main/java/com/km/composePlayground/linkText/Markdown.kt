@@ -85,13 +85,15 @@ class MarkdownText(htmlText: String) {
       Typeface.BOLD -> {
         SpanRange(
           Range(spannedText.getSpanStart(span), spannedText.getSpanEnd(span)),
-          Typeface.BOLD)
+          Typeface.BOLD
+        )
       }
 
       Typeface.ITALIC -> {
         SpanRange(
           Range(spannedText.getSpanStart(span), spannedText.getSpanEnd(span)),
-          Typeface.BOLD)
+          Typeface.BOLD
+        )
       }
       else -> null
     }
@@ -100,7 +102,8 @@ class MarkdownText(htmlText: String) {
   private fun extractUrlSpan(spannedText: Spanned, span: URLSpan): UrlSpan {
     return UrlSpan(
       Range(spannedText.getSpanStart(span), spannedText.getSpanEnd(span)),
-      span.url)
+      span.url
+    )
   }
 
   private class SpanRange(

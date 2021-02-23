@@ -9,14 +9,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.*
-import androidx.compose.runtime.savedinstancestate.rememberSavedInstanceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.AmbientContext
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
@@ -362,7 +361,7 @@ private fun Modifier.fadingEdge(
   withConstraintsScope: BoxWithConstraintsScope,
   fadingEdgeWidth: Dp
 ): Modifier = composed {
-  val screenWidth = AmbientContext.current.resources.configuration.screenWidthDp
+  val screenWidth = LocalContext.current.resources.configuration.screenWidthDp
   val scrollerWidth = withConstraintsScope.maxWidth
   if (screenWidth < scrollerWidth.value) this
   else {

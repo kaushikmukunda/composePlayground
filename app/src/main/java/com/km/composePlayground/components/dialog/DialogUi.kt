@@ -1,9 +1,17 @@
 package com.km.composePlayground.components.dialog
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.ClickableText
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.ConstraintLayout
+import androidx.compose.foundation.layout.ConstraintSet
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +31,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
 import com.km.composePlayground.components.button.ButtonUiAction
-import com.km.composePlayground.components.buttongroup.*
+import com.km.composePlayground.components.buttongroup.ButtonConfig
+import com.km.composePlayground.components.buttongroup.ButtonGroupComposer
+import com.km.composePlayground.components.buttongroup.ButtonGroupSnapping
+import com.km.composePlayground.components.buttongroup.ButtonGroupUiModel
+import com.km.composePlayground.components.buttongroup.ButtonGroupVariant
 import com.km.composePlayground.linkText.MarkdownText
 import com.km.composePlayground.linkText.getStyleSpans
 
@@ -53,33 +65,36 @@ private fun DialogUi(buttonGroupComposer: ButtonGroupComposer, model: DialogUiMo
     dismiss()
     model.uiAction.onDismiss(model.dialogData)
   }) {
+    ConstraintSet {
+      val headerRef = createRefFor(HEADER_ID)
+      val contentRef = createRefFor(CONTENT_ID)
+      val footerRef = createRefFor(FOOTER_ID)
+
+      constrain(headerRef) {
+        top.linkTo(parent.top)
+        bottom.linkTo(contentRef.top)
+        linkTo(start = parent.start, end = parent.end, bias = 0f)
+      }
+
+      constrain(contentRef) {
+        top.linkTo(headerRef.bottom)
+        bottom.linkTo(footerRef.top)
+        linkTo(start = parent.start, end = parent.end, bias = 0f)
+      }
+
+      constrain(footerRef) {
+        start.linkTo(parent.start)
+        end.linkTo(parent.end)
+        top.linkTo(contentRef.bottom)
+        bottom.linkTo(parent.bottom)
+      }
+    }
     ConstraintLayout(
-      constraintSet = ConstraintSet {
-        val headerRef = createRefFor(HEADER_ID)
-        val contentRef = createRefFor(CONTENT_ID)
-        val footerRef = createRefFor(FOOTER_ID)
-
-        constrain(headerRef) {
-          top.linkTo(parent.top)
-          bottom.linkTo(contentRef.top)
-          linkTo(start = parent.start, end = parent.end, bias = 0f)
-        }
-
-        constrain(contentRef) {
-          top.linkTo(headerRef.bottom)
-          bottom.linkTo(footerRef.top)
-          linkTo(start = parent.start, end = parent.end, bias = 0f)
-        }
-
-        constrain(footerRef) {
-          start.linkTo(parent.start)
-          end.linkTo(parent.end)
-          top.linkTo(contentRef.bottom)
-          bottom.linkTo(parent.bottom)
-        }
-      },
       modifier = Modifier
-        .background(color = MaterialTheme.colors.background, shape = RoundedCornerShape(corner = CornerSize(8.dp)))
+        .background(
+          color = MaterialTheme.colors.background,
+          shape = RoundedCornerShape(corner = CornerSize(8.dp))
+        )
         .fillMaxWidth()
         .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 16.dp)
     ) {
@@ -115,7 +130,7 @@ private fun HeaderUi(model: HeaderModel?, modifier: Modifier) {
     verticalAlignment = Alignment.CenterVertically
   ) {
     model?.let {
-      Text(text=it.title, maxLines = 2, overflow = TextOverflow.Clip)
+      Text(text = it.title, maxLines = 2, overflow = TextOverflow.Clip)
     }
   }
 }
@@ -126,7 +141,8 @@ private fun ContentUi(model: ContentModel, contentAction: (String) -> Unit, modi
   val urlSpans = model.content.markdown.urls
   ClickableText(
     text = buildAnnotatedString(model.content),
-    modifier = modifier.padding(vertical = 16.dp).heightIn(max = 448.dp).verticalScroll(scrollstate),
+    modifier = modifier.padding(vertical = 16.dp).heightIn(max = 448.dp)
+      .verticalScroll(scrollstate),
     onClick = { offset ->
       for (urlSpan in urlSpans) {
         if (offset >= urlSpan.range.start && offset < urlSpan.range.end) {

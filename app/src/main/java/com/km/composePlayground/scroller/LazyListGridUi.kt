@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.AmbientDensity
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import com.km.composePlayground.base.UiModel
@@ -59,14 +59,14 @@ private fun LazyListScope.VerticalGridUi(
     BoxWithConstraints {
       fun canPlaceItemsInRow(rowIdx: Int): Boolean {
         val allItemsPlaced = gridRowIndexes.isNotEmpty() &&
-            gridRowIndexes.last().endIndex == itemList.size - 1
+          gridRowIndexes.last().endIndex == itemList.size - 1
         val isAlreadyPlacedRow = rowIdx < gridRowIndexes.size
         return isAlreadyPlacedRow || !allItemsPlaced
       }
 
       fun isEndOfList(itemIdx: Int) = itemIdx >= itemList.size
 
-      val cellWidth = getCellWidth(AmbientDensity.current)
+      val cellWidth = getCellWidth(LocalDensity.current)
       val numColumns = getNumColumns()
 
       if (!canPlaceItemsInRow(rowIdx)) {
