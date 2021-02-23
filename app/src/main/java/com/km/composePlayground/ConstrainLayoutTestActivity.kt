@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.platform.DensityAmbient
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -44,7 +44,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent(Recomposer.current()) {
+        setContent {
             Column {
                 Text("Button section:", modifier = Modifier.padding(bottom = 2.dp))
                 ScreenContentWithConstraints()
@@ -192,7 +192,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
         val minHeight = rememberState { 0 }
         minHeight.value = max(minHeight.value, layoutSize.height)
 
-        return with(DensityAmbient.current) {
+        return with(LocalDensity.current) {
             Log.d(
                 "dbg",
                 "prev max: ${minHeight.value.toDp()} layoutSize: ${layoutSize.height.toDp()}"

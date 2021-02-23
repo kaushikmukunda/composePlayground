@@ -350,8 +350,8 @@ private fun RenderItemWithAnimation(
   val delayMillis = if (shouldDelay) ANIM_DELAY_MS else 0
   AnimatedVisibility(
     visible = itemVisible,
-    enter = fadeIn(animSpec = tween(easing = LinearEasing, delayMillis = delayMillis)),
-    exit = fadeOut(animSpec = tween(easing = LinearEasing)),
+    enter = fadeIn(animationSpec = tween(easing = LinearEasing, delayMillis = delayMillis)),
+    exit = fadeOut(animationSpec = tween(easing = LinearEasing)),
     initiallyVisible = initiallyVisible
   ) {
     mapper.map(uiModel = item).invoke(modifier)

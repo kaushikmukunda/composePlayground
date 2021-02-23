@@ -2,31 +2,61 @@ package com.km.composePlayground.scratchpad
 
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.*
-import androidx.compose.animation.core.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animatedFloat
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimatedFloat
+import androidx.compose.animation.core.AnimationEndReason
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.ClickableText
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ConstraintLayout
+import androidx.compose.foundation.layout.ConstraintSet
+import androidx.compose.foundation.layout.Dimension
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Recomposer
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawOpacity
-import androidx.compose.ui.drawBehind
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
-import androidx.compose.ui.platform.setContent
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.annotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -35,7 +65,12 @@ import com.km.composePlayground.components.button.ColorUtility
 import com.km.composePlayground.components.buttongroup.ButtonGroupComposer
 import com.km.composePlayground.components.delimiterFlowRow.BulletDelimiter
 import com.km.composePlayground.components.delimiterFlowRow.DelimiterFlowLayout
-import com.km.composePlayground.components.dialog.*
+import com.km.composePlayground.components.dialog.ContentModel
+import com.km.composePlayground.components.dialog.DialogButtonConfig
+import com.km.composePlayground.components.dialog.DialogComposer
+import com.km.composePlayground.components.dialog.DialogUiAction
+import com.km.composePlayground.components.dialog.DialogUiModel
+import com.km.composePlayground.components.dialog.FooterModel
 import com.km.composePlayground.linkText.LinkTextUi
 import com.km.composePlayground.linkText.LinkTextUiAction
 import com.km.composePlayground.linkText.LinkTextUiModel
@@ -49,7 +84,7 @@ class ScratchPadActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContent(Recomposer.current()) {
+        setContent {
             MaterialTheme {
                 Box(modifier = Modifier.fillMaxSize()) {
                   AnimatedVisibilityLazyColumnDemo()
@@ -95,8 +130,8 @@ fun AnimatedVisibilityLazyColumnDemo() {
             itemsIndexed(turquoiseColors) { i, color ->
                 AnimatedVisibility(
                   (turquoiseColors.size - itemNum) <= i,
-                  enter = fadeIn(0.1f, animSpec = tween(120)),
-                  exit = fadeOut(0.1f, animSpec = tween(120))
+                  enter = fadeIn(0.1f, animationSpec = tween(120)),
+                  exit = fadeOut(0.1f, animationSpec = tween(120))
                 ) {
                     Log.d("dbg", "rendering i $i")
                     Spacer(Modifier.width(90.dp).height(90.dp).background(color))
@@ -282,7 +317,7 @@ private fun LinkText() {
 
 @Composable
 private fun TextAnnotation() {
-    val annotatedString = annotatedString {
+    val annotatedString = buildAnnotatedString {
         append("link: <b>Jetpack</b> Compose")
         // attach a string annotation that stores a URL to the text "Jetpack Compose".
         addStringAnnotation(
@@ -375,7 +410,7 @@ fun FullyLoadedTransition() {
             visible = (animState.numText == 1),
             enter = expandHorizontally(
                 initialWidth = { (it * 0.1).toInt() },
-                animSpec = tween(
+                animationSpec = tween(
                     durationMillis = ANIM_DURATION_MS,
                     easing = CubicBezierEasing(0.8f, 0.0f, 0.6f, 1.0f)
                 )
@@ -383,12 +418,12 @@ fun FullyLoadedTransition() {
             exit = shrinkHorizontally(
                 shrinkTowards = Alignment.Start,
                 targetWidth = { (it * 0.1).toInt() },
-                animSpec = tween(
+                animationSpec = tween(
                     durationMillis = ANIM_DURATION_MS,
                     easing = CubicBezierEasing(0.8f, 0.0f, 0.6f, 1.0f)
                 )
             ) + fadeOut(
-                animSpec = tween(
+                animationSpec = tween(
                     durationMillis = 167,
                     easing = LinearEasing,
                     delayMillis = 333
@@ -404,8 +439,8 @@ fun FullyLoadedTransition() {
 
         AnimatedVisibility(
             visible = animState.numText == 2,
-            enter = fadeIn(initialAlpha = 0.3f, animSpec = tween()),
-            exit = fadeOut(targetAlpha = 0.3f, animSpec = tween())
+            enter = fadeIn(initialAlpha = 0.3f, animationSpec = tween()),
+            exit = fadeOut(targetAlpha = 0.3f, animationSpec = tween())
         ) {
             Row {
                 Text("try", modifier = Modifier.fillMaxWidth(0.5f))
@@ -437,7 +472,7 @@ private fun AnimatingText() {
     val animState = rememberState { OpacityAnimState(current = "text") }
 
     val opacity =
-        animatedOpacity(tween(durationMillis = 250, delayMillis = 500), animState.value.visible) {
+        animatedAlpha(tween(durationMillis = 250, delayMillis = 500), animState.value.visible) {
             Log.d("dbg", "animation end")
             MainScope().launch {
                 delay(500)
@@ -460,25 +495,24 @@ private fun AnimatingText() {
             }
         }
 
-    Text(animState.value.current, modifier = Modifier.drawOpacity(opacity.value))
+    Text(animState.value.current, modifier = Modifier.alpha(opacity.value))
 }
 
 @Composable
-private fun animatedOpacity(
-    animation: AnimationSpec<Float>,
-    visible: Boolean,
-    onAnimationFinish: () -> Unit = {}
-): AnimatedFloat {
-    val animatedFloat = animatedFloat(if (!visible) 1f else 0f)
-    onCommit(visible) {
-        animatedFloat.animateTo(
-            if (visible) 1f else 0f,
-            anim = animation,
-            onEnd = { reason, _ ->
-                if (reason == AnimationEndReason.TargetReached) {
-                    onAnimationFinish()
-                }
-            })
+private fun animatedAlpha(
+  animation: AnimationSpec<Float>,
+  visible: Boolean,
+  onAnimationFinish: () -> Unit = {}
+): Animatable<Float, AnimationVector1D> {
+    val animatedFloat = remember { Animatable(if (!visible) 1f else 0f) }
+    LaunchedEffect(visible) {
+        val result = animatedFloat.animateTo(
+          if (visible) 1f else 0f,
+          animationSpec = animation,
+        )
+        if (result.endReason == AnimationEndReason.Finished) {
+            onAnimationFinish()
+        }
     }
     return animatedFloat
 }

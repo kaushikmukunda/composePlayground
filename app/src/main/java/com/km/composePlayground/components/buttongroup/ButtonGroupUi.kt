@@ -15,8 +15,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.AmbientLayoutDirection
-import androidx.compose.ui.platform.DensityAmbient
-import androidx.compose.ui.platform.LayoutDirectionAmbient
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.unit.*
 import com.km.composePlayground.components.button.*
@@ -141,7 +141,7 @@ private fun Modifier.buttonWidthConstraints(
         ButtonGroupVariant.FILL_OUTLINE_50_50,
         ButtonGroupVariant.OUTLINE_OUTLINE_50_50 -> {
             val buttonSpacing = getButtonGroupSpacing(model)
-            val totalWidthDp = with(DensityAmbient.current) { layoutSize.width.toDp() }
+            val totalWidthDp = with(LocalDensity.current) { layoutSize.width.toDp() }
             // Use floor as any overflow will cause the FlowRow to layout the second button on the
             // next row.
             val buttonWidth = ((totalWidthDp - buttonSpacing) / model.numButtons).floor()

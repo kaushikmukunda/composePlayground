@@ -270,7 +270,7 @@ private fun SimpleListPagination() {
     Log.d("dbg", "recomposing lazy row")
     itemsIndexed(content.paginationList) { index, item ->
       itemRendered(index)
-      onCommit {
+      SideEffect {
         uiModel.content.value.uiAction(index)
       }
       Text(

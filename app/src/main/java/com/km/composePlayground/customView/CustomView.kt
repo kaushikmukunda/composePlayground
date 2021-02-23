@@ -3,11 +3,11 @@ package com.km.composePlayground.customView
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
-import androidx.compose.material.Text
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.Button
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Recomposer
 import androidx.compose.runtime.mutableStateOf
@@ -22,9 +22,9 @@ class CustomView(context: Context, attrs: AttributeSet) : FrameLayout(context, a
 
     override fun onFinishInflate() {
         super.onFinishInflate()
-        setContent(Recomposer.current()) {
-            ScreenContent()
-        }
+//        this.setContent {
+//            ScreenContent()
+//        }
     }
 
     @Composable

@@ -15,16 +15,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.onCommit
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawOpacity
-import androidx.compose.ui.drawWithContent
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
-import androidx.compose.ui.layout.id
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -112,7 +111,7 @@ fun DelimiterFlowLayout(
         numLines = numLines,
         startIdx = animationState.currentIndex,
         modifier = modifier
-            .drawOpacity(opacity.value)
+            .alpha(opacity.value)
             .onChildrenPlaced { idx, isLastIdx ->
                 // If the lastIdx was placed, we need to loop back from the start.
                 animationState.nextIndex = if (isLastIdx) 0 else idx
@@ -169,7 +168,7 @@ private fun animatedOpacity(
     onAnimationFinish: () -> Unit = {}
 ): AnimatedFloat {
     val animatedFloat = animatedFloat(if (!visible) 1f else 0f)
-    onCommit(visible) {
+    SideEffect() {
         animatedFloat.animateTo(
             if (visible) 1f else 0f,
             anim = animation,
@@ -236,7 +235,7 @@ private fun DelimiterFlowLayoutInternal(
         var measurableIdx = startIdx - 1
 
         fun trimLastLineDelimiter() {
-            if (measurables[measurableIdx].id == DELIMITER_ID) {
+            if (measurables[measurableIdx].layoutId == DELIMITER_ID) {
                 currentSequence.removeAt(currentSequence.lastIndex)
             }
         }
@@ -274,7 +273,7 @@ private fun DelimiterFlowLayoutInternal(
             val placeable = measurable.measure(childConstraints)
 
             // Lazily initialize delimiter width
-            if (delimiterWidth == 0 && measurable.id == DELIMITER_ID) {
+            if (delimiterWidth == 0 && measurable.layoutId == DELIMITER_ID) {
                 delimiterWidth = placeable.width
             }
 
@@ -287,7 +286,7 @@ private fun DelimiterFlowLayoutInternal(
             }
 
             // Do not start line with delimiter
-            if (currentSequence.isEmpty() && measurable.id == DELIMITER_ID) {
+            if (currentSequence.isEmpty() && measurable.layoutId == DELIMITER_ID) {
                 continue
             }
 
@@ -323,7 +322,8 @@ private fun DelimiterFlowLayoutInternal(
 
                 placeables.fastForEachIndexed { j, placeable ->
                     // If delimiter and content are of unequal height, offset ensures they are center aligned.
-                    val verticalOffset = Alignment.CenterVertically.align(rowHeights[i] - placeable.height)
+                    val verticalOffset = Alignment.CenterVertically.align(
+                        rowHeights[i] - placeable.height, placeable.height)
 
                     placeable.place(
                         x = horizontalPositions[j],

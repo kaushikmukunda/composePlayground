@@ -1,19 +1,15 @@
 package com.km.composePlayground.modifiers
 
 import androidx.annotation.FloatRange
-import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.HorizontalGradient
-import androidx.compose.ui.graphics.VerticalGradient
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.util.fastForEach
 
 /**
@@ -35,103 +31,105 @@ fun Modifier.fadingEdgeForeground(
   @FloatRange(from = 0.0, to = 1.0) rightRatio: Float = 0f,
   @FloatRange(from = 0.0, to = 1.0) bottomRatio: Float = 0f,
 ): Modifier = composed {
-  var sizeState: Size by rememberState { Size.Zero }
-  val gradientDatas = remember(color, sizeState, leftRatio, topRatio, rightRatio, bottomRatio) {
-    calculateGradientDatas(color, sizeState, leftRatio, topRatio, rightRatio, bottomRatio)
+  // Pre-allocate gradient shaders based on input parameters to avoid creation during draw time.
+  // Cannot use `drawWithCache` as that only regenerates based on size or snapshot changes which
+  // doesn't work well with input color for the gradient.
+  val gradients = remember(color, leftRatio, topRatio, rightRatio, bottomRatio) {
+    createFadingEdgeBrushes(color, leftRatio, topRatio, rightRatio, bottomRatio)
   }
 
   drawWithContent {
-    sizeState = size
     drawContent()
 
-    gradientDatas.fastForEach { gradientData ->
-      drawRect(brush = gradientData.brush, topLeft = gradientData.offset, size = gradientData.size)
+    gradients.fastForEach { gradient ->
+      drawRect(
+        brush = gradient,
+        topLeft = gradient.calculateFromOffset(size),
+        size = gradient.calculateGradientSize(size)
+      )
     }
   }
 }
 
-@Immutable
-private class GradientData(
-  val offset: Offset,
-  val size: Size,
-  val brush: Brush,
-)
-
-private fun calculateGradientDatas(
+private fun createFadingEdgeBrushes(
   color: Color,
-  layoutSize: Size,
   leftRatio: Float,
   topRatio: Float,
   rightRatio: Float,
-  bottomRatio: Float,
-): List<GradientData> {
-  // Layout size not determined yet, don't draw any gradients.
-  if (layoutSize == Size.Zero) {
-    return emptyList()
-  }
-
-  val result = mutableListOf<GradientData>()
+  bottomRatio: Float
+): List<FadingEdgeShaderBrush> {
   val startColorList = listOf(color, Color.Transparent)
   val endColorList = listOf(Color.Transparent, color)
+  val result = mutableListOf<FadingEdgeShaderBrush>()
 
   if (leftRatio > 0.0f) {
-    val leftGradientSize = Size(width = layoutSize.width * leftRatio, height = layoutSize.height)
+    result += object : FadingEdgeShaderBrush(startColorList) {
+      override fun calculateFromOffset(size: Size) = Offset.Zero
 
-    result += GradientData(
-      size = leftGradientSize,
-      offset = Offset.Zero,
-      brush = HorizontalGradient(
-        colors = startColorList,
-        startX = 0f,
-        endX = leftGradientSize.width
-      )
-    )
+      override fun calculateToOffset(size: Size) = Offset(calculateGradientSize(size).width, 0f)
+
+      override fun calculateGradientSize(size: Size) =
+        Size(width = size.width * leftRatio, height = size.height)
+    }
   }
   if (topRatio > 0.0f) {
-    val topGradientSize = Size(width = layoutSize.width, height = layoutSize.height * topRatio)
+    result += object : FadingEdgeShaderBrush(startColorList) {
+      override fun calculateFromOffset(size: Size) = Offset.Zero
 
-    result += GradientData(
-      size = topGradientSize,
-      offset = Offset.Zero,
-      brush = VerticalGradient(
-        colors = startColorList,
-        startY = 0f,
-        endY = topGradientSize.height
-      )
-    )
+      override fun calculateToOffset(size: Size) = Offset(0f, calculateGradientSize(size).height)
+
+      override fun calculateGradientSize(size: Size) =
+        Size(width = size.width, height = size.height * topRatio)
+    }
   }
-
   if (rightRatio > 0.0f) {
-    val rightGradientSize =
-      Size(width = layoutSize.width * rightRatio, height = layoutSize.height)
-    val rightGradientOffset = Offset(x = layoutSize.width - rightGradientSize.width, y = 0f)
+    result += object : FadingEdgeShaderBrush(endColorList) {
+      override fun calculateFromOffset(size: Size): Offset {
+        return Offset(x = size.width - calculateGradientSize(size).width, y = 0f)
+      }
 
-    result += GradientData(
-      size = rightGradientSize,
-      offset = rightGradientOffset,
-      brush = HorizontalGradient(
-        colors = endColorList,
-        startX = rightGradientOffset.x,
-        endX = layoutSize.width
-      )
-    )
+      override fun calculateToOffset(size: Size) = Offset(size.width, 0f)
+
+      override fun calculateGradientSize(size: Size) =
+        Size(width = size.width * rightRatio, height = size.height)
+    }
   }
-
   if (bottomRatio > 0.0f) {
-    val bottomGradientSize =
-      Size(width = layoutSize.width, height = layoutSize.height * bottomRatio)
-    val bottomGradientOffset = Offset(x = 0f, y = layoutSize.height - bottomGradientSize.height)
+    result += object : FadingEdgeShaderBrush(endColorList) {
+      override fun calculateFromOffset(size: Size): Offset {
+        return Offset(x = 0f, y = size.height - calculateGradientSize(size).height)
+      }
 
-    result += GradientData(
-      size = bottomGradientSize,
-      offset = bottomGradientOffset,
-      brush = VerticalGradient(
-        colors = endColorList,
-        startY = bottomGradientOffset.y,
-        endY = layoutSize.height
-      )
-    )
+      override fun calculateToOffset(size: Size) = Offset(0f, size.height)
+
+      override fun calculateGradientSize(size: Size) =
+        Size(width = size.width, height = size.height * bottomRatio)
+    }
   }
 
   return result
+}
+
+/**
+ * Custom brush that uses a LinearGradientShader with provided `colors` based on from / to offsets
+ * and gradient size.
+ */
+private abstract class FadingEdgeShaderBrush(
+  private val colors: List<Color>,
+) : ShaderBrush() {
+
+  /** Returns the top left corner of the Rect for drawing the gradient. */
+  abstract fun calculateFromOffset(size: Size): Offset
+
+  /** Returns the "to" offset for creating LinearGradientShader. */
+  abstract fun calculateToOffset(size: Size): Offset
+
+  /** Returns size of the gradient Rect to draw. */
+  abstract fun calculateGradientSize(size: Size): Size
+
+  final override fun createShader(size: Size) = LinearGradientShader(
+    colors = colors,
+    from = calculateFromOffset(size),
+    to = calculateToOffset(size),
+  )
 }
