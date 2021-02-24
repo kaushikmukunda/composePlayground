@@ -115,7 +115,6 @@ class ScrollerActivity : AppCompatActivity() {
 //      )
 //      Spacer(modifier = Modifier.height(16.dp))
 
-      Log.d("dbg", "recomposing top level?")
       Text("1x")
       HorizontalScrollerUi(
         layoutPolicy = FixedLayoutPolicy(

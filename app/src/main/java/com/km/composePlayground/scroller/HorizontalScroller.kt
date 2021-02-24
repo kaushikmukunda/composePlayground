@@ -5,9 +5,14 @@ import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,6 +28,7 @@ import com.km.composePlayground.base.UniformUi
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.fadingEdgeForeground
 import com.km.composePlayground.modifiers.rememberState
+import kotlin.math.abs
 import kotlin.math.max
 
 
@@ -171,6 +177,46 @@ private class ScrollerAnimationState(
   }
 }
 
+@Composable
+private fun getFlingBehavior(lazyListState: LazyListState): FlingBehavior {
+  return remember {
+    object : FlingBehavior {
+      override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+        val firstItemOffset = lazyListState.layoutInfo.visibleItemsInfo[0].offset
+        val firstItemSize = lazyListState.layoutInfo.visibleItemsInfo[0].size
+
+        Log.d(
+          "dbg", "first visible ${lazyListState.firstVisibleItemIndex} scroll offset" +
+            " ${lazyListState.firstVisibleItemScrollOffset} itemOffset $firstItemOffset" +
+            " size $firstItemSize velocity: $initialVelocity"
+        )
+        // forward scroll +ve vel
+        // backward scroll -ve vel
+
+        val scrollDistance = if (abs(firstItemOffset) > firstItemSize / 2) {
+          // Scroll to End position - 10%
+          val targetOffset = firstItemSize.toFloat()
+          Log.d("dbg", "scrolling to next element ${targetOffset - abs(firstItemOffset)}")
+          (targetOffset - abs(firstItemOffset)) * if (initialVelocity > 0) 1 else -1
+        } else {
+          // Scroll to Start position - 10%
+          val targetOffset = 0.1f * firstItemSize
+          Log.d(
+            "dbg",
+            "scrolling to start of this element ${targetOffset + abs(firstItemOffset)}"
+          )
+          (targetOffset + abs(firstItemOffset)) * if (initialVelocity > 0) -1 else 1
+        }
+
+        Log.d("dbg", "scrollDistance $scrollDistance")
+        scrollBy(scrollDistance)
+        Log.d("dbg", "***** ******")
+        return 0f
+      }
+    }
+  }
+}
+
 /**
  * Displays horizontally scrollable content.
  *
@@ -212,7 +258,12 @@ fun HorizontalScrollerUi(
         ScrollerAnimationState(maxIdxRendered = numItemsInRow, initial = content.items)
       }
 
-      LazyRow(contentPadding = layoutPolicy.getContentPadding().toPaddingValues()) {
+      val lazyListState = rememberLazyListState()
+      LazyRow(
+        contentPadding = layoutPolicy.getContentPadding().toPaddingValues(),
+        state = lazyListState,
+        flingBehavior = getFlingBehavior(lazyListState)
+      ) {
         itemsIndexed(content.items) { index, item ->
           RenderItemAtIndex(
             scrollerAnimationState,
@@ -226,7 +277,7 @@ fun HorizontalScrollerUi(
 
           SideEffect {
             content.uiAction.onItemRendered(index)
-            Log.d("dbg", "rendering $index maxIdx ${scrollerAnimationState.maxIdxRendered}")
+//            Log.d("dbg", "rendering $index maxIdx ${scrollerAnimationState.maxIdxRendered}")
           }
 
           scrollerAnimationState.updateState(index, item)
@@ -251,7 +302,7 @@ private fun RenderItemAtIndex(
   // Check if there existed a different item at this index. If yes, animate out that item and
   // animate in the new item. Encapsulate these inside a stacking composable (Box).
   if (itemConflict) {
-    Log.d("dbg", "inConflict $index $oldItem $item")
+//    Log.d("dbg", "inConflict $index $oldItem $item")
     Box {
       RenderOldItem(
         decorationModifierCalculator,
