@@ -7,7 +7,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.preferredHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
           Text(activityEntry.value)
         }
 
-        Spacer(modifier = Modifier.preferredHeight(8.dp))
+        Spacer(modifier = Modifier.heightIn(8.dp))
       }
     }
   }

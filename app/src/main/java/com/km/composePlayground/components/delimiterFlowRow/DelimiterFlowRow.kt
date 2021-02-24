@@ -1,9 +1,9 @@
 package com.km.composePlayground.components.delimiterFlowRow
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimatedFloat
 import androidx.compose.animation.core.AnimationEndReason
 import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -166,18 +167,16 @@ private fun animatedOpacity(
   animation: AnimationSpec<Float>,
   visible: Boolean,
   onAnimationFinish: () -> Unit = {}
-): AnimatedFloat {
+): Animatable<Float, AnimationVector1D>{
   val animatedFloat = remember { Animatable(if (!visible) 1f else 0f) }
-  SideEffect {
-    animatedFloat.animateTo(
+  LaunchedEffect(visible) {
+    val result = animatedFloat.animateTo(
       if (visible) 1f else 0f,
-      anim = animation,
-      onEnd = { reason, _ ->
-        if (reason == AnimationEndReason.TargetReached) {
-          onAnimationFinish()
-        }
-      }
+      animationSpec = animation,
     )
+    if (result.endReason == AnimationEndReason.Finished) {
+      onAnimationFinish()
+    }
   }
   return animatedFloat
 }

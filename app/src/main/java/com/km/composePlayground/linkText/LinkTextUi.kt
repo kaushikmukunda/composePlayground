@@ -1,12 +1,11 @@
 package com.km.composePlayground.linkText
 
-import androidx.compose.foundation.ClickableText
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.SpanStyleRange
 
 /**
  * LinkText renders text with a link. Supports bold and italic markdown on the non-clickable portion
@@ -40,7 +39,7 @@ fun LinkTextUi(model: LinkTextUiModel) {
 }
 
 private fun buildAnnotatedString(model: LinkTextUiModel, linkColor: Color): AnnotatedString {
-  val spanStyles = mutableListOf<SpanStyleRange>().apply {
+  val spanStyles = mutableListOf<AnnotatedString.Range<SpanStyle>>().apply {
     addAll(model.textMarkdown.markdown.getStyleSpans())
     addAll(
       model.linkTextMarkdown.markdown
@@ -48,7 +47,7 @@ private fun buildAnnotatedString(model: LinkTextUiModel, linkColor: Color): Anno
     )
 
     add(
-      SpanStyleRange(
+      AnnotatedString.Range(
         SpanStyle(color = linkColor),
         start = model.textMarkdown.text.length,
         end = model.textMarkdown.text.length + model.linkTextMarkdown.text.length

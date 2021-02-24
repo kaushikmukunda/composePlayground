@@ -7,8 +7,8 @@ import android.text.Spanned
 import android.text.style.StyleSpan
 import android.text.style.URLSpan
 import androidx.annotation.IntRange
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.SpanStyleRange
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.util.fastForEach
@@ -112,11 +112,11 @@ class MarkdownText(htmlText: String) {
   )
 }
 
-fun Markdown.getStyleSpans(rangeOffset: Int = 0): List<SpanStyleRange> {
-  return mutableListOf<SpanStyleRange>().apply {
+fun Markdown.getStyleSpans(rangeOffset: Int = 0): List<AnnotatedString.Range<SpanStyle>> {
+  return mutableListOf<AnnotatedString.Range<SpanStyle>>().apply {
     bold.fastForEach { boldSpan ->
       add(
-        SpanStyleRange(
+        AnnotatedString.Range<SpanStyle>(
           SpanStyle(fontWeight = FontWeight.Bold),
           start = boldSpan.start + rangeOffset,
           end = boldSpan.end + rangeOffset
@@ -126,7 +126,7 @@ fun Markdown.getStyleSpans(rangeOffset: Int = 0): List<SpanStyleRange> {
 
     italics.fastForEach { italicSpan ->
       add(
-        SpanStyleRange(
+        AnnotatedString.Range(
           SpanStyle(fontStyle = FontStyle.Italic),
           start = italicSpan.start + rangeOffset,
           end = italicSpan.end + rangeOffset

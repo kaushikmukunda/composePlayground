@@ -4,6 +4,7 @@ import android.view.MotionEvent
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -57,7 +58,7 @@ sealed class IconAsset {
 }
 
 class IconModel(
-  val icon: IconAsset,
+  val icon: Painter,
   val iconPlacement: IconPlacement,
   val iconPadding: Dp = DEFAULT_ICON_PADDING,
   val iconWidth: Dp = DEFAULT_ICON_SIZE,

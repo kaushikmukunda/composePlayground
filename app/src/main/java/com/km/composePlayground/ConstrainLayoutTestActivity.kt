@@ -4,18 +4,12 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.Interaction
-import androidx.compose.foundation.InteractionState
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ConstraintLayout
-import androidx.compose.foundation.layout.ConstraintSet
-import androidx.compose.foundation.layout.Dimension
-import androidx.compose.foundation.layout.ExperimentalLayout
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -25,6 +19,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
@@ -32,6 +27,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.ConstraintSet
+import androidx.constraintlayout.compose.Dimension
 import com.km.composePlayground.components.actionbutton.ActionButtonClickData
 import com.km.composePlayground.components.actionbutton.ActionButtonComposer
 import com.km.composePlayground.components.actionbutton.AdTrackData
@@ -44,6 +42,7 @@ import com.km.composePlayground.components.buttongroup.ButtonConfig
 import com.km.composePlayground.components.buttongroup.ButtonGroupComposer
 import com.km.composePlayground.components.buttongroup.ButtonGroupUiModel
 import com.km.composePlayground.components.buttongroup.ButtonGroupVariant
+import com.km.composePlayground.components.delimiterFlowRow.FlowRow
 import com.km.composePlayground.modifiers.LayoutSize
 import com.km.composePlayground.modifiers.layoutSize
 import com.km.composePlayground.modifiers.layoutSizeCache
@@ -189,9 +188,7 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
       .padding(top = 40.dp, bottom = 20.dp)
       .indication(
         indication = rememberRipple(color = Color.Red),
-        interactionState = InteractionState().apply {
-          addInteraction(Interaction.Pressed)
-        }
+        interactionSource = remember { MutableInteractionSource() }
       )
       .clickable { Log.d("dbg", "clicked") }
       .border(width = 1.dp, color = Color.Red)) {
@@ -215,7 +212,6 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
   }
 
   @Composable
-  @OptIn(ExperimentalLayout::class)
   private fun InstallBarButtonSection(modifier: Modifier) {
     Box(modifier = modifier) {
       FlowRow {
@@ -273,7 +269,6 @@ class ConstrainLayoutTestActivity : AppCompatActivity() {
   }
 
   @Composable
-  @OptIn(ExperimentalLayout::class)
   private fun ButtonSection(modifier: Modifier) {
     Box(modifier = modifier) {
       FlowRow {

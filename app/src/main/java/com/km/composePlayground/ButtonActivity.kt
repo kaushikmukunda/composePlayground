@@ -6,8 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.preferredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -15,8 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.components.actionbutton.ActionButtonClickData
 import com.km.composePlayground.components.actionbutton.ActionButtonComposer
@@ -127,7 +126,7 @@ private fun ButtonGroupScreenContent() {
       )
     )
 
-    Spacer(modifier = Modifier.preferredHeight(8.dp))
+    Spacer(modifier = Modifier.heightIn(8.dp))
 
     buttonGroupComposer.compose(
       model = ButtonGroupUiModel(
@@ -146,7 +145,7 @@ private fun ButtonGroupScreenContent() {
       modifier = Modifier.width(300.dp)
     )
 
-    Spacer(modifier = Modifier.preferredHeight(8.dp))
+    Spacer(modifier = Modifier.heightIn(8.dp))
 
     buttonGroupComposer.compose(
       model = ButtonGroupUiModel(
@@ -165,7 +164,7 @@ private fun ButtonGroupScreenContent() {
       modifier = Modifier.fillMaxWidth()
     )
 
-    Spacer(modifier = Modifier.preferredHeight(8.dp))
+    Spacer(modifier = Modifier.heightIn(8.dp))
 
     buttonGroupComposer.compose(
       model = ButtonGroupUiModel(
@@ -195,7 +194,7 @@ private fun ButtonScreenContent() {
           uiAction = ButtonUiAction({}, {}, { _, _ -> }),
           clickData = Any(),
           iconModel = IconModel(
-            IconAsset.ImageIcon(imageResource(id = android.R.drawable.ic_btn_speak_now)),
+            painterResource(id = android.R.drawable.ic_btn_speak_now),
             IconPlacement.START,
             iconPadding = 0.dp
           )
@@ -213,7 +212,7 @@ private fun ButtonScreenContent() {
           uiAction = ButtonUiAction({}, {}, { _, _ -> }),
           clickData = Any(),
           iconModel = IconModel(
-            IconAsset.VectorIcon(vectorResource(id = R.drawable.ic_open_in_new)),
+            painterResource(id = R.drawable.ic_open_in_new),
             IconPlacement.END,
             iconPadding = 0.dp,
             colorFilter = ColorFilter.tint(Color.Red, BlendMode.SrcAtop)
@@ -221,7 +220,7 @@ private fun ButtonScreenContent() {
         )
       )
 
-    Spacer(modifier = Modifier.preferredHeight(8.dp))
+    Spacer(modifier = Modifier.heightIn(8.dp))
 
     ButtonComposer(ColorUtility())
       .compose(
@@ -234,7 +233,7 @@ private fun ButtonScreenContent() {
         )
       )
 
-    Spacer(modifier = Modifier.preferredHeight(8.dp))
+    Spacer(modifier = Modifier.heightIn(8.dp))
 
     ButtonComposer(ColorUtility())
       .compose(
@@ -245,7 +244,7 @@ private fun ButtonScreenContent() {
           uiAction = ButtonUiAction({}, {}, { _, _ -> }),
           clickData = Any(),
           iconModel = IconModel(
-            IconAsset.VectorIcon(vectorResource(id = R.drawable.ic_open_in_new)),
+            painterResource(id = R.drawable.ic_open_in_new),
             IconPlacement.END
           )
         )

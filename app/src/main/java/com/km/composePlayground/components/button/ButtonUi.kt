@@ -1,6 +1,7 @@
 package com.km.composePlayground.components.button
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.ButtonDefaults
@@ -71,7 +72,7 @@ private fun ButtonUi(
   val backgroundColor = getBackgroundColor(model, colorUtility)
   val buttonWidthPadding = getButtonWidthPadding(model)
 
-  val interactionState = remember { InteractionState() }
+  val interactionSource = remember { MutableInteractionSource() }
   val buttonOnClick = { model.uiAction.onClick(model.clickData) }//.playStoreClickable()
   val garMinHeight = 48.dp
   // Button minHeight < required GAR height. Button is enclosed in an invisible box that extends the
@@ -79,12 +80,12 @@ private fun ButtonUi(
   Box(
     contentAlignment = Alignment.Center,
     modifier = buttonContainerModifier
-      .preferredHeightIn(min = garMinHeight)
-      .clickable(indication = null, interactionState = interactionState) { buttonOnClick() }
+      .heightIn(min = garMinHeight)
+      .clickable(indication = null, interactionSource = interactionSource) { buttonOnClick() }
   ) {
     Button(
       onClick = { buttonOnClick() },
-      interactionState = interactionState,
+      interactionSource = interactionSource,
       enabled = model.isEnabled(),
       // Button contains custom logic to switch between backgroundColor and disabledBackgroundColor
       // based on enabled state. The button background color also depends on buttonStyle. By passing
@@ -143,25 +144,13 @@ private fun iconUi(model: IconModel) {
     }
   val iconModifier = paddingModifier.size(model.iconWidth, model.iconHeight)
   val contentScale = ContentScale.Fit
-  val iconAsset = model.icon
-  when (iconAsset) {
-    is IconAsset.ImageIcon -> {
-      Image(
-        bitmap = iconAsset.asset,
-        colorFilter = model.colorFilter,
-        contentScale = contentScale,
-        modifier = iconModifier,
-        contentDescription = null
-      )
-    }
-    is IconAsset.VectorIcon -> Image(
-      imageVector = iconAsset.asset,
-      colorFilter = model.colorFilter,
-      contentScale = contentScale,
-      modifier = iconModifier,
-      contentDescription = null
-    )
-  }
+  Image(
+    painter = model.icon,
+    colorFilter = model.colorFilter,
+    contentScale = contentScale,
+    modifier = iconModifier,
+    contentDescription = null
+  )
 }
 
 @Composable
@@ -234,7 +223,7 @@ private fun Modifier.minSizeModifier(model: ButtonUiModel): Modifier {
     minHeight = smallButtonMinHeight
   }
 
-  return this.then(Modifier.defaultMinSizeConstraints(minWidth, minHeight))
+  return this.then(Modifier.defaultMinSize(minWidth, minHeight))
 }
 
 @Composable

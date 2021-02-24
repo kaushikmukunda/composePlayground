@@ -1,11 +1,9 @@
 package com.km.composePlayground.components.buttongroup
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayout
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.preferredWidthIn
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -25,6 +23,7 @@ import com.km.composePlayground.components.button.ButtonState
 import com.km.composePlayground.components.button.ButtonStyle
 import com.km.composePlayground.components.button.ButtonUiModel
 import com.km.composePlayground.components.button.ButtonVariant
+import com.km.composePlayground.components.delimiterFlowRow.FlowRow
 import com.km.composePlayground.modifiers.rememberState
 import kotlin.math.floor
 
@@ -38,7 +37,6 @@ open class ButtonGroupComposer constructor(private val buttonComposer: ButtonCom
   }
 }
 
-@OptIn(ExperimentalLayout::class)
 @Composable
 private fun ButtonGroupUi(
   buttonComposer: ButtonComposer,
@@ -153,12 +151,12 @@ private fun Modifier.buttonWidthConstraints(
 
       // ButtonWidth would be < 0.dp before the composable is positioned (onPositionedModifier).
       if (buttonWidth > 0.dp) {
-        this.preferredWidthIn(min = buttonWidth, max = maxWidth)
+        this.widthIn(min = buttonWidth, max = maxWidth)
       } else {
-        this.preferredWidthIn(max = maxWidth)
+        this.widthIn(max = maxWidth)
       }
     }
-    else -> this.preferredWidthIn(max = maxWidth)
+    else -> this.widthIn(max = maxWidth)
   }
 }
 

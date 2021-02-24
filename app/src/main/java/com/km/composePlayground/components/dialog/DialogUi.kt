@@ -1,9 +1,6 @@
 package com.km.composePlayground.components.dialog
 
-import androidx.compose.foundation.ClickableText
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.ConstraintLayout
-import androidx.compose.foundation.layout.ConstraintSet
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -11,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -24,12 +22,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.SpanStyleRange
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.window.Dialog
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.ConstraintSet
 import com.km.composePlayground.components.button.ButtonUiAction
 import com.km.composePlayground.components.buttongroup.ButtonConfig
 import com.km.composePlayground.components.buttongroup.ButtonGroupComposer
@@ -155,13 +154,13 @@ private fun ContentUi(model: ContentModel, contentAction: (String) -> Unit, modi
 }
 
 private fun buildAnnotatedString(markdownText: MarkdownText): AnnotatedString {
-  val spanStyles = mutableListOf<SpanStyleRange>().apply {
+  val spanStyles = mutableListOf<AnnotatedString.Range<SpanStyle>>().apply {
     addAll(markdownText.markdown.getStyleSpans())
 
     markdownText.markdown.urls.fastForEach { urlSpan ->
       add(
-        SpanStyleRange(
-          SpanStyle(color = Color.Gray, textDecoration = TextDecoration.Underline),
+        AnnotatedString.Range(
+          item = SpanStyle(color = Color.Gray, textDecoration = TextDecoration.Underline),
           start = urlSpan.range.start,
           end = urlSpan.range.end
         )
