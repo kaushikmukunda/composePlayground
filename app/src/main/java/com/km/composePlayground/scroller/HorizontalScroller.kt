@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.calculateTargetValue
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollScope
-import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
@@ -23,13 +23,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastSumBy
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUi
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.fadingEdgeForeground
 import com.km.composePlayground.modifiers.rememberState
+import kotlinx.coroutines.launch
+import java.lang.Integer.min
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 
 /** Action associated with Scrolling Ui. */
@@ -217,6 +221,56 @@ private fun getFlingBehavior(lazyListState: LazyListState): FlingBehavior {
   }
 }
 
+@Composable
+private fun getFlingBehavior2(lazyListState: LazyListState): FlingBehavior {
+  val coroutineScope = rememberCoroutineScope()
+  val defaultDecayAnimationSpec = defaultDecayAnimationSpec()
+  return remember {
+    object : FlingBehavior {
+      override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+        val firstItemOffset = lazyListState.layoutInfo.visibleItemsInfo[0].offset
+        val firstItemSize = lazyListState.layoutInfo.visibleItemsInfo[0].size
+
+
+        val targetOffset = defaultDecayAnimationSpec.calculateTargetValue(0f, initialVelocity)
+        Log.d(
+          "dbg", "first visible ${lazyListState.firstVisibleItemIndex} scroll offset" +
+            " ${lazyListState.firstVisibleItemScrollOffset} itemOffset $firstItemOffset" +
+            " size $firstItemSize velocity: $initialVelocity offset $targetOffset"
+        )
+        coroutineScope.launch {
+          lazyListState.animateScrollToItem(getTargetPosition(targetOffset, lazyListState), 0)
+        }
+
+        return 0f
+      }
+    }
+  }
+}
+
+private fun getTargetPosition(targetValue: Float, listState: LazyListState): Int {
+  if (listState.layoutInfo.totalItemsCount == 0) {
+    return 0
+  }
+
+  val totalItems = listState.layoutInfo.totalItemsCount
+  val visibleItemsInfo = listState.layoutInfo.visibleItemsInfo
+  val visibleItemsWidth = visibleItemsInfo.fastSumBy { it.size }
+  val averageItemWidth = visibleItemsWidth / visibleItemsInfo.size
+  val numItemsToScroll =
+    Math.min(visibleItemsInfo.size / 2f, abs(targetValue) / averageItemWidth).toInt()
+  Log.d("dbg", "num Items to scroll $visibleItemsWidth $numItemsToScroll")
+  val firstVisibleItemIdx = listState.firstVisibleItemIndex
+
+  return if (targetValue > 0) {
+    // reverse scroll
+    max(0, (firstVisibleItemIdx - numItemsToScroll + 1))
+  } else {
+    // forward scroll
+    min(totalItems - 1, firstVisibleItemIdx + numItemsToScroll)
+  }
+}
+
 /**
  * Displays horizontally scrollable content.
  *
@@ -262,7 +316,7 @@ fun HorizontalScrollerUi(
       LazyRow(
         contentPadding = layoutPolicy.getContentPadding().toPaddingValues(),
         state = lazyListState,
-        flingBehavior = getFlingBehavior(lazyListState)
+        flingBehavior = getFlingBehavior2(lazyListState)
       ) {
         itemsIndexed(content.items) { index, item ->
           RenderItemAtIndex(
