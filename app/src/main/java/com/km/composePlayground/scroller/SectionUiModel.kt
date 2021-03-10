@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
+import com.km.composePlayground.components.common.Identifiable
 
 
 /**
@@ -42,8 +43,8 @@ class SectionUiModel(
 @Stable
 open class SectionUiModelContent(
   val itemList: List<UiModel>,
-  val identity: String,
+  identity: String,
   val scrollingUiAction: ScrollingUiAction = ScrollingUiAction {},
-) //: Identifiable {
-//  override val dataId: String = identity
-//}
+) : Identifiable {
+  override val dataId: String = identity
+}

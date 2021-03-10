@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,7 +31,7 @@ private val NO_CONTENT_PADDING = PaddingValues(0.dp)
  */
 @SuppressLint("ModifierParameter")
 @Composable
-fun VerticalScroller(
+fun VerticalScrollerUi(
   uiModel: VerticalScrollerUiModel,
   mapper: UiModelComposableMapper,
   decorationCalculator: DecorationCalculator = EMPTY_DECORATION_CALCULATOR,
@@ -43,73 +45,110 @@ fun VerticalScroller(
     }
 
   LazyColumn(modifier = containerModifier.fillMaxSize(), contentPadding = contentPadding) {
-    // UiModels following a RenderBlockingUiModel should not be displayed. As such we filter the
-    // nested list in two phases - truncate any models below a RenderBlockingUiModel at the top-level
-    // and then once again within Sections - DynamicGrid, StaticGrid, Section.
+    // UiModels following a RenderBlockingUiModel should not be displayed
     filterRenderBlockingModels(content.itemList).forEachIndexed { index, listItem ->
-      val filteredModel = filterRenderableContent(listItem)
-      when (filteredModel) {
-        is DynamicGridUiModel -> DynamicGridUi(filteredModel, scrollerElementRenderer)
-        is StaticGridUiModel -> StaticGridUi(filteredModel, scrollerElementRenderer)
-        is SectionUiModel -> LinearUi(filteredModel, scrollerElementRenderer)
+      when (listItem) {
+        // onItemRendered for the Grid sections are not wrapped in the SideEffect as LazyListScope
+        // does not have Composable scope.
+        is DynamicGridUiModel -> {
+          DynamicGridUi(listItem, scrollerElementRenderer)
+          content.scrollingUiAction.onItemRendered(index)
+        }
+        is StaticGridUiModel -> {
+          StaticGridUi(listItem, scrollerElementRenderer)
+          content.scrollingUiAction.onItemRendered(index)
+        }
+        is SectionUiModel -> {
+          LinearUi(listItem, scrollerElementRenderer)
+          content.scrollingUiAction.onItemRendered(index)
+        }
         else -> item {
-          val decorationModifier = decorationModifierCalculator
-            .getModifierForDecorations(decorationCalculator.getDecorationsForUiModel(listItem))
-          mapper.map(listItem).invoke(decorationModifier)
+          scrollerElementRenderer.Render(listItem, Modifier)
+
+          SideEffect {
+            content.scrollingUiAction.onItemRendered(index)
+          }
         }
       }
-
-      content.scrollingUiAction.onItemRendered(index)
     }
   }
 }
 
-private fun filterRenderableContent(uiModel: UiModel): UiModel {
-  return when (uiModel) {
-    is DynamicGridUiModel -> {
-      val content = uiModel.content.value
-      DynamicGridUiModel(
-        DynamicGridUiModelContent(
-          itemList = filterRenderBlockingModels(content.itemList),
-          desiredCellSize = content.desiredCellSize,
-          spanLookup = content.spanLookup,
-          identity = content.identity,
-          scrollingUiAction = content.scrollingUiAction
-        )
-      )
-    }
-    is StaticGridUiModel -> {
-      val content = uiModel.content.value
-      StaticGridUiModel(
-        StaticGridUiModelContent(
-          itemList = filterRenderBlockingModels(content.itemList),
-          spanCount = content.spanCount,
-          spanLookup = content.spanLookup,
-          identity = content.identity,
-          scrollingUiAction = content.scrollingUiAction
-        )
-      )
-    }
-    is SectionUiModel -> {
-      val content = uiModel.content.value
-      SectionUiModel(
-        SectionUiModelContent(
-          itemList = filterRenderBlockingModels(content.itemList),
-          identity = content.identity,
-          scrollingUiAction = content.scrollingUiAction
-        )
-      )
-    }
-    else -> uiModel
-  }
-}
-
+/**
+ * UiModels below a [RenderBlockingUiModel] must not be rendered. Pre-process the list of models
+ * and truncate the list to the first [RenderBlockingUiModel] found in the list. This could be
+ * either at the top level or within a sectionUiModel.
+ *
+ * Ex: [UiModelA, NestedUiModelB[UiModelAA, UIModelBB, RenderBlockingUiModel, UiModelCC], UiModelC]
+ *  -> [UiModelA, NestedUiModelB[UiModelAA, UIModelBB, RenderBlockingUiModel]]
+ */
 private fun filterRenderBlockingModels(uiModels: List<UiModel>): List<UiModel> {
-  val firstBlockingUiModel = uiModels.find { uiModel -> uiModel is RenderBlockingUiModel }
-  return firstBlockingUiModel?.let {
-    uiModels.subList(0, uiModels.indexOf(firstBlockingUiModel) + 1)
-  } ?: uiModels
+  val filteredModels = mutableListOf<UiModel>()
+  for (uiModel in uiModels) {
+    when (uiModel) {
+      is DynamicGridUiModel -> {
+        val content = uiModel.content.value
+        val filteredGridModels = filterRenderBlockingModels(content.itemList)
+        if (filteredGridModels.isNotEmpty() && filteredGridModels.last() is RenderBlockingUiModel) {
+          val filteredUiModel = DynamicGridUiModel(
+            DynamicGridUiModelContent(
+              itemList = filterRenderBlockingModels(content.itemList),
+              desiredCellSize = content.desiredCellSize,
+              spanLookup = content.spanLookup,
+              identity = content.dataId,
+              scrollingUiAction = content.scrollingUiAction
+            )
+          )
+          filteredModels.add(filteredUiModel)
+          break
+        } else {
+          filteredModels.add(uiModel)
+        }
+      }
+      is StaticGridUiModel -> {
+        val content = uiModel.content.value
+        val filteredGridModels = filterRenderBlockingModels(content.itemList)
+        if (filteredGridModels.isNotEmpty() && filteredGridModels.last() is RenderBlockingUiModel) {
+          val filteredUiModel = StaticGridUiModel(
+            StaticGridUiModelContent(
+              itemList = filterRenderBlockingModels(content.itemList),
+              spanCount = content.spanCount,
+              spanLookup = content.spanLookup,
+              identity = content.dataId,
+              scrollingUiAction = content.scrollingUiAction
+            )
+          )
+          filteredModels.add(filteredUiModel)
+          break
+        } else {
+          filteredModels.add(uiModel)
+        }
+      }
+      is SectionUiModel -> {
+        val content = uiModel.content.value
+        val filteredGridModels = filterRenderBlockingModels(content.itemList)
+        if (filteredGridModels.isNotEmpty() && filteredGridModels.last() is RenderBlockingUiModel) {
+          val filteredUiModel = SectionUiModel(
+            SectionUiModelContent(
+              itemList = filterRenderBlockingModels(content.itemList),
+              identity = content.dataId,
+              scrollingUiAction = content.scrollingUiAction
+            )
+          )
+          filteredModels.add(filteredUiModel)
+        } else {
+          filteredModels.add(uiModel)
+        }
+      }
+      is RenderBlockingUiModel -> {
+        filteredModels.add(uiModel)
+        break
+      }
+      else -> filteredModels.add(uiModel)
+    }
+  }
 
+  return filteredModels
 }
 
 /**

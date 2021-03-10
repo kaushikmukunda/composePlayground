@@ -22,7 +22,8 @@ internal fun LazyListScope.StaticGridUi(
     getCellWidth = { maxWidth / content.spanCount },
     getNumColumns = { content.spanCount },
     spanLookup = content.spanLookup,
-    scrollingUiAction = content.scrollingUiAction
+    scrollingUiAction = content.scrollingUiAction,
+    identity = content.dataId
   )
 }
 
@@ -38,7 +39,8 @@ internal fun LazyListScope.DynamicGridUi(
     getCellWidth = { density -> with(density) { content.desiredCellSize.toDp() } },
     getNumColumns = { constraints.maxWidth / content.desiredCellSize },
     spanLookup = content.spanLookup,
-    scrollingUiAction = content.scrollingUiAction
+    scrollingUiAction = content.scrollingUiAction,
+    identity = content.dataId
   )
 }
 
@@ -48,14 +50,31 @@ private fun LazyListScope.VerticalGridUi(
   getCellWidth: BoxWithConstraintsScope.(density: Density) -> Dp,
   getNumColumns: BoxWithConstraintsScope.() -> Int,
   spanLookup: ItemSpanLookup,
-  scrollingUiAction: ScrollingUiAction
+  scrollingUiAction: ScrollingUiAction,
+  identity: String
 ) {
 
   // Keeps track of start and end indexes of items from itemList that are placed in each Row.
   val gridRowIndexes = mutableListOf<GridRowIndexes>()
 
   // No efficient way to compute actual number of rows
-  items(itemList.size) { rowIdx ->
+  items(
+    count = itemList.size,
+    key = { idx ->
+      if (idx > 0) {
+        if (idx > gridRowIndexes.size) {
+//          Log.d("dbg", "emptyRow key $idx")
+          "${identity}_emptyrow_$idx"
+        } else {
+//          Log.d("dbg", "valid row key $idx ${identity}_row_${gridRowIndexes[idx - 1].endIndex}")
+          "${identity}_row_${gridRowIndexes[idx - 1].endIndex}"
+        }
+      } else {
+//        Log.d("dbg", "first row key")
+        "${identity}_row_000.}"
+      }
+    }
+  ) { rowIdx ->
     BoxWithConstraints {
       fun canPlaceItemsInRow(rowIdx: Int): Boolean {
         val allItemsPlaced = gridRowIndexes.isNotEmpty() &&
@@ -112,8 +131,10 @@ private fun MutableList<GridRowIndexes>.addOrUpdate(idx: Int, startIdx: Int, end
   if (this.isEmpty() || this.size <= idx) {
     this.add(idx, GridRowIndexes(startIdx, endIdx))
   } else {
-    this[idx].startIndex = startIdx
-    this[idx].endIndex = endIdx
+    this[idx].apply {
+      startIndex = startIdx
+      endIndex = endIdx
+    }
   }
 }
 

@@ -17,8 +17,7 @@ import com.km.composePlayground.base.UniformUiModel
  *
  * See go/phonesky-mvvm-scroller for more details.
  *
- * @property content MutableLiveDate of the content that can change in this UiModel. The content
- * is [DynamicGridUiModelContent]
+ * @property content The content that can change in this UiModel.
  * @property loggingGroupVeMetadata Optional logging information to construct a
  * [PlayStoreUiElementNode] which will be a common parent to all items represented by UiModels in
  * [DynamicGridUiModelContent]. Refer to [LoggingGroupUiModel] for more details.

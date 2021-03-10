@@ -1,6 +1,8 @@
 package com.km.composePlayground.scroller
 
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 
 /**
@@ -12,10 +14,14 @@ internal fun LazyListScope.LinearUi(
   elementRenderer: ElementRenderer
 ) {
   val content = model.content.value
-  items(content.itemList.size) { idx ->
-    val item = content.itemList[idx]
+  itemsIndexed(
+    items = content.itemList,
+    key = { _, item -> "${model.content.value.dataId}_${item.hashCode()}" }
+  ) { idx, item ->
     elementRenderer.Render(uiModel = item, modifier = Modifier)
 
-    content.scrollingUiAction.onItemRendered(idx)
+    SideEffect {
+      content.scrollingUiAction.onItemRendered(idx)
+    }
   }
 }

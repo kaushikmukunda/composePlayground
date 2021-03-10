@@ -30,7 +30,7 @@ class ScrollerActivity : AppCompatActivity() {
     ScrollerUiModel(
       HorizontalScrollerUiContent(
         uiAction = { updateScrollingContent(it) },
-        items = mutableListOf<UiModel>().apply { addAll(testList) }
+        items = mutableListOf<UiModel>().apply { addAll(testList.subList(0,10)) }
       )
     )
   )
@@ -50,7 +50,7 @@ class ScrollerActivity : AppCompatActivity() {
 
   @Composable
   private fun GridScroller() {
-    VerticalScroller(
+    VerticalScrollerUi(
       uiModel = VerticalScrollerUiModel(
         uiContent = VerticalScrollerUiModelContent(
           itemList = listOf(
