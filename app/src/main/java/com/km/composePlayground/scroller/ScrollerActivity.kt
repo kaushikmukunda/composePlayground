@@ -40,9 +40,9 @@ class ScrollerActivity : AppCompatActivity() {
     setContent {
       MaterialTheme {
         Column {
-          HorizontalScrollers()
+//          HorizontalScrollers()
 //          SimpleListPagination()
-//          GridScroller()
+          GridScroller()
         }
       }
     }
@@ -50,21 +50,35 @@ class ScrollerActivity : AppCompatActivity() {
 
   @Composable
   private fun GridScroller() {
+    val staticGridUiModel = StaticGridUiModel(
+      StaticGridUiModelContent(
+        itemList = testList.subList(0, 10) +
+                                object : RenderBlockingUiModel {} +
+          testList.subList(11, 100),
+        spanCount = 3,
+        spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
+        "id1"
+      )
+    )
+
+    LaunchedEffect(key1 = staticGridUiModel) {
+      delay(3000)
+
+      Log.d("dbg", "updating content")
+      staticGridUiModel.content.value = StaticGridUiModelContent(
+        itemList = testList.subList(0, 10) +
+          testList.subList(11, 20),
+        spanCount = 3,
+        spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
+        "id1"
+      )
+    }
     VerticalScrollerUi(
       uiModel = VerticalScrollerUiModel(
         uiContent = VerticalScrollerUiModelContent(
           itemList = listOf(
             UnderlineTextModel("Static Grid"),
-            StaticGridUiModel(
-              StaticGridUiModelContent(
-                itemList = testList.subList(0, 10) +
-//                                object : RenderBlockingUiModel {} +
-                  testList.subList(11, 100),
-                spanCount = 3,
-                spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
-                ""
-              )
-            ),
+            staticGridUiModel,
 
             UnderlineTextModel("Horizontal Scroller"),
             scrollerUiModel1x,

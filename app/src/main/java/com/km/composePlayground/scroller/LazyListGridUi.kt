@@ -67,11 +67,11 @@ private fun LazyListScope.VerticalGridUi(
           "${identity}_emptyrow_$idx"
         } else {
 //          Log.d("dbg", "valid row key $idx ${identity}_row_${gridRowIndexes[idx - 1].endIndex}")
-          "${identity}_row_${gridRowIndexes[idx - 1].endIndex}"
+          "${identity}_${itemList.hashCode()}_row_${gridRowIndexes[idx - 1].endIndex}"
         }
       } else {
 //        Log.d("dbg", "first row key")
-        "${identity}_row_000.}"
+        "${identity}_${itemList.hashCode()}_row_000.}"
       }
     }
   ) { rowIdx ->
