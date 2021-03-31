@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.animation.*
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.calculateTargetValue
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollScope
@@ -21,7 +22,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastSumBy
 import com.km.composePlayground.base.UiModel
@@ -33,7 +37,6 @@ import kotlinx.coroutines.launch
 import java.lang.Integer.min
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.roundToInt
 
 
 /** Action associated with Scrolling Ui. */
@@ -224,22 +227,19 @@ private fun getFlingBehavior(lazyListState: LazyListState): FlingBehavior {
 @Composable
 private fun getFlingBehavior2(lazyListState: LazyListState): FlingBehavior {
   val coroutineScope = rememberCoroutineScope()
-  val defaultDecayAnimationSpec = defaultDecayAnimationSpec()
-  return remember {
+  val defaultDecayAnimationSpec = remember(LocalDensity.current) {
+    // Friction multiplier of 4.5f feels right.
+    exponentialDecay<Float>(frictionMultiplier = 4.5f, absVelocityThreshold = 0f)
+  }
+  val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
+  return remember(isLtr) {
     object : FlingBehavior {
       override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
-        val firstItemOffset = lazyListState.layoutInfo.visibleItemsInfo[0].offset
-        val firstItemSize = lazyListState.layoutInfo.visibleItemsInfo[0].size
-
-
         val targetOffset = defaultDecayAnimationSpec.calculateTargetValue(0f, initialVelocity)
-        Log.d(
-          "dbg", "first visible ${lazyListState.firstVisibleItemIndex} scroll offset" +
-            " ${lazyListState.firstVisibleItemScrollOffset} itemOffset $firstItemOffset" +
-            " size $firstItemSize velocity: $initialVelocity offset $targetOffset"
-        )
+        val targetPosition = getTargetPosition(targetOffset, lazyListState, isLtr)
+
         coroutineScope.launch {
-          lazyListState.animateScrollToItem(getTargetPosition(targetOffset, lazyListState), 0)
+          lazyListState.animateScrollToItem(targetPosition, 0)
         }
 
         return 0f
@@ -248,7 +248,12 @@ private fun getFlingBehavior2(lazyListState: LazyListState): FlingBehavior {
   }
 }
 
-private fun getTargetPosition(targetValue: Float, listState: LazyListState): Int {
+// Max items to fling is one and half screen width
+private const val MAX_FLING_WIDTH = 1.5f
+// Snap to next item if this item has been scrolled out of screen by 40%
+private const val ITEM_SNAPPING_THRESHOLD = 0.4f
+
+private fun getTargetPosition(targetOffset: Float, listState: LazyListState, isLtr: Boolean): Int {
   if (listState.layoutInfo.totalItemsCount == 0) {
     return 0
   }
@@ -257,18 +262,35 @@ private fun getTargetPosition(targetValue: Float, listState: LazyListState): Int
   val visibleItemsInfo = listState.layoutInfo.visibleItemsInfo
   val visibleItemsWidth = visibleItemsInfo.fastSumBy { it.size }
   val averageItemWidth = visibleItemsWidth / visibleItemsInfo.size
-  val numItemsToScroll =
-    Math.min(visibleItemsInfo.size / 2f, abs(targetValue) / averageItemWidth).toInt()
-  Log.d("dbg", "num Items to scroll $visibleItemsWidth $numItemsToScroll")
-  val firstVisibleItemIdx = listState.firstVisibleItemIndex
+  val firstItemOffset = listState.layoutInfo.visibleItemsInfo[0].offset
+  val firstItemSize = listState.layoutInfo.visibleItemsInfo[0].size
+  val firstVisibleItemIndex = listState.firstVisibleItemIndex
+  val isForwardScroll = (targetOffset < 0 && isLtr) || (targetOffset > 0 && !isLtr)
 
-  return if (targetValue > 0) {
-    // reverse scroll
-    max(0, (firstVisibleItemIdx - numItemsToScroll + 1))
-  } else {
-    // forward scroll
-    min(totalItems - 1, firstVisibleItemIdx + numItemsToScroll)
+  // Handle small fling that only moves one item
+  if (abs(targetOffset) < firstItemSize) {
+    // Scroll to next item if we have scrolled beyond 40% of the first item.
+    val forwardThreshold = abs(firstItemOffset) > firstItemSize * ITEM_SNAPPING_THRESHOLD
+    val reverseThreshold = abs(firstItemOffset) < firstItemSize * (1 - ITEM_SNAPPING_THRESHOLD)
+    val hasCrossedItemThreshold =
+      (isForwardScroll && forwardThreshold) || (!isForwardScroll && reverseThreshold)
+
+    return if (hasCrossedItemThreshold) {
+      if (isForwardScroll) firstVisibleItemIndex + 1 else firstVisibleItemIndex
+    } else {
+      if (isForwardScroll) firstVisibleItemIndex else firstVisibleItemIndex + 1
+    }
   }
+
+  val numItemsToScroll =
+    (Math.min(
+      visibleItemsInfo.size * MAX_FLING_WIDTH,
+      abs(targetOffset) / averageItemWidth
+    )).toInt()
+  val forwardScrollPosition = min(totalItems - 1, firstVisibleItemIndex + numItemsToScroll)
+  val reverseScrollPosition = max(0, (firstVisibleItemIndex - numItemsToScroll))
+
+  return if (isForwardScroll) forwardScrollPosition else reverseScrollPosition
 }
 
 /**

@@ -5,9 +5,13 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -15,7 +19,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
@@ -30,7 +36,7 @@ class ScrollerActivity : AppCompatActivity() {
     ScrollerUiModel(
       HorizontalScrollerUiContent(
         uiAction = { updateScrollingContent(it) },
-        items = mutableListOf<UiModel>().apply { addAll(testList.subList(0,10)) }
+        items = mutableListOf<UiModel>().apply { addAll(testList.subList(0, 10)) }
       )
     )
   )
@@ -43,6 +49,49 @@ class ScrollerActivity : AppCompatActivity() {
 //          HorizontalScrollers()
 //          SimpleListPagination()
           GridScroller()
+//          TestScroller()
+        }
+      }
+    }
+  }
+
+  @Composable
+  fun TestScroller() {
+    val coroutineScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
+
+    val isDraggedState = listState.interactionSource.collectIsDraggedAsState()
+    Log.d("dbg", "is dragged ${isDraggedState.value} isScrollInProgress ${listState.isScrollInProgress}")
+
+
+    LazyRow(
+      state = listState,
+      flingBehavior = object : FlingBehavior {
+        override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+          val firstIdx = listState.firstVisibleItemIndex
+          val isForwardScroll = (initialVelocity < 0 && isLtr) || (initialVelocity > 0 && !isLtr)
+          Log.d("dbg", "$firstIdx")
+          val nextIdx = if (isForwardScroll) {
+            Math.min(99, firstIdx + 3)
+          } else {
+            Math.max(0, firstIdx - 3)
+          }
+
+          coroutineScope.launch {
+            listState.animateScrollToItem(nextIdx)
+          }
+
+          return 0f
+        }
+      }
+    ) {
+      for (idx in 1..100) {
+        item {
+          Text(
+            text = "Box $idx",
+            modifier = Modifier.size(100.dp).padding(4.dp).background(color = Color.LightGray)
+          )
         }
       }
     }
@@ -53,7 +102,7 @@ class ScrollerActivity : AppCompatActivity() {
     val staticGridUiModel = StaticGridUiModel(
       StaticGridUiModelContent(
         itemList = testList.subList(0, 10) +
-                                object : RenderBlockingUiModel {} +
+          object : RenderBlockingUiModel {} +
           testList.subList(11, 100),
         spanCount = 3,
         spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
@@ -111,57 +160,64 @@ class ScrollerActivity : AppCompatActivity() {
 
   @Composable
   private fun HorizontalScrollers() {
+    val decorationCalculator: (uiModel: UiModel) -> List<Decorator> = { uiModel ->
+      val decorators = mutableListOf<Decorator>()
+      if (uiModel is TextModel) {
+        decorators.add(DividerDecorator())
+      }
+      decorators
+    }
     Column {
-//      Text("0.75x")
-//      HorizontalScrollerUi(
-//        layoutPolicy = FixedLayoutPolicy(
-//          desiredItemWidth = 80.dp,
-//          baseWidthMultipler = 0.75f
-//        ),
-//        mapper = uiModelMapper,
-//        uiModel = ScrollerUiModel(
-//          HorizontalScrollerUiContent(
-//            uiAction = { Log.d("dbg", "load more") },
-//            items = testList
-//          ),
-//        ),
-//        itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
-//      )
-//      Spacer(modifier = Modifier.height(16.dp))
-
-      Text("1x")
+      Text("0.75x")
       HorizontalScrollerUi(
         layoutPolicy = FixedLayoutPolicy(
           desiredItemWidth = 80.dp,
-          baseWidthMultipler = 1.25f
+          baseWidthMultipler = 0.75f
         ),
         mapper = uiModelMapper,
-        uiModel = scrollerUiModel1x,
-        decorationCalculator = { uiModel ->
-          val decorators = mutableListOf<Decorator>()
-          if (uiModel is TextModel) {
-            decorators.add(DividerDecorator())
-          }
-          decorators
-        }
+        uiModel = ScrollerUiModel(
+          HorizontalScrollerUiContent(
+            uiAction = { Log.d("dbg", "load more") },
+            items = testList
+          ),
+        ),
+        decorationCalculator = decorationCalculator
       )
-
 //      Spacer(modifier = Modifier.height(16.dp))
-//      Text("1.25x")
+
+//      Text("1x")
 //      HorizontalScrollerUi(
 //        layoutPolicy = FixedLayoutPolicy(
 //          desiredItemWidth = 80.dp,
 //          baseWidthMultipler = 1.25f
 //        ),
 //        mapper = uiModelMapper,
-//        uiModel = ScrollerUiModel(
-//          HorizontalScrollerUiContent(
-//            uiAction = {},
-//            items = testList
-//          ),
-//        ),
-//        itemDecoration = { _, _, _ -> listOf(SpacerDecorator()) }
+//        uiModel = scrollerUiModel1x,
+//        decorationCalculator = { uiModel ->
+//          val decorators = mutableListOf<Decorator>()
+//          if (uiModel is TextModel) {
+//            decorators.add(DividerDecorator())
+//          }
+//          decorators
+//        }
 //      )
+
+      Spacer(modifier = Modifier.height(16.dp))
+      Text("1.25x")
+      HorizontalScrollerUi(
+        layoutPolicy = FixedLayoutPolicy(
+          desiredItemWidth = 80.dp,
+          baseWidthMultipler = 1.25f
+        ),
+        mapper = uiModelMapper,
+        uiModel = ScrollerUiModel(
+          HorizontalScrollerUiContent(
+            uiAction = {},
+            items = testList
+          ),
+        ),
+        decorationCalculator = decorationCalculator
+      )
 //
 //      Spacer(modifier = Modifier.height(16.dp))
 //      Text("fit entire content")
