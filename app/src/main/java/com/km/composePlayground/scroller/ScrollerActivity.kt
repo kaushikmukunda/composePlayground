@@ -5,10 +5,10 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -26,10 +26,16 @@ import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.rememberState
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
+import kotlin.time.milliseconds
 
+@ExperimentalTime
 class ScrollerActivity : AppCompatActivity() {
 
   private var scrollerUiModel1x by mutableStateOf(
@@ -48,8 +54,51 @@ class ScrollerActivity : AppCompatActivity() {
         Column {
 //          HorizontalScrollers()
 //          SimpleListPagination()
-          GridScroller()
-//          TestScroller()
+//          GridScroller()
+          TestScroller()
+        }
+      }
+    }
+  }
+
+  @Composable
+  fun LazyListState.enableAutoScroll(delayDuration: Duration) {
+    // All items visible, do not scroll
+    if (layoutInfo.visibleItemsInfo.size == layoutInfo.totalItemsCount) {
+      return
+    }
+
+    var hasScrolled by rememberState { false }
+
+    // Listen for a scroll event
+    LaunchedEffect(this) {
+      interactionSource.interactions.collect { interaction ->
+        if (interaction is DragInteraction) {
+          hasScrolled = true
+        }
+      }
+    }
+
+    LaunchedEffect(this) {
+      launch {
+        while (true) {
+          delay(delayDuration.toLongMilliseconds())
+
+          // Stop auto scroll if a scroll is detected
+          if (hasScrolled) {
+            break
+          }
+
+          try {
+            val lastElementVisible =
+              layoutInfo.visibleItemsInfo.last().index == layoutInfo.totalItemsCount - 1
+            // If last item is visible, loop back to first item
+            val nextIdx = if (lastElementVisible) 0 else (firstVisibleItemIndex + 1)
+
+            animateScrollToItem(nextIdx)
+          } catch (e: CancellationException) {
+            // No-op as the scrollToItem can be cancelled if the user scrolls manually
+          }
         }
       }
     }
@@ -62,35 +111,24 @@ class ScrollerActivity : AppCompatActivity() {
     val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
 
     val isDraggedState = listState.interactionSource.collectIsDraggedAsState()
-    Log.d("dbg", "is dragged ${isDraggedState.value} isScrollInProgress ${listState.isScrollInProgress}")
+//    Log.d(
+//      "dbg",
+//      "is dragged ${isDraggedState.value} isScrollInProgress ${listState.isScrollInProgress}"
+//    )
+//
+//    Log.d("dbg", "coroutine scope $coroutineScope isActive ${coroutineScope.isActive}")
 
+    listState.enableAutoScroll(delayDuration = 1000.milliseconds)
 
-    LazyRow(
-      state = listState,
-      flingBehavior = object : FlingBehavior {
-        override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
-          val firstIdx = listState.firstVisibleItemIndex
-          val isForwardScroll = (initialVelocity < 0 && isLtr) || (initialVelocity > 0 && !isLtr)
-          Log.d("dbg", "$firstIdx")
-          val nextIdx = if (isForwardScroll) {
-            Math.min(99, firstIdx + 3)
-          } else {
-            Math.max(0, firstIdx - 3)
-          }
-
-          coroutineScope.launch {
-            listState.animateScrollToItem(nextIdx)
-          }
-
-          return 0f
-        }
-      }
-    ) {
-      for (idx in 1..100) {
+    LazyRow(state = listState) {
+      for (idx in 1..8) {
         item {
           Text(
             text = "Box $idx",
-            modifier = Modifier.size(100.dp).padding(4.dp).background(color = Color.LightGray)
+            modifier = Modifier
+              .size(100.dp)
+              .padding(4.dp)
+              .background(color = Color.LightGray)
           )
         }
       }
@@ -344,7 +382,9 @@ private fun SimpleListPagination() {
       }
       Text(
         item,
-        modifier = Modifier.size(80.dp).padding(start = 8.dp)
+        modifier = Modifier
+          .size(80.dp)
+          .padding(start = 8.dp)
           .background(color = Color.LightGray)
       )
       Log.d("dbg", "rendering $index")
@@ -421,6 +461,10 @@ fun UnderlineTextItem(model: UnderlineTextModel, modifier: Modifier = Modifier) 
 @Composable
 private fun FooterItem(model: FooterModel) {
   Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
-    CircularProgressIndicator(modifier = Modifier.size(50.dp).padding(start = 16.dp))
+    CircularProgressIndicator(
+      modifier = Modifier
+        .size(50.dp)
+        .padding(start = 16.dp)
+    )
   }
 }

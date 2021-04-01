@@ -306,6 +306,7 @@ private fun getTargetPosition(targetOffset: Float, listState: LazyListState, isL
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun HorizontalScrollerUi(
+  lazyListState: LazyListState = rememberLazyListState(),
   uiModel: ScrollerUiModel,
   layoutPolicy: HorizontalScrollerLayoutPolicy,
   config: HorizontalScrollerConfig = DefaultHorizontalScrollerConfig,
@@ -334,7 +335,6 @@ fun HorizontalScrollerUi(
         ScrollerAnimationState(maxIdxRendered = numItemsInRow, initial = content.items)
       }
 
-      val lazyListState = rememberLazyListState()
       LazyRow(
         contentPadding = layoutPolicy.getContentPadding().toPaddingValues(),
         state = lazyListState,
@@ -427,7 +427,9 @@ private fun RenderOldItem(
 
   RenderItemWithAnimation(
     mapper = mapper,
-    modifier = decorationModifier.width(itemWidth).fillMaxHeight(),
+    modifier = decorationModifier
+      .width(itemWidth)
+      .fillMaxHeight(),
     item = oldItem,
     itemVisible = false,
     initiallyVisible = true
@@ -451,7 +453,9 @@ private fun RenderNewItem(
 
   RenderItemWithAnimation(
     mapper,
-    decorationModifier.width(itemWidth).fillMaxHeight(),
+    decorationModifier
+      .width(itemWidth)
+      .fillMaxHeight(),
     item = item,
     itemVisible = true,
     initiallyVisible =
