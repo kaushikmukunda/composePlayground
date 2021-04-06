@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -19,21 +20,30 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.rememberState
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.internal.ChannelFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
 
 @ExperimentalTime
 class ScrollerActivity : AppCompatActivity() {
@@ -106,23 +116,44 @@ class ScrollerActivity : AppCompatActivity() {
 
   @Composable
   fun TestScroller() {
-    val coroutineScope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
-    val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
 
-    val isDraggedState = listState.interactionSource.collectIsDraggedAsState()
-//    Log.d(
-//      "dbg",
-//      "is dragged ${isDraggedState.value} isScrollInProgress ${listState.isScrollInProgress}"
-//    )
-//
-//    Log.d("dbg", "coroutine scope $coroutineScope isActive ${coroutineScope.isActive}")
+    val scrollConnection = remember { NestedConnectionScrollSource() }
 
-    listState.enableAutoScroll(delayDuration = 1000.milliseconds)
-
-    LazyRow(state = listState) {
-      for (idx in 1..8) {
+    Box(Modifier.nestedScroll(connection = scrollConnection)) {
+      LazyColumn {
         item {
+          LazyRow() {
+            for (idx in 1..8) {
+              item {
+                Text(
+                  text = "Box $idx",
+                  modifier = Modifier
+                    .size(100.dp)
+                    .padding(4.dp)
+                    .background(color = Color.LightGray)
+                )
+              }
+            }
+          }
+        }
+
+        item {
+          LazyRow() {
+            for (idx in 20..28) {
+              item {
+                Text(
+                  text = "Box $idx",
+                  modifier = Modifier
+                    .size(100.dp)
+                    .padding(4.dp)
+                    .background(color = Color.LightGray)
+                )
+              }
+            }
+          }
+        }
+
+        items(10) { idx ->
           Text(
             text = "Box $idx",
             modifier = Modifier
@@ -130,6 +161,22 @@ class ScrollerActivity : AppCompatActivity() {
               .padding(4.dp)
               .background(color = Color.LightGray)
           )
+        }
+
+        item {
+          LazyRow() {
+            for (idx in 10..18) {
+              item {
+                Text(
+                  text = "Box $idx",
+                  modifier = Modifier
+                    .size(100.dp)
+                    .padding(4.dp)
+                    .background(color = Color.LightGray)
+                )
+              }
+            }
+          }
         }
       }
     }
