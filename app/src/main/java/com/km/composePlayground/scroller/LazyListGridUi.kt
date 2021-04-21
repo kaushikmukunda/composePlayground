@@ -83,10 +83,23 @@ private fun LazyListScope.VerticalGridUi(
         return isAlreadyPlacedRow || !allItemsPlaced
       }
 
-      fun isEndOfList(itemIdx: Int) = itemIdx >= itemList.size
+      fun getTotalItems(startIdx: Int): Int {
+        var cellIdx = 0
+        var itemIdx = startIdx
+        val numColumns = getNumColumns()
+        while (cellIdx < numColumns && itemIdx < itemList.size) {
+          val itemCellWidth = spanLookup(itemIdx)
+          cellIdx += itemCellWidth
+          if (cellIdx > numColumns) {
+            break
+          }
+          itemIdx++
+        }
+
+        return itemIdx - startIdx
+      }
 
       val cellWidth = getCellWidth(LocalDensity.current)
-      val numColumns = getNumColumns()
 
       if (!canPlaceItemsInRow(rowIdx)) {
         return@BoxWithConstraints
@@ -98,20 +111,13 @@ private fun LazyListScope.VerticalGridUi(
         val startIdx = if (rowIdx == 0) 0 else gridRowIndexes[rowIdx - 1].endIndex + 1
         // itemIdx specifies the next item from the list that needs to be placed.
         var itemIdx = startIdx
-        // cellIdx specifies the next cell to be populated in the row.
-        var cellIdx = 0
+        val totalItemsInRow = getTotalItems(startIdx)
 
-        while (cellIdx < numColumns && !isEndOfList(itemIdx)) {
+        for (i in 0 until totalItemsInRow) {
           val itemCellWidth = spanLookup(itemIdx)
-          cellIdx += itemCellWidth
-
-          // Not enough space available for this item in this Row, finalize Row
-          if (cellIdx > numColumns) {
-            break
-          }
 
           gridRowIndexes.addOrUpdate(rowIdx, startIdx, itemIdx)
-          Log.d("dbg", "rendering $itemIdx")
+          Log.d("dbg", "rendering $itemIdx $totalItemsInRow")
           val item = itemList[itemIdx++]
           elementRenderer.Render(
             uiModel = item,
@@ -126,6 +132,8 @@ private fun LazyListScope.VerticalGridUi(
     }
   }
 }
+
+
 
 private fun MutableList<GridRowIndexes>.addOrUpdate(idx: Int, startIdx: Int, endIdx: Int) {
   if (this.isEmpty() || this.size <= idx) {

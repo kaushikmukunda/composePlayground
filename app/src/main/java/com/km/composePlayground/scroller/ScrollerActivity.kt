@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.DragInteraction
-import androidx.compose.foundation.interaction.collectIsDraggedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -20,32 +19,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.rememberState
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.internal.ChannelFlow
 import kotlinx.coroutines.launch
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import java.time.Duration
 
-@ExperimentalTime
 class ScrollerActivity : AppCompatActivity() {
 
   private var scrollerUiModel1x by mutableStateOf(
@@ -64,51 +50,28 @@ class ScrollerActivity : AppCompatActivity() {
         Column {
 //          HorizontalScrollers()
 //          SimpleListPagination()
-//          GridScroller()
-          TestScroller()
+          GridScroller()
+//          TestScroller()
+//          AutoScroller()
         }
       }
     }
   }
 
   @Composable
-  fun LazyListState.enableAutoScroll(delayDuration: Duration) {
-    // All items visible, do not scroll
-    if (layoutInfo.visibleItemsInfo.size == layoutInfo.totalItemsCount) {
-      return
-    }
-
-    var hasScrolled by rememberState { false }
-
-    // Listen for a scroll event
-    LaunchedEffect(this) {
-      interactionSource.interactions.collect { interaction ->
-        if (interaction is DragInteraction) {
-          hasScrolled = true
-        }
-      }
-    }
-
-    LaunchedEffect(this) {
-      launch {
-        while (true) {
-          delay(delayDuration.toLongMilliseconds())
-
-          // Stop auto scroll if a scroll is detected
-          if (hasScrolled) {
-            break
-          }
-
-          try {
-            val lastElementVisible =
-              layoutInfo.visibleItemsInfo.last().index == layoutInfo.totalItemsCount - 1
-            // If last item is visible, loop back to first item
-            val nextIdx = if (lastElementVisible) 0 else (firstVisibleItemIndex + 1)
-
-            animateScrollToItem(nextIdx)
-          } catch (e: CancellationException) {
-            // No-op as the scrollToItem can be cancelled if the user scrolls manually
-          }
+  fun AutoScroller() {
+    val listState = rememberLazyListState()
+    listState.enableAutoScroll(1000)
+    LazyRow(state=listState) {
+      for (idx in 1..8) {
+        item {
+          Text(
+            text = "Box $idx",
+            modifier = Modifier
+              .size(100.dp)
+              .padding(4.dp)
+              .background(color = Color.LightGray)
+          )
         }
       }
     }

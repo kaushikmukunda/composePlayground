@@ -3,9 +3,9 @@ package com.km.composePlayground.scroller
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.unit.Velocity
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 enum class ScrollState {
   Idle,
@@ -19,16 +19,17 @@ interface ScrollSource {
 @ExperimentalCoroutinesApi
 class NestedConnectionScrollSource : NestedScrollConnection, ScrollSource {
 
-  private val scrollEventsFlow = ConflatedBroadcastChannel<ScrollState>()
-  override fun scrollEvents(): Flow<ScrollState> = scrollEventsFlow.asFlow()
+  private val scrollEventsFlow = MutableStateFlow(ScrollState.Idle)
+  override fun scrollEvents(): Flow<ScrollState> = scrollEventsFlow.asStateFlow()
+
 
   override suspend fun onPreFling(available: Velocity): Velocity {
-    scrollEventsFlow.offer(ScrollState.Scrolling)
+    scrollEventsFlow.emit(ScrollState.Scrolling)
     return super.onPreFling(available)
   }
 
   override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-    scrollEventsFlow.offer(ScrollState.Idle)
+    scrollEventsFlow.emit(ScrollState.Idle)
     return super.onPostFling(consumed, available)
   }
 }

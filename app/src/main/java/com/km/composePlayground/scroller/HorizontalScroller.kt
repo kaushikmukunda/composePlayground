@@ -231,12 +231,11 @@ private fun getFlingBehavior2(lazyListState: LazyListState): FlingBehavior {
     // Friction multiplier of 4.5f feels right.
     exponentialDecay<Float>(frictionMultiplier = 4.5f, absVelocityThreshold = 0f)
   }
-  val isLtr = LocalLayoutDirection.current == LayoutDirection.Ltr
-  return remember(isLtr) {
+  return remember {
     object : FlingBehavior {
       override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
         val targetOffset = defaultDecayAnimationSpec.calculateTargetValue(0f, initialVelocity)
-        val targetPosition = getTargetPosition(targetOffset, lazyListState, isLtr)
+        val targetPosition = getTargetPosition(targetOffset, lazyListState)
 
         coroutineScope.launch {
           lazyListState.animateScrollToItem(targetPosition, 0)
@@ -253,7 +252,7 @@ private const val MAX_FLING_WIDTH = 1.5f
 // Snap to next item if this item has been scrolled out of screen by 40%
 private const val ITEM_SNAPPING_THRESHOLD = 0.4f
 
-private fun getTargetPosition(targetOffset: Float, listState: LazyListState, isLtr: Boolean): Int {
+private fun getTargetPosition(targetOffset: Float, listState: LazyListState): Int {
   if (listState.layoutInfo.totalItemsCount == 0) {
     return 0
   }
@@ -265,7 +264,7 @@ private fun getTargetPosition(targetOffset: Float, listState: LazyListState, isL
   val firstItemOffset = listState.layoutInfo.visibleItemsInfo[0].offset
   val firstItemSize = listState.layoutInfo.visibleItemsInfo[0].size
   val firstVisibleItemIndex = listState.firstVisibleItemIndex
-  val isForwardScroll = (targetOffset < 0 && isLtr) || (targetOffset > 0 && !isLtr)
+  val isForwardScroll = targetOffset > 0
 
   // Handle small fling that only moves one item
   if (abs(targetOffset) < firstItemSize) {
@@ -290,6 +289,7 @@ private fun getTargetPosition(targetOffset: Float, listState: LazyListState, isL
   val forwardScrollPosition = min(totalItems - 1, firstVisibleItemIndex + numItemsToScroll)
   val reverseScrollPosition = max(0, (firstVisibleItemIndex - numItemsToScroll))
 
+  Log.d("dbg", "$numItemsToScroll fwd:$forwardScrollPosition rev:$reverseScrollPosition")
   return if (isForwardScroll) forwardScrollPosition else reverseScrollPosition
 }
 
