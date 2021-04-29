@@ -5,10 +5,8 @@ import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -25,12 +23,9 @@ import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.rememberState
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import java.time.Duration
 
 class ScrollerActivity : AppCompatActivity() {
 
@@ -50,8 +45,8 @@ class ScrollerActivity : AppCompatActivity() {
         Column {
 //          HorizontalScrollers()
 //          SimpleListPagination()
-          GridScroller()
-//          TestScroller()
+//          GridScroller()
+          TestScroller()
 //          AutoScroller()
         }
       }
@@ -77,6 +72,8 @@ class ScrollerActivity : AppCompatActivity() {
     }
   }
 
+  private val scrollConsumer = TestScrollConsumer()
+
   @Composable
   fun TestScroller() {
 
@@ -85,7 +82,16 @@ class ScrollerActivity : AppCompatActivity() {
     Box(Modifier.nestedScroll(connection = scrollConnection)) {
       LazyColumn {
         item {
-          LazyRow() {
+          val lazyListState = rememberLazyListState()
+          DisposableEffect(lazyListState) {
+            val scrollSource = lazyListState.scrollSource()
+            scrollConsumer.registerSource(scrollSource)
+
+            onDispose {
+              scrollConsumer.unregisterSource(scrollSource)
+            }
+          }
+          LazyRow(state = lazyListState) {
             for (idx in 1..8) {
               item {
                 Text(
@@ -98,6 +104,8 @@ class ScrollerActivity : AppCompatActivity() {
               }
             }
           }
+
+
         }
 
         item {
