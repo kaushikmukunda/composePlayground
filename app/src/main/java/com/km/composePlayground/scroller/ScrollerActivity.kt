@@ -46,8 +46,8 @@ class ScrollerActivity : AppCompatActivity() {
 //          HorizontalScrollers()
 //          SimpleListPagination()
 //          GridScroller()
-          TestScroller()
-//          AutoScroller()
+//          TestScroller()
+          AutoScroller()
         }
       }
     }
