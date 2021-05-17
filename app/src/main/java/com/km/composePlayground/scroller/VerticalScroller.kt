@@ -1,6 +1,13 @@
 package com.km.composePlayground.scroller
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.SplineBasedFloatDecayAnimationSpec
+import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.DecayAnimationSpec
+import androidx.compose.animation.core.animateDecay
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,11 +16,39 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUi
+import kotlin.math.abs
 
 private val NO_CONTENT_PADDING = PaddingValues(0.dp)
+
+private class DefaultFlingBehavior(
+  private val flingDecay: DecayAnimationSpec<Float>
+) : FlingBehavior {
+  override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+    // come up with the better threshold, but we need it since spline curve gives us NaNs
+    return if (abs(initialVelocity) > 1f) {
+      var velocityLeft = initialVelocity
+      var lastValue = 0f
+      AnimationState(
+        initialValue = 0f,
+        initialVelocity = initialVelocity,
+      ).animateDecay(flingDecay) {
+        val delta = value - lastValue
+        val consumed = scrollBy(delta)
+        lastValue = value
+        velocityLeft = this.velocity
+        // avoid rounding errors and stop if anything is unconsumed
+        if (abs(delta - consumed) > 0.5f) this.cancelAnimation()
+      }
+      velocityLeft
+    } else {
+      initialVelocity
+    }
+  }
+}
 
 /**
  * Displays vertically scrollable content.
@@ -44,7 +79,15 @@ fun VerticalScrollerUi(
       ElementRenderer(mapper, decorationCalculator, decorationModifierCalculator)
     }
 
-  LazyColumn(modifier = containerModifier.fillMaxSize(), contentPadding = contentPadding) {
+  val defaultDecayAnimationSpec = remember(LocalDensity.current) {
+    // Friction multiplier of 4.5f feels right.
+    exponentialDecay<Float>(frictionMultiplier = 0.6f)
+  }
+  LazyColumn(
+    modifier = containerModifier.fillMaxSize(),
+    contentPadding = contentPadding,
+//    flingBehavior = DefaultFlingBehavior(defaultDecayAnimationSpec)
+  ) {
     // UiModels following a RenderBlockingUiModel should not be displayed
     filterRenderBlockingModels(content.itemList).forEachIndexed { index, listItem ->
       when (listItem) {

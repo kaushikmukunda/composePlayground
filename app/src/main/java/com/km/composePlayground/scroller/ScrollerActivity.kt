@@ -45,9 +45,9 @@ class ScrollerActivity : AppCompatActivity() {
         Column {
 //          HorizontalScrollers()
 //          SimpleListPagination()
-//          GridScroller()
+          GridScroller()
 //          TestScroller()
-          AutoScroller()
+//          AutoScroller()
         }
       }
     }
@@ -158,7 +158,7 @@ class ScrollerActivity : AppCompatActivity() {
     val staticGridUiModel = StaticGridUiModel(
       StaticGridUiModelContent(
         itemList = testList.subList(0, 10) +
-          object : RenderBlockingUiModel {} +
+//          object : RenderBlockingUiModel {} +
           testList.subList(11, 100),
         spanCount = 3,
         spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
@@ -166,18 +166,18 @@ class ScrollerActivity : AppCompatActivity() {
       )
     )
 
-    LaunchedEffect(key1 = staticGridUiModel) {
-      delay(3000)
-
-      Log.d("dbg", "updating content")
-      staticGridUiModel.content.value = StaticGridUiModelContent(
-        itemList = testList.subList(0, 10) +
-          testList.subList(11, 20),
-        spanCount = 3,
-        spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
-        "id1"
-      )
-    }
+//    LaunchedEffect(key1 = staticGridUiModel) {
+//      delay(3000)
+//
+//      Log.d("dbg", "updating content")
+//      staticGridUiModel.content.value = StaticGridUiModelContent(
+//        itemList = testList.subList(0, 10) +
+//          testList.subList(11, 20),
+//        spanCount = 3,
+//        spanLookup = { idx -> if (idx > 0 && idx % 7 == 0) 2 else 1 },
+//        "id1"
+//      )
+//    }
     VerticalScrollerUi(
       uiModel = VerticalScrollerUiModel(
         uiContent = VerticalScrollerUiModelContent(
@@ -203,7 +203,7 @@ class ScrollerActivity : AppCompatActivity() {
             UnderlineTextModel("Linear Section"),
             SectionUiModel(
               SectionUiModelContent(
-                itemList = testList.subList(0, 10),
+                itemList = testList,//.subList(0, 10),
                 identity = "",
               )
             )
