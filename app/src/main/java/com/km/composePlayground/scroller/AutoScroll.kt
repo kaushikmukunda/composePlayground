@@ -1,28 +1,30 @@
 package com.km.composePlayground.scroller
 
 import androidx.compose.foundation.interaction.DragInteraction
+import androidx.compose.foundation.interaction.Interaction
+import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import com.km.composePlayground.modifiers.rememberState
+import androidx.compose.runtime.remember
+import androidx.compose.ui.util.fastAll
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 
+/**
+ * This extension function allows a scroll by 1 item to occur every {@param delayDurationInMillis]}.
+ * When the last item is reached, the scroller scrolls back to the first item.
+ *
+ * If a user triggers a manual scroll, the auto scrolling stops entirely.
+ */
 @Composable
-fun LazyListState.enableAutoScroll(delayDurationMs: Long) {
-  // All items visible, do not scroll
-  if (layoutInfo.visibleItemsInfo.size == layoutInfo.totalItemsCount) {
-    return
-  }
-
-  var hasScrolled by rememberState { false }
+fun LazyListState.enableAutoScroll(delayDurationInMillis: Long) {
+  var hasScrolled = remember(this) { false }
 
   // Listen for a scroll event
   LaunchedEffect(this) {
-    interactionSource.interactions.collect { interaction ->
+    interactionSource.interactions.collect { interaction: Interaction ->
       if (interaction is DragInteraction) {
         hasScrolled = true
       }
@@ -31,21 +33,24 @@ fun LazyListState.enableAutoScroll(delayDurationMs: Long) {
 
   LaunchedEffect(this) {
     while (true) {
-      delay(delayDurationMs)
+      delay(delayDurationInMillis)
 
-      // Stop auto scroll if a scroll is detected
-      if (hasScrolled) {
+      // Stop auto scroll if all items are visible or a scroll is detected.
+      // AutoScroll can be enabled before or after a LazyList is composed. When scroll is enabled
+      // before, the list is empty and allItemsVisible will return true. Hence, check for
+      // totalItemsCount to be non-zero.
+      if ((layoutInfo.totalItemsCount > 0 && areAllItemsFullyVisible()) || hasScrolled) {
         break
       }
 
       try {
         val lastVisibleItem = layoutInfo.visibleItemsInfo.last()
-        val isLastItemFullyVisible =
-          (lastVisibleItem.offset + lastVisibleItem.size) <= layoutInfo.viewportEndOffset
-        val lastElementVisible = lastVisibleItem.index == layoutInfo.totalItemsCount - 1 &&
-          isLastItemFullyVisible
+        val isLastItemFullyVisible = isItemFullyVisible(layoutInfo.visibleItemsInfo.last())
+        val isLastListElementVisible =
+          lastVisibleItem.index == layoutInfo.totalItemsCount - 1 && isLastItemFullyVisible
         // If last item is visible, loop back to first item
-        val nextIdx = if (lastElementVisible) 0 else (firstVisibleItemIndex + 1)
+        // TODO(b/182983176): Verify if compose scrolling fix fixes the jerky reverse scroll.
+        val nextIdx = if (isLastListElementVisible) 0 else (firstVisibleItemIndex + 1)
 
         animateScrollToItem(nextIdx)
       } catch (e: CancellationException) {
@@ -53,4 +58,17 @@ fun LazyListState.enableAutoScroll(delayDurationMs: Long) {
       }
     }
   }
+}
+
+private fun LazyListState.areAllItemsFullyVisible(): Boolean {
+  if (layoutInfo.visibleItemsInfo.size < layoutInfo.totalItemsCount) {
+    return false
+  }
+
+  return layoutInfo.visibleItemsInfo.fastAll { isItemFullyVisible(it) }
+}
+
+private fun LazyListState.isItemFullyVisible(itemInfo: LazyListItemInfo): Boolean {
+  return itemInfo.offset >= layoutInfo.viewportStartOffset &&
+    (itemInfo.offset + itemInfo.size) <= layoutInfo.viewportEndOffset
 }
