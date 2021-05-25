@@ -25,6 +25,7 @@ import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.rememberState
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class ScrollerActivity : AppCompatActivity() {
@@ -42,22 +43,20 @@ class ScrollerActivity : AppCompatActivity() {
     super.onCreate(savedInstanceState)
     setContent {
       MaterialTheme {
-        Column {
 //          HorizontalScrollers()
 //          SimpleListPagination()
-          GridScroller()
-//          TestScroller()
+//          GridScroller()
+          TestScroller()
 //          AutoScroller()
         }
       }
     }
-  }
 
   @Composable
   fun AutoScroller() {
     val listState = rememberLazyListState()
     listState.enableAutoScroll(1000)
-    LazyRow(state=listState) {
+    LazyRow(state = listState) {
       for (idx in 1..8) {
         item {
           Text(
@@ -78,6 +77,7 @@ class ScrollerActivity : AppCompatActivity() {
   fun TestScroller() {
 
     val scrollConnection = remember { NestedConnectionScrollSource() }
+    val coroutineScope = rememberCoroutineScope()
 
     Box(Modifier.nestedScroll(connection = scrollConnection)) {
       LazyColumn {
@@ -85,14 +85,14 @@ class ScrollerActivity : AppCompatActivity() {
           val lazyListState = rememberLazyListState()
           DisposableEffect(lazyListState) {
             val scrollSource = lazyListState.scrollSource()
-            scrollConsumer.registerSource(scrollSource)
+            scrollConsumer.registerSource(coroutineScope, scrollSource)
 
             onDispose {
               scrollConsumer.unregisterSource(scrollSource)
             }
           }
           LazyRow(state = lazyListState) {
-            for (idx in 1..8) {
+            for (idx in 1..80) {
               item {
                 Text(
                   text = "Box $idx",
@@ -104,8 +104,6 @@ class ScrollerActivity : AppCompatActivity() {
               }
             }
           }
-
-
         }
 
         item {
