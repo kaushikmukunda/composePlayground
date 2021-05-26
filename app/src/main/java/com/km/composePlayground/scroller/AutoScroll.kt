@@ -1,5 +1,7 @@
 package com.km.composePlayground.scroller
 
+import android.content.Context
+import android.view.View
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.lazy.LazyListItemInfo
@@ -7,6 +9,13 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.AccessibilityManager
+import androidx.compose.ui.platform.LocalAccessibilityManager
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.util.fastAll
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
@@ -31,7 +40,13 @@ fun LazyListState.enableAutoScroll(delayDurationInMillis: Long) {
     }
   }
 
+  val context = LocalContext.current
+  val accessibilityManager = remember(context) {
+    context.getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+  }
+
   LaunchedEffect(this) {
+
     while (true) {
       delay(delayDurationInMillis)
 
@@ -39,7 +54,7 @@ fun LazyListState.enableAutoScroll(delayDurationInMillis: Long) {
       // AutoScroll can be enabled before or after a LazyList is composed. When scroll is enabled
       // before, the list is empty and allItemsVisible will return true. Hence, check for
       // totalItemsCount to be non-zero.
-      if ((layoutInfo.totalItemsCount > 0 && areAllItemsFullyVisible()) || hasScrolled) {
+      if (accessibilityManager.isEnabled || (layoutInfo.totalItemsCount > 0 && areAllItemsFullyVisible()) || hasScrolled) {
         break
       }
 
