@@ -1,4 +1,4 @@
-package com.km.composePlayground.scroller
+package com.km.composePlayground.scroller.common
 
 /**
  * Calculates the number of cells in the grid which an item will occupy.

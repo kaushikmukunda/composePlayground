@@ -1,4 +1,4 @@
-package com.km.composePlayground.scroller
+package com.km.composePlayground.scroller.horizontal
 
 import android.annotation.SuppressLint
 import android.util.Log
@@ -9,11 +9,11 @@ import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.FlingBehavior
 import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,16 +23,19 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastSumBy
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUi
-import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.fadingEdgeForeground
-import com.km.composePlayground.modifiers.rememberState
+import com.km.composePlayground.scroller.common.Decoration
+import com.km.composePlayground.scroller.common.DecorationCalculator
+import com.km.composePlayground.scroller.common.DecorationModifierCalculator
+import com.km.composePlayground.scroller.common.EMPTY_DECORATION_CALCULATOR
+import com.km.composePlayground.scroller.common.EMPTY_DECORATION_MODIFIER_CALCULATOR
+import com.km.composePlayground.scroller.common.ScrollerPositionInfo
+import com.km.composePlayground.scroller.common.computeUiModelKeys
 import kotlinx.coroutines.launch
 import java.lang.Integer.min
 import kotlin.math.abs
@@ -60,38 +63,13 @@ class ScrollerPadding(val start: Dp, val end: Dp) {
 
 }
 
-/** Configure the layout parameters for the scroller. */
-interface HorizontalScrollerLayoutPolicy {
-
-  /**
-   * Given the width of the horizontal scroller in density-pixels, returns the width of a child.
-   * The returned width will be equally applied to all children.
-   *
-   * @param scope Provides the layout constraints of the scroller.
-   */
-  fun getChildWidth(scope: BoxWithConstraintsScope): Dp
-
-  /**
-   * Given the width of a child, returns the desired height of the horizontal scroller or null if
-   * this height is not a function of the child width, in which case the horizontal scroller height
-   * will not be modified.
-   */
-  fun getScrollerHeight(itemWidth: Dp): Dp?
-
-  /** The padding to be set on the scroller. */
-  fun getContentPadding(): ScrollerPadding
-}
-
 /** Configure additional behavior of the scroller. */
 interface HorizontalScrollerConfig {
   /** If the entire content were to fit in a single screen, should it be centered? */
-  fun shouldCenterContent(): Boolean
+  fun shouldCenterContent(): Boolean = false
 
-  /** Width of the fading edge that might be drawn at the edges of the scroller. */
-  fun getFadingEdgeWidth(): Dp
-
-  /** Enable snapping of content cards to its edges. */
-  fun shouldEnableSnapping(): Boolean
+  /** If we don't want to allow scrolling behavior, set this to true */
+  fun shouldClipItemsOffScreen(): Boolean = false
 }
 
 /** Interface that denotes a decoration to be applied to an item in scroller ui. */
@@ -99,89 +77,6 @@ fun interface Decorator {
 
   /** Returns a Compose Ui consumable Modifier. */
   fun decorate(): Modifier
-}
-
-/** Configure item decoration within the scroller. */
-fun interface DecorationCalculator {
-
-  /** Determine the decorations for a given item represented by the UiModel. */
-  fun getDecorationsForUiModel(uiModel: UiModel): List<Decorator>
-
-}
-
-/** Placeholder calculator that provides no decorations. */
-val EMPTY_DECORATION_CALCULATOR: DecorationCalculator = DecorationCalculator { emptyList() }
-
-/**
- * Resolves the list of decorators to a Compose Ui consumable Modifier.
- *
- * Modifier chaining is not associative. When custom chaining of
- * a group of Modifiers is required, this interface should be overridden.
- */
-fun interface DecorationModifierCalculator {
-
-  fun getModifierForDecorations(decorationList: List<Decorator>): Modifier
-
-}
-
-/** Placeholder calculator that provides no decorations. */
-val EMPTY_DECORATION_MODIFIER_CALCULATOR: DecorationModifierCalculator =
-  DecorationModifierCalculator { Modifier }
-
-/**
- * UiContent for the horizontal scroller.
- *
- * @property layoutPolicy Determine the layout and size of the item.
- * @property uiAction Ui actions supported by the scroller.
- * @property items The UiModels that are to be rendered in a list.
- * @property footeritem Optional The uiModel that ought to be appended to the list. Usually used
- *   for loading or error scenarios.
- */
-@Stable
-class HorizontalScrollerUiContent(
-  val uiAction: ScrollingUiAction,
-  val items: List<UiModel>,
-)
-
-/**
- * UiModel that establishes contract with HorizontalScrollerUi.
- *
- * @property mapper Maps UiModels to composables.
- */
-@Stable
-class ScrollerUiModel(
-  horizontalScrollerUiContent: HorizontalScrollerUiContent,
-) : UniformUiModel<HorizontalScrollerUiContent> {
-  override val content = mutableStateOf(horizontalScrollerUiContent)
-}
-
-/**
- * Keeps track of the state of the scroller relevant to item animation.
- *
- * @property items The list of UiModels backing the Scroller.
- * @property maxIdxRendered The max index of the rendered model in the scroller. This is to ensure
- *   that only new items are animated.
- */
-private class ScrollerAnimationState(
-  initial: List<UiModel>,
-  var maxIdxRendered: Int = 0
-) {
-
-  val items: MutableList<UiModel> = initial.toMutableList()
-
-  fun updateState(index: Int, item: UiModel) {
-    maxIdxRendered = max(maxIdxRendered, index)
-
-    // If the new item does not match the backing list, replace or add to the list.
-    // This occurs after the UI renders the replacement animation, this is safe to do.
-    if (items.getOrNull(index) != item) {
-      if (items.size == index) {
-        items.add(item)
-      } else {
-        items[index] = item
-      }
-    }
-  }
 }
 
 @Composable
@@ -249,6 +144,7 @@ private fun getFlingBehavior2(lazyListState: LazyListState): FlingBehavior {
 
 // Max items to fling is one and half screen width
 private const val MAX_FLING_WIDTH = 1.5f
+
 // Snap to next item if this item has been scrolled out of screen by 40%
 private const val ITEM_SNAPPING_THRESHOLD = 0.4f
 
@@ -293,70 +189,121 @@ private fun getTargetPosition(targetOffset: Float, listState: LazyListState): In
   return if (isForwardScroll) forwardScrollPosition else reverseScrollPosition
 }
 
+// Corresponds to the fading_edge_overdraw resource http://shortn/_8GBaeCSedi
+private val DEFAULT_FADING_EDGE_WIDTH = 10.dp
+
+private val NO_CONTENT_PADDING = PaddingValues(0.dp)
+
+// Delay animation of the new item if the old item is being animated out
+private const val ANIM_DELAY_MS = 100
+
+/** A default implementation of the HorizontalScrollerConfig. */
+object DEFAULT_HORIZONTAL_SCROLLER_CONFIG : HorizontalScrollerConfig
+
 /**
  * Displays horizontally scrollable content.
  *
  * @param uiModel The UiModel for rendering the scroller.
- * @param layoutPolicy The policy to apply to the scroller.
- * @param config Configures additional behavior of the scroller like snapping.
+ * @param config Configures additional behavior of the scroller like centering content.
  * @param mapper Transforms a UiModel to its Compose representation.
- * @param decorationCalculator The decoration to be applied to the individual items in the scroller.
- * @param decorationResolver Optional resolver that transforms decoration to a Modifier.
+ * @param decorationCalculator Class which calculates the decorations to be applied to an item based
+ * on its UiModel
+ * @param decorationModifierCalculator Class which calculates the modifiers to be applied to the
+ * item composables based on the decorations to be applied to the item
+ * @param contentPadding a padding around the whole content. This will add padding for the content
+ * after it has been clipped, which is not possible via [modifier] param. Note that it is **not** a
+ * padding applied for each item's content.
+ * @param containerModifier Optional modifier to be applied to the scroll container.
  */
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun HorizontalScrollerUi(
-  lazyListState: LazyListState = rememberLazyListState(),
-  uiModel: ScrollerUiModel,
-  layoutPolicy: HorizontalScrollerLayoutPolicy,
-  config: HorizontalScrollerConfig = DefaultHorizontalScrollerConfig,
+  uiModel: HorizontalScrollerComposeUiModel,
+  config: HorizontalScrollerConfig = DEFAULT_HORIZONTAL_SCROLLER_CONFIG,
   mapper: UiModelComposableMapper,
-  decorationCalculator: DecorationCalculator = NoDecoration,
-  decorationResolver: DecorationModifierCalculator = StandardDecorationResolver
-) = UniformUi(uiModel) { content ->
+  decorationCalculator: DecorationCalculator = EMPTY_DECORATION_CALCULATOR,
+  decorationModifierCalculator: DecorationModifierCalculator = EMPTY_DECORATION_MODIFIER_CALCULATOR,
+  contentPadding: PaddingValues = NO_CONTENT_PADDING,
+  containerModifier: Modifier = Modifier,
+) {
   BoxWithConstraints {
-    val alignment =
-      if (config.shouldCenterContent()) Alignment.Center else Alignment.TopStart
-    val itemWidth = layoutPolicy.getChildWidth(this)
-    val scrollerHeightModifier = layoutPolicy.getScrollerHeight(itemWidth)
-      ?.let { Modifier.height(it) } ?: Modifier
+    HorizontalScrollerUiInternal(
+      uiModel = uiModel,
+      config = config,
+      mapper = mapper,
+      decorationCalculator = decorationCalculator,
+      decorationModifierCalculator = decorationModifierCalculator,
+      contentPadding = contentPadding,
+      containerModifier = containerModifier,
+    )
+  }
+}
 
+/**
+ * This API is to be only used by Scrollers that extend functionality like the
+ * [LayoutPolicyAwareScroller]. Any modification to the item or the container should be applied via
+ * the additional Modifier params - containerModifier, itemModifier
+ */
+@Composable
+fun BoxWithConstraintsScope.HorizontalScrollerUiInternal(
+  uiModel: HorizontalScrollerComposeUiModel,
+  config: HorizontalScrollerConfig = DEFAULT_HORIZONTAL_SCROLLER_CONFIG,
+  mapper: UiModelComposableMapper,
+  decorationCalculator: DecorationCalculator,
+  decorationModifierCalculator: DecorationModifierCalculator,
+  contentPadding: PaddingValues = NO_CONTENT_PADDING,
+  containerModifier: Modifier = Modifier,
+  itemModifier: Modifier = Modifier,
+  itemWidth: Dp? = null,
+  flingBehavior: FlingBehavior = ScrollableDefaults.flingBehavior(),
+) {
+//  tracePrefix.trace("UiInternal") {
+  UniformUi(uiModel) { content ->
+    val alignment = if (config.shouldCenterContent()) Alignment.Center else Alignment.TopStart
     Box(
       contentAlignment = alignment,
-      modifier = Modifier
+      modifier =
+      containerModifier
         .fillMaxWidth()
-        .then(scrollerHeightModifier)
-        .fadingEdge(this, config.getFadingEdgeWidth())
+        .fadingEdge(boxWithConstraintsScope = this, DEFAULT_FADING_EDGE_WIDTH)
     ) {
       // The initial set of items should not be animated. Initialize the maxIdxRendered to
       // the number of items displayed in row.
-      val numItemsInRow = (this@BoxWithConstraints.maxWidth / itemWidth).toInt() - 1
-      val scrollerAnimationState by rememberState {
-        ScrollerAnimationState(maxIdxRendered = numItemsInRow, initial = content.items)
-      }
+      val numItemsInRow =
+        itemWidth?.let { (this@HorizontalScrollerUiInternal.maxWidth / itemWidth).toInt() - 1 }
+          ?: 0
+      val itemsToRender =
+        if (config.shouldClipItemsOffScreen()) {
+          content.items.subList(0, (numItemsInRow + 1).coerceAtMost(content.items.size))
+        } else {
+          content.items
+        }
+      val itemKeys =
+        remember(itemsToRender) {
+          computeUiModelKeys(itemsToRender, uiModel.hashCode().toString())
+        }
 
       LazyRow(
-        contentPadding = layoutPolicy.getContentPadding().toPaddingValues(),
-        state = lazyListState,
-        flingBehavior = getFlingBehavior2(lazyListState)
+        state = uiModel.lazyListState,
+        contentPadding = contentPadding,
+        flingBehavior = flingBehavior
       ) {
-        itemsIndexed(content.items) { index, item ->
+        itemsIndexed(items = itemsToRender, key = { index, _ -> itemKeys[index] }) { index, item
+          ->
           RenderItemAtIndex(
-            scrollerAnimationState,
-            index,
-            item,
-            decorationResolver,
+            uiModel.scrollerAnimationState,
+            decorationModifierCalculator,
             decorationCalculator,
             mapper,
-            itemWidth
+            index,
+            itemsToRender.size,
+            item,
+            itemModifier
           )
 
           SideEffect {
             content.uiAction.onItemRendered(index)
-//            Log.d("dbg", "rendering $index maxIdx ${scrollerAnimationState.maxIdxRendered}")
+            uiModel.scrollerAnimationState.updateState(index, item)
           }
-
-          scrollerAnimationState.updateState(index, item)
         }
       }
     }
@@ -366,47 +313,53 @@ fun HorizontalScrollerUi(
 @Composable
 private fun RenderItemAtIndex(
   scrollerAnimationState: ScrollerAnimationState,
-  index: Int,
-  item: UiModel,
   decorationModifierCalculator: DecorationModifierCalculator,
   decorationCalculator: DecorationCalculator,
   mapper: UiModelComposableMapper,
-  itemWidth: Dp
-) {
+  index: Int,
+  totalItems: Int,
+  item: UiModel,
+  itemModifier: Modifier
+) //=
+  /*tracePrefix.trace("RenderItem idx$index")*/ {
   val oldItem = scrollerAnimationState.items.getOrNull(index)
   val itemConflict = oldItem != null && oldItem != item
+  val newItemDecorationModifier =
+    decorationModifierCalculator.getModifierForDecorations(
+      decorationCalculator.getDecorationsForUiModel(
+        uiModel = item,
+        ScrollerPositionInfo(index == 0, index == totalItems - 1)
+      )
+    )
+
   // Check if there existed a different item at this index. If yes, animate out that item and
   // animate in the new item. Encapsulate these inside a stacking composable (Box).
   if (itemConflict) {
-//    Log.d("dbg", "inConflict $index $oldItem $item")
-    Box {
-      RenderOldItem(
-        decorationModifierCalculator,
-        decorationCalculator,
-        oldItem!!,
-        mapper,
-        itemWidth
+    val oldItemDecorationModifier =
+      decorationModifierCalculator.getModifierForDecorations(
+        decorationCalculator.getDecorationsForUiModel(
+          uiModel = requireNotNull(oldItem),
+          ScrollerPositionInfo(index == 0, index == scrollerAnimationState.items.size - 1)
+        )
       )
+    Box {
+      RenderOldItem(mapper, oldItem, oldItemDecorationModifier.then(itemModifier))
 
       RenderNewItem(
-        decorationModifierCalculator,
-        decorationCalculator,
-        item,
-        index,
         mapper,
-        itemWidth,
+        item,
+        newItemDecorationModifier.then(itemModifier),
+        index,
         itemConflict,
         scrollerAnimationState
       )
     }
   } else {
     RenderNewItem(
-      decorationModifierCalculator,
-      decorationCalculator,
-      item,
-      index,
       mapper,
-      itemWidth,
+      item,
+      newItemDecorationModifier.then(itemModifier),
+      index,
       itemConflict,
       scrollerAnimationState
     )
@@ -414,22 +367,10 @@ private fun RenderItemAtIndex(
 }
 
 @Composable
-private fun RenderOldItem(
-  decorationResolver: DecorationModifierCalculator,
-  decorationCalculator: DecorationCalculator,
-  oldItem: UiModel,
-  mapper: UiModelComposableMapper,
-  itemWidth: Dp
-) {
-  val decorationModifier = decorationResolver.getModifierForDecorations(
-    decorationCalculator.getDecorationsForUiModel(uiModel = oldItem)
-  )
-
+private fun RenderOldItem(mapper: UiModelComposableMapper, oldItem: UiModel, modifier: Modifier) {
   RenderItemWithAnimation(
     mapper = mapper,
-    modifier = decorationModifier
-      .width(itemWidth)
-      .fillMaxHeight(),
+    modifier = modifier,
     item = oldItem,
     itemVisible = false,
     initiallyVisible = true
@@ -438,36 +379,34 @@ private fun RenderOldItem(
 
 @Composable
 private fun RenderNewItem(
-  decorationResolver: DecorationModifierCalculator,
-  decorationCalculator: DecorationCalculator,
-  item: UiModel,
-  index: Int,
   mapper: UiModelComposableMapper,
-  itemWidth: Dp,
+  item: UiModel,
+  modifier: Modifier,
+  index: Int,
   itemConflict: Boolean,
   scrollerAnimationState: ScrollerAnimationState
 ) {
-  val decorationModifier = decorationResolver.getModifierForDecorations(
-    decorationCalculator.getDecorationsForUiModel(uiModel = item)
-  )
-
   RenderItemWithAnimation(
-    mapper,
-    decorationModifier
-      .width(itemWidth)
-      .fillMaxHeight(),
+    mapper = mapper,
+    modifier = modifier,
     item = item,
     itemVisible = true,
-    initiallyVisible =
-    if (itemConflict) !itemConflict else index <= scrollerAnimationState.maxIdxRendered,
+    initiallyVisible = if (itemConflict) false else index <= scrollerAnimationState.maxIdxRendered,
     shouldDelay = itemConflict
   )
 }
 
-private const val ANIM_DELAY_MS = 100
+@ExperimentalAnimationApi
+private val FadeOutTransition = fadeOut(animationSpec = tween(easing = LinearEasing))
+
+@ExperimentalAnimationApi
+private val FadeInInstantTransition = fadeIn(animationSpec = tween(easing = LinearEasing))
+
+@ExperimentalAnimationApi
+private val FadeInDelayedTransition =
+  fadeIn(animationSpec = tween(easing = LinearEasing, delayMillis = ANIM_DELAY_MS))
 
 @OptIn(ExperimentalAnimationApi::class)
-@SuppressLint("ModifierParameter")
 @Composable
 private fun RenderItemWithAnimation(
   mapper: UiModelComposableMapper,
@@ -477,77 +416,47 @@ private fun RenderItemWithAnimation(
   initiallyVisible: Boolean,
   shouldDelay: Boolean = false,
 ) {
-  val delayMillis = if (shouldDelay) ANIM_DELAY_MS else 0
   AnimatedVisibility(
     visible = itemVisible,
-    enter = fadeIn(animationSpec = tween(easing = LinearEasing, delayMillis = delayMillis)),
-    exit = fadeOut(animationSpec = tween(easing = LinearEasing)),
+    enter = if (shouldDelay) FadeInDelayedTransition else FadeInInstantTransition,
+    exit = FadeOutTransition,
     initiallyVisible = initiallyVisible
-  ) {
-    mapper.map(uiModel = item).invoke(modifier)
-  }
+  ) { mapper.map(uiModel = item).invoke(modifier) }
 }
 
 private fun Modifier.fadingEdge(
-  withConstraintsScope: BoxWithConstraintsScope,
+  boxWithConstraintsScope: BoxWithConstraintsScope,
   fadingEdgeWidth: Dp
 ): Modifier = composed {
+  if (fadingEdgeWidth <= 0.dp) return@composed this
+
+  // Only apply a fading edge to scrollers that are not full screen width.
   val screenWidth = LocalContext.current.resources.configuration.screenWidthDp
-  val scrollerWidth = withConstraintsScope.maxWidth
-  if (screenWidth < scrollerWidth.value) this
+  val scrollerWidth = boxWithConstraintsScope.maxWidth
+  if (screenWidth <= scrollerWidth.value) this
   else {
     val ratio = fadingEdgeWidth / scrollerWidth
+    // Existing view implementation uses White
+    // See GradientColor#SOLID (http://shortn/_LlMjcA8evY)
     this.fadingEdgeForeground(color = Color.White, leftRatio = ratio, rightRatio = ratio)
   }
 }
 
 /** A default implementation of the HorizontalScrollerConfig. */
 val DefaultHorizontalScrollerConfig = object : HorizontalScrollerConfig {
-  override fun shouldCenterContent() = true
-
-  override fun getFadingEdgeWidth(): Dp = 10.dp
-
-  override fun shouldEnableSnapping() = true
+  override fun shouldCenterContent() = false
 
 }
 
-/** A simple implementation of fixed layout policy. */
-class FixedLayoutPolicy(
-  val desiredItemWidth: Dp,
-  val childPeekAmount: Float = 0.1f,
-  val baseWidthMultipler: Float = 1f
-) :
-  HorizontalScrollerLayoutPolicy {
-
-  override fun getChildWidth(scope: BoxWithConstraintsScope): Dp {
-    val widthForChildren =
-      (scope.maxWidth - getContentPadding().start - getContentPadding().end)
-    return Dp(
-      CardCountHelper.getUnitCardWidth(
-        (desiredItemWidth.value * baseWidthMultipler).toInt(),
-        widthForChildren.value.toInt(),
-        childPeekAmount
-      ).toFloat()
-    )
-
-  }
-
-  override fun getScrollerHeight(itemWidth: Dp): Dp? {
-    return itemWidth.times(9 / 16f)
-  }
-
-  override fun getContentPadding() = ScrollerPadding(start = 16.dp, end = 16.dp)
-}
-
-val NoDecoration = DecorationCalculator { emptyList() }
+val NoDecoration = DecorationCalculator { _, _ -> emptyList() }
 
 class DividerDecorator(
   private val sidePadding: Dp = 16.dp,
   private val verticalPadding: Dp = 8.dp
-) : Decorator {
+) : Decoration {
 
   @SuppressLint("ModifierFactoryExtensionFunction")
-  override fun decorate(): Modifier {
+  fun decorate(): Modifier {
     return Modifier
       .padding(start = sidePadding)
       .drawBehind {
@@ -568,7 +477,7 @@ class DividerDecorator(
 val StandardDecorationResolver = DecorationModifierCalculator { decorators ->
   var modifier: Modifier = Modifier
   decorators.forEach { decorator ->
-    modifier = modifier.then(decorator.decorate())
+    modifier = modifier
   }
   modifier
 }

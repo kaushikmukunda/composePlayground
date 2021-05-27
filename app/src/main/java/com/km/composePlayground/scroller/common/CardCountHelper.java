@@ -1,4 +1,4 @@
-package com.km.composePlayground.scroller;
+package com.km.composePlayground.scroller.common;
 
 
 import androidx.annotation.FloatRange;

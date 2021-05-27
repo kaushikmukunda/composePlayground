@@ -1,9 +1,11 @@
-package com.km.composePlayground.scroller
+package com.km.composePlayground.scroller.vertical
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
+import com.km.composePlayground.scroller.common.ItemSpanLookup
+import com.km.composePlayground.scroller.horizontal.ScrollingUiAction
 
 /**
  * Represents a group (section) of UiModels to be arranged in the form of a grid. The specifications
@@ -47,4 +49,21 @@ class StaticGridUiModelContent(
   val spanLookup: ItemSpanLookup,
   identity: String,
   scrollingUiAction: ScrollingUiAction = ScrollingUiAction {},
-) : SectionUiModelContent(itemList, identity, scrollingUiAction)
+) : SectionUiModelContent(itemList, identity, scrollingUiAction) {
+
+  fun copy(
+    itemList: List<UiModel> = this.itemList,
+    spanCount: Int = this.spanCount,
+    spanLookup: ItemSpanLookup = this.spanLookup,
+    identity: String = this.dataId,
+    scrollingUiAction: ScrollingUiAction = this.scrollingUiAction
+  ): StaticGridUiModelContent {
+    return StaticGridUiModelContent(
+      itemList = itemList,
+      spanCount = spanCount,
+      spanLookup = spanLookup,
+      identity = identity,
+      scrollingUiAction = scrollingUiAction
+    )
+  }
+}

@@ -1,10 +1,11 @@
-package com.km.composePlayground.scroller
+package com.km.composePlayground.scroller.vertical
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.components.common.Identifiable
+import com.km.composePlayground.scroller.horizontal.ScrollingUiAction
 
 
 /**
@@ -47,4 +48,16 @@ open class SectionUiModelContent(
   val scrollingUiAction: ScrollingUiAction = ScrollingUiAction {},
 ) : Identifiable {
   override val dataId: String = identity
+
+  fun copy(
+    itemList: List<UiModel> = this.itemList,
+    identity: String = this.dataId,
+    scrollingUiAction: ScrollingUiAction = this.scrollingUiAction
+  ): SectionUiModelContent {
+    return SectionUiModelContent(
+      itemList = itemList,
+      identity = identity,
+      scrollingUiAction = scrollingUiAction
+    )
+  }
 }

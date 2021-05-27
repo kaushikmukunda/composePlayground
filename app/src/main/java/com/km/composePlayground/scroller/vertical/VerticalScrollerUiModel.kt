@@ -1,9 +1,10 @@
-package com.km.composePlayground.scroller
+package com.km.composePlayground.scroller.vertical
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
+import com.km.composePlayground.scroller.horizontal.ScrollingUiAction
 
 
 /**

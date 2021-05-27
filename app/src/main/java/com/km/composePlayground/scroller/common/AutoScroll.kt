@@ -1,7 +1,6 @@
-package com.km.composePlayground.scroller
+package com.km.composePlayground.scroller.common
 
 import android.content.Context
-import android.view.View
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.interaction.Interaction
 import androidx.compose.foundation.lazy.LazyListItemInfo
@@ -9,13 +8,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.AccessibilityManager
-import androidx.compose.ui.platform.LocalAccessibilityManager
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.platform.LocalViewConfiguration
-import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.util.fastAll
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay

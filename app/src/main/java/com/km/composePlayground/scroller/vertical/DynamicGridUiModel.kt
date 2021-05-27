@@ -4,6 +4,9 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateOf
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
+import com.km.composePlayground.scroller.common.ItemSpanLookup
+import com.km.composePlayground.scroller.horizontal.ScrollingUiAction
+import com.km.composePlayground.scroller.vertical.SectionUiModelContent
 
 
 /**
@@ -55,4 +58,21 @@ class DynamicGridUiModelContent(
   val spanLookup: ItemSpanLookup,
   identity: String,
   scrollingUiAction: ScrollingUiAction = ScrollingUiAction {},
-) : SectionUiModelContent(itemList, identity, scrollingUiAction)
+) : SectionUiModelContent(itemList, identity, scrollingUiAction) {
+
+  fun copy(
+    itemList: List<UiModel> = this.itemList,
+    desiredCellSize: Int = this.desiredCellSize,
+    spanLookup: ItemSpanLookup = this.spanLookup,
+    identity: String = this.dataId,
+    scrollingUiAction: ScrollingUiAction = this.scrollingUiAction
+  ): DynamicGridUiModelContent {
+    return DynamicGridUiModelContent(
+      itemList = itemList,
+      desiredCellSize = desiredCellSize,
+      spanLookup = spanLookup,
+      identity = identity,
+      scrollingUiAction = scrollingUiAction
+    )
+  }
+}
