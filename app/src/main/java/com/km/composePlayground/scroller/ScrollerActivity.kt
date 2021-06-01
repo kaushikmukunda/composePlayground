@@ -201,29 +201,37 @@ class ScrollerActivity : AppCompatActivity() {
       uiModel = VerticalScrollerUiModel(
         uiContent = VerticalScrollerUiModelContent(
           itemList = listOf(
-            UnderlineTextModel("Static Grid"),
-            staticGridUiModel,
-
-            UnderlineTextModel("Horizontal Scroller"),
-            scrollerUiModel1x,
+//            UnderlineTextModel("Static Grid"),
+//            staticGridUiModel,
+//
+//            UnderlineTextModel("Horizontal Scroller"),
+//            scrollerUiModel1x,
 
 //                    object : RenderBlockingUiModel {},
 
-            UnderlineTextModel("Dynamic Grid"),
-            DynamicGridUiModel(
-              DynamicGridUiModelContent(
-                itemList = testList,
-                desiredCellSize = 240,
-                spanLookup = { idx -> if (idx > 0 && (idx % 7 == 0 || idx % 11 == 0)) 2 else 1 },
-                ""
-              )
-            ),
+//            UnderlineTextModel("Dynamic Grid"),
+//            DynamicGridUiModel(
+//              DynamicGridUiModelContent(
+//                itemList = testList,
+//                desiredCellSize = 240,
+//                spanLookup = { idx -> if (idx > 0 && (idx % 7 == 0 || idx % 11 == 0)) 2 else 1 },
+//                ""
+//              )
+//            ),
 
             UnderlineTextModel("Linear Section"),
             SectionUiModel(
               SectionUiModelContent(
-                itemList = testList,//.subList(0, 10),
-                identity = "",
+                itemList = listOf(scrollerUiModel1x),
+                identity = "xyz",
+              )
+            ),
+
+            UnderlineTextModel("Linear Section 2"),
+            SectionUiModel(
+              SectionUiModelContent(
+                itemList = listOf(scrollerUiModel1x),
+                identity = "xyz1",
               )
             )
           )
@@ -407,7 +415,8 @@ val uiModelMapper = object : UiModelComposableMapper {
       is TextModel -> TextItem(uiModel, modifier)
       is UnderlineTextModel -> UnderlineTextItem(model = uiModel)
       is FooterModel -> FooterItem(model = uiModel)
-      is HorizontalScrollerComposeUiModel ->
+      is HorizontalScrollerComposeUiModel -> {
+        Log.d("dbg", "horizontal scroller")
         HorizontalScrollerUi(
           mapper = this,
           uiModel = uiModel,
@@ -419,6 +428,7 @@ val uiModelMapper = object : UiModelComposableMapper {
             decorators
           }
         )
+      }
 
       is LayoutPolicyHorizontalScrollerComposeUiModel ->
         LayoutPolicyAwareHorizontalScrollerUi(
