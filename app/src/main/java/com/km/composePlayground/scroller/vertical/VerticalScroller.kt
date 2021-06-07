@@ -76,13 +76,11 @@ fun VerticalScrollerUi(
           content.scrollingUiAction.onItemRendered(index)
         }
         is SectionUiModel -> {
-          Log.d("dbg", "vscroller top level linear $listItem")
           LinearUi(listItem, scrollerElementRenderer)
           content.scrollingUiAction.onItemRendered(index)
         }
         else ->
           item(key = itemKeys[index]) {
-            Log.d("dbg", "vscroller top level single $listItem key: ${itemKeys[index]}")
             val positionInfo =
               ScrollerPositionInfo(index == 0, index == content.itemList.size - 1)
             scrollerElementRenderer.render(listItem, positionInfo, Modifier)
@@ -208,7 +206,6 @@ internal class ElementRenderer(
 //          mapper.map(uiModel).invoke(modifier.then(decorationModifier))
 //        }
 //      } else {
-    Log.d("dbg", "vscroller: no parent element $uiModel")
     mapper.map(uiModel).invoke(modifier.then(decorationModifier))
 //      }
   }

@@ -45,9 +45,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.layoutId
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -83,7 +89,8 @@ class ScratchPadActivity : AppCompatActivity() {
     setContent {
       MaterialTheme {
         Box(modifier = Modifier.fillMaxSize()) {
-          AnimatedVisibilityLazyColumnDemo()
+          TalkbackBugDemo()
+//          AnimatedVisibilityLazyColumnDemo()
 //                    ModifierSample()
 //                TextAnnotation()
 //          FullScreenDialogSample()
@@ -100,6 +107,20 @@ class ScratchPadActivity : AppCompatActivity() {
   }
 }
 
+@Composable
+fun TalkbackBugDemo() {
+  Box(modifier = Modifier.clearAndSetSemantics {
+    contentDescription = "simple click"
+    role = Role.Button
+  }) {
+    Button(
+      onClick = { Log.d("dbg", "button clicked") },
+    ) {
+      Text("Click me, I'm a button")
+    }
+  }
+}
+
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun AnimatedVisibilityLazyColumnDemo() {
@@ -109,7 +130,9 @@ fun AnimatedVisibilityLazyColumnDemo() {
       Button(
         { itemNum = itemNum + 1 },
         enabled = itemNum <= turquoiseColors.size - 1,
-        modifier = Modifier.padding(15.dp).weight(1f)
+        modifier = Modifier
+          .padding(15.dp)
+          .weight(1f)
       ) {
         Text("Add")
       }
@@ -117,7 +140,9 @@ fun AnimatedVisibilityLazyColumnDemo() {
       Button(
         { itemNum = itemNum - 1 },
         enabled = itemNum >= 1,
-        modifier = Modifier.padding(15.dp).weight(1f)
+        modifier = Modifier
+          .padding(15.dp)
+          .weight(1f)
       ) {
         Text("Remove")
       }
@@ -130,14 +155,20 @@ fun AnimatedVisibilityLazyColumnDemo() {
           exit = fadeOut(0.1f, animationSpec = tween(120))
         ) {
           Log.d("dbg", "rendering i $i")
-          Spacer(Modifier.width(90.dp).height(90.dp).background(color))
+          Spacer(
+            Modifier
+              .width(90.dp)
+              .height(90.dp)
+              .background(color))
         }
       }
     }
 
     Button(
       { itemNum = 0 },
-      modifier = Modifier.align(Alignment.End).padding(15.dp)
+      modifier = Modifier
+        .align(Alignment.End)
+        .padding(15.dp)
     ) {
       Text("Clear All")
     }
@@ -234,7 +265,9 @@ fun FullScreenDialogSample() {
           }
       }
       ConstraintLayout(
-          modifier = Modifier.fillMaxSize().padding(vertical = 8.dp)
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(vertical = 8.dp)
       ) {
           Text("Header", modifier = Modifier.layoutId(headerId))
           Text("Content", modifier = Modifier.layoutId(contentId))
@@ -429,7 +462,9 @@ fun FullyLoadedTransition() {
       Text(
         "open",
         textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().border(width = 1.dp, color = Color.Red)
+        modifier = Modifier
+          .fillMaxWidth()
+          .border(width = 1.dp, color = Color.Red)
       )
     }
 

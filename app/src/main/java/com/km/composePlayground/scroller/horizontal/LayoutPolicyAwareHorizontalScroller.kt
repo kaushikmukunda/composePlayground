@@ -1,5 +1,6 @@
 package com.km.composePlayground.scroller.horizontal
 
+import android.util.Log
 import androidx.compose.animation.core.calculateTargetValue
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.foundation.gestures.FlingBehavior
@@ -84,7 +85,7 @@ private fun getFlingBehaviorForSnapping(lazyListState: LazyListState): FlingBeha
 // TODO(b/182983176): Compose framework team needs to fix reverse scrolling which seems
 // to be janky compared with the forward scroll.
 /** Custom Fling Behavior to support snapping. */
-private class PlayFlingBehavior(
+class PlayFlingBehavior(
   private val lazyListState: LazyListState,
   private val coroutineScope: CoroutineScope
 ) : FlingBehavior {

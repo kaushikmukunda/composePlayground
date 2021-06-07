@@ -1,6 +1,5 @@
 package com.km.composePlayground.scroller.vertical
 
-import android.util.Log
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Row
@@ -79,14 +78,12 @@ internal fun LazyListScope.LinearUi(model: SectionUiModel, elementRenderer: Elem
   val itemKeys = computeUiModelKeys(content.itemList, content.dataId)
   val posInfo = LinearSectionPositionInfo(false, false)
 
-  Log.d("dbg", "linearUi outer ")
 
-  itemsIndexed(items = content.itemList /*key = { idx, _ -> itemKeys[idx] }*/) { idx, item ->
-//      val positionInfo = LinearSectionPositionInfo(idx == 0, idx == content.itemList.size - 1)
-    Log.d("dbg", "vscroller linearUi $item key ${itemKeys[idx]}")
+  itemsIndexed(items = content.itemList, key = { idx, _ -> itemKeys[idx] }) { idx, item ->
+    val positionInfo = LinearSectionPositionInfo(idx == 0, idx == content.itemList.size - 1)
     elementRenderer.render(uiModel = item, positionInfo = posInfo, modifier = Modifier)
 
-//      SideEffect { content.scrollingUiAction.onItemRendered(idx) }
+    SideEffect { content.scrollingUiAction.onItemRendered(idx) }
   }
 }
 

@@ -4,22 +4,35 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.km.composePlayground.R
 import com.km.composePlayground.base.UiModel
 import com.km.composePlayground.base.UniformUiModel
 import com.km.composePlayground.modifiers.rememberState
@@ -30,13 +43,13 @@ import com.km.composePlayground.scroller.common.NestedConnectionScrollSource
 import com.km.composePlayground.scroller.common.RenderBlockingUiModel
 import com.km.composePlayground.scroller.common.TestScrollConsumer
 import com.km.composePlayground.scroller.common.enableAutoScroll
-import com.km.composePlayground.scroller.common.scrollSource
 import com.km.composePlayground.scroller.horizontal.DividerDecorator
 import com.km.composePlayground.scroller.horizontal.HorizontalScrollerComposeUiContent
 import com.km.composePlayground.scroller.horizontal.HorizontalScrollerComposeUiModel
 import com.km.composePlayground.scroller.horizontal.HorizontalScrollerUi
 import com.km.composePlayground.scroller.horizontal.LayoutPolicyAwareHorizontalScrollerUi
 import com.km.composePlayground.scroller.horizontal.LayoutPolicyHorizontalScrollerComposeUiModel
+import com.km.composePlayground.scroller.horizontal.PlayFlingBehavior
 import com.km.composePlayground.scroller.horizontal.UiModelComposableMapper
 import com.km.composePlayground.scroller.vertical.SectionUiModel
 import com.km.composePlayground.scroller.vertical.SectionUiModelContent
@@ -48,6 +61,7 @@ import com.km.composePlayground.scroller.vertical.VerticalScrollerUiModelContent
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.lang.Math.abs
 
 class ScrollerActivity : AppCompatActivity() {
 
@@ -60,15 +74,139 @@ class ScrollerActivity : AppCompatActivity() {
     )
   )
 
+  private val layoutPolicyUiModel = LayoutPolicyHorizontalScrollerComposeUiModel(
+    HorizontalScrollerComposeUiContent(
+      uiAction = {},
+      items = testList
+    ),
+    enableSnapping = true
+  )
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
     setContent {
       MaterialTheme {
 //          HorizontalScrollers()
 //          SimpleListPagination()
-        GridScroller()
+//        GridScroller()
 //          TestScroller()
 //          AutoScroller()
+//        ParallaxScroller()
+        NestedConnectionParallaxScroller()
+      }
+    }
+  }
+
+  @Composable
+  fun ParallaxScrollerEx() {
+    val scrollState = rememberScrollState()
+    Box {
+      Image(
+        painter = painterResource(id = R.drawable.squirrel),
+        contentDescription = null,
+        contentScale = ContentScale.FillWidth,
+        modifier = Modifier
+          .graphicsLayer {
+            val imageOffset = (-scrollState.value * 0.18f).dp
+            val imageAlpha =
+              ((scrollState.maxValue - scrollState.value.toFloat()) / scrollState.maxValue)
+            translationY = imageOffset.value
+            alpha = imageAlpha
+          }
+          .height(240.dp)
+          .fillMaxWidth()
+      )
+
+      Column(
+        Modifier
+          .verticalScroll(scrollState)
+          .padding(top = 200.dp)
+          .background(
+            MaterialTheme.colors.surface,
+          )
+          .fillMaxHeight()
+          .fillMaxWidth()
+          .padding(all = 16.dp)
+      ) {
+        for (idx in 1..8) {
+          TextBox(idx)
+        }
+      }
+    }
+  }
+
+  @Composable
+  fun NestedConnectionParallaxScroller() {
+    val headerImgWidth = 100.dp
+    val headerImgWidthPx = with(LocalDensity.current) { headerImgWidth.roundToPx().toFloat() }
+    val headerImgOffsetPx = remember { mutableStateOf(0f) }
+    val listState = rememberLazyListState()
+
+    // Listen to scroll events from LazyRow
+    val nestedScrollConnection = remember {
+      object : NestedScrollConnection {
+
+        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+          val delta = available.x
+          val firstVisibleItem = listState.layoutInfo.visibleItemsInfo.firstOrNull()
+
+          val isForwardScroll = delta < 0
+          // | headerImg | item 1 | item 2 |....
+          // |           | <-- offset 0
+          // The header image should only be scrolled back once the first item is fullyvisible.
+          // At steady state, first item offset is 0. When the first item reaches the edge of the screen,
+          // it has moved by the width of the header image. Offset is -ve as forward scroll is -ve.
+          //
+          // | item 1 | item 2 |....
+          // | <-- offset -headerImgWidth
+          val inRangeReverseScroll = delta > 0 &&
+            firstVisibleItem?.index == 0 && firstVisibleItem.offset > (-headerImgWidthPx)
+          if (isForwardScroll || inRangeReverseScroll) {
+            val newOffset = headerImgOffsetPx.value + delta
+            headerImgOffsetPx.value = newOffset.coerceIn(-headerImgWidthPx, 0f)
+          }
+
+          // Don't consume any scroll. The header image is translated by X
+          return Offset.Zero
+        }
+      }
+    }
+
+    Box(
+      Modifier
+        .fillMaxWidth()
+        .nestedScroll(nestedScrollConnection)
+    ) {
+
+      Image(
+        painter = painterResource(id = R.drawable.ic_launcher_background),
+        contentDescription = null,
+        modifier = Modifier
+          .graphicsLayer {
+            // Multiplier controls the speed of translation
+            translationX = headerImgOffsetPx.value * 0.8f
+            alpha = (headerImgWidthPx - abs(headerImgOffsetPx.value)) / headerImgWidthPx
+          }
+          .size(headerImgWidth)
+      )
+
+      LazyRow(
+        state = listState,
+        flingBehavior = PlayFlingBehavior(listState, rememberCoroutineScope()),
+        modifier = Modifier
+          .align(alignment = Alignment.Center)
+          .fillMaxWidth(),
+        contentPadding = PaddingValues(start = headerImgWidth)
+      ) {
+        items(10) { idx ->
+          Text(
+            "Item $idx",
+            modifier = Modifier
+              .padding(horizontal = 16.dp)
+              .size(100.dp)
+              .border(width = 1.dp, color = Color.Red)
+          )
+        }
       }
     }
   }
@@ -80,13 +218,7 @@ class ScrollerActivity : AppCompatActivity() {
     LazyRow(state = listState) {
       for (idx in 1..8) {
         item {
-          Text(
-            text = "Box $idx",
-            modifier = Modifier
-              .size(100.dp)
-              .padding(4.dp)
-              .background(color = Color.LightGray)
-          )
+          TextBox(idx)
         }
       }
     }
@@ -95,82 +227,64 @@ class ScrollerActivity : AppCompatActivity() {
   private val scrollConsumer = TestScrollConsumer()
 
   @Composable
-  fun TestScroller() {
+  fun TextBox(idx: Int) {
+    Text(
+      text = "Box $idx",
+      modifier = Modifier
+        .size(100.dp)
+        .padding(4.dp)
+        .background(color = Color.LightGray)
+    )
+  }
 
+  @Composable
+  fun TestScroller() {
     val scrollConnection = remember { NestedConnectionScrollSource() }
     val coroutineScope = rememberCoroutineScope()
 
     Box(Modifier.nestedScroll(connection = scrollConnection)) {
+      DisposableEffect(scrollConnection) {
+        scrollConsumer.registerSource(coroutineScope, scrollConnection)
+
+        onDispose {
+          scrollConsumer.unregisterSource(scrollConnection)
+        }
+      }
+
       LazyColumn {
         item {
-          val lazyListState = rememberLazyListState()
-          DisposableEffect(lazyListState) {
-            val scrollSource = lazyListState.scrollSource()
-            scrollConsumer.registerSource(coroutineScope, scrollSource)
-
-            onDispose {
-              scrollConsumer.unregisterSource(scrollSource)
-            }
-          }
-          LazyRow(state = lazyListState) {
+          LazyRow {
             for (idx in 1..80) {
-              item {
-                Text(
-                  text = "Box $idx",
-                  modifier = Modifier
-                    .size(100.dp)
-                    .padding(4.dp)
-                    .background(color = Color.LightGray)
-                )
-              }
+              item { TextBox(idx) }
             }
           }
         }
 
         item {
-          LazyRow {
-            for (idx in 20..28) {
-              item {
-                Text(
-                  text = "Box $idx",
-                  modifier = Modifier
-                    .size(100.dp)
-                    .padding(4.dp)
-                    .background(color = Color.LightGray)
-                )
-              }
+          val scope = rememberCoroutineScope()
+          val listState = rememberLazyListState()
+          LazyRow(flingBehavior = PlayFlingBehavior(listState, scope), state = listState) {
+            for (idx in 20..50) {
+              item { TextBox(idx) }
             }
           }
         }
 
         items(10) { idx ->
-          Text(
-            text = "Box $idx",
-            modifier = Modifier
-              .size(100.dp)
-              .padding(4.dp)
-              .background(color = Color.LightGray)
-          )
+          TextBox(idx)
         }
 
         item {
           LazyRow {
             for (idx in 10..18) {
-              item {
-                Text(
-                  text = "Box $idx",
-                  modifier = Modifier
-                    .size(100.dp)
-                    .padding(4.dp)
-                    .background(color = Color.LightGray)
-                )
-              }
+              item { TextBox(idx) }
             }
           }
         }
       }
     }
   }
+
 
   @Composable
   private fun GridScroller() {
@@ -197,6 +311,18 @@ class ScrollerActivity : AppCompatActivity() {
 //        "id1"
 //      )
 //    }
+
+    val scrollConnection = remember { NestedConnectionScrollSource() }
+    val coroutineScope = rememberCoroutineScope()
+
+    DisposableEffect(scrollConnection) {
+      scrollConsumer.registerSource(coroutineScope, scrollConnection)
+
+      onDispose {
+        scrollConsumer.unregisterSource(scrollConnection)
+      }
+    }
+
     VerticalScrollerUi(
       uiModel = VerticalScrollerUiModel(
         uiContent = VerticalScrollerUiModelContent(
@@ -222,22 +348,24 @@ class ScrollerActivity : AppCompatActivity() {
             UnderlineTextModel("Linear Section"),
             SectionUiModel(
               SectionUiModelContent(
-                itemList = listOf(scrollerUiModel1x),
-                identity = "xyz",
+                itemList = listOf(layoutPolicyUiModel),
+                identity = "ls1",
               )
             ),
 
             UnderlineTextModel("Linear Section 2"),
             SectionUiModel(
               SectionUiModelContent(
-                itemList = listOf(scrollerUiModel1x),
-                identity = "xyz1",
+                itemList = testList.subList(0, 10),
+                identity = "ls2",
               )
+            ),
+
             )
-          )
         )
       ),
-      mapper = uiModelMapper
+      mapper = uiModelMapper,
+      containerModifier = Modifier.nestedScroll(scrollConnection)
     )
   }
 
@@ -264,8 +392,9 @@ class ScrollerActivity : AppCompatActivity() {
             uiAction = { Log.d("dbg", "load more") },
             items = testList
           ),
+          enableSnapping = true
         ),
-        decorationCalculator = decorationCalculator
+        decorationCalculator = decorationCalculator,
       )
 
       Spacer(modifier = Modifier.height(16.dp))
@@ -281,6 +410,7 @@ class ScrollerActivity : AppCompatActivity() {
             uiAction = {},
             items = testList
           ),
+          enableSnapping = true
         ),
         decorationCalculator = decorationCalculator
       )
@@ -415,20 +545,6 @@ val uiModelMapper = object : UiModelComposableMapper {
       is TextModel -> TextItem(uiModel, modifier)
       is UnderlineTextModel -> UnderlineTextItem(model = uiModel)
       is FooterModel -> FooterItem(model = uiModel)
-      is HorizontalScrollerComposeUiModel -> {
-        Log.d("dbg", "horizontal scroller")
-        HorizontalScrollerUi(
-          mapper = this,
-          uiModel = uiModel,
-          decorationCalculator = { itemModel, _ ->
-            val decorators = mutableListOf<Decoration>()
-            if (itemModel is TextModel) {
-              decorators.add(DividerDecorator(verticalPadding = 0.dp))
-            }
-            decorators
-          }
-        )
-      }
 
       is LayoutPolicyHorizontalScrollerComposeUiModel ->
         LayoutPolicyAwareHorizontalScrollerUi(
@@ -446,6 +562,22 @@ val uiModelMapper = object : UiModelComposableMapper {
             decorators
           }
         )
+
+      is HorizontalScrollerComposeUiModel -> {
+        Log.d("dbg", "horizontal scroller")
+        HorizontalScrollerUi(
+          mapper = this,
+          uiModel = uiModel,
+          decorationCalculator = { itemModel, _ ->
+            val decorators = mutableListOf<Decoration>()
+            if (itemModel is TextModel) {
+              decorators.add(DividerDecorator(verticalPadding = 0.dp))
+            }
+            decorators
+          }
+        )
+      }
+
       is RenderBlockingUiModel -> TextItem(TextModel("blocking item"))
     }
   }
@@ -458,7 +590,8 @@ fun TextItem(model: TextModel, modifier: Modifier = Modifier) {
     modifier = modifier
       .padding(bottom = 8.dp, end = 8.dp)
       .background(color = Color.Gray)
-//      .border(width = 1.dp, color = Color.Yellow)
+      .size(size = 80.dp)
+      .border(width = 1.dp, color = Color.Yellow)
   )
 }
 
